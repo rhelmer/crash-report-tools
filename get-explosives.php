@@ -121,8 +121,8 @@ $exp_vars = array(
 
 $on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
 $url_adu['firefox'] = 'https://metrics.mozilla.com/stats/firefox_updates.csv';
-$url_csvbase = $on_moz_server?'http://people.mozilla.com/crash_analysis/'
-                             :'/mnt/crashanalysis/crash_analysis/';
+$url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
+                             :'http://people.mozilla.com/crash_analysis/';
 $url_algolink = 'https://wiki.mozilla.org/CrashKill/Plan/Explosive';
 $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
 $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
