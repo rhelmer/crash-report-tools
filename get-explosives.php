@@ -463,9 +463,6 @@ foreach ($reports as $rep) {
     print("\n");
   }
 }
-if (strlen($path_outputbase)) {
-  copy($_SERVER['SCRIPT_FILENAME'], $path_outputbase.basename($_SERVER['SCRIPT_FILENAME']));
-}
 
 // *** helper functions ***
 

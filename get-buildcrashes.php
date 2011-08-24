@@ -63,8 +63,13 @@ $notes = array('Firefox-5.0-20110427143820' => '5.0b1',
 
 // *** URLs ***
 
-$url_csvbase = 'http://people.mozilla.com/crash_analysis/';
-$path_outputbase = '/home/robert/git-kairo/testbed/socorro/';
+$on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
+$url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
+                             :'http://people.mozilla.com/crash_analysis/';
+$path_outputbase = $on_moz_server?'':'/home/robert/git-kairo/testbed/socorro/';
+
+if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
+else { chdir('/mnt/mozilla/projects/socorro/'); }
 
 // *** code start ***
 
@@ -86,13 +91,19 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $fweb = $anadir.'.buildcrashes.html';
 
   // make sure we have the crashdata csv
-  $anafcsv = $anadir.'/'.$fcsv;
-  if (!file_exists($anafcsv)) {
-    print('Fetching '.$anafcsv.' from the web'."\n");
-    $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-    if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
+  if ($on_moz_server) {
+    $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
+    if (!file_exists($anafcsvgz)) { break; }
   }
-  if (!file_exists($anafcsv)) { break; }
+  else {
+    $anafcsv = $anadir.'/'.$fcsv;
+    if (!file_exists($anafcsv)) {
+      print('Fetching '.$anafcsv.' from the web'."\n");
+      $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
+      if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
+    }
+    if (!file_exists($anafcsv)) { break; }
+  }
 
   // get list of wanted info for the crashes
   $anafbcs = $anadir.'/'.$fbcs;
@@ -101,8 +112,13 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
     // some parts from that split into total and crashcount blocks, though
     // $7 is product, $8 is version, $9 is build ID, $23 is hang id, $25 is process type
-    shell_exec('awk \'-F\t\' \''
-                .' {printf "\t%s;%s;%s;%s;%s\n",$7,$8,$9,($23!="\\\\N"),$25}\' '.$anafcsv.' > '.$anafbcs);
+    $cmd = 'awk \'-F\t\' \' {printf "\t%s;%s;%s;%s;%s\n",$7,$8,$9,($23!="\\\\N"),$25}\'';
+    if ($on_moz_server) {
+      shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' > '.$anafbcs);
+    }
+    else {
+      shell_exec($cmd.' '.$anafcsv.' > '.$anafbcs);
+    }
   }
 
   // get build list with counts per build
@@ -326,11 +342,10 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     }
 
     $doc->saveHTMLFile($anafweb);
-    copy($anafweb, $path_outputbase.$fweb);
+    if (strlen($path_outputbase)) { copy($anafweb, $path_outputbase.$fweb); }
   }
   print("\n");
 }
-copy($_SERVER['SCRIPT_FILENAME'], $path_outputbase.basename($_SERVER['SCRIPT_FILENAME']));
 
 // *** helper functions ***
 

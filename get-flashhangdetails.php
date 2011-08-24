@@ -60,9 +60,15 @@ $backlog_days = 7;
 
 // *** URLs ***
 
+$on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
+$url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
+                             :'http://people.mozilla.com/crash_analysis/';
 $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
 $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
-$path_outputbase = '/home/robert/git-kairo/testbed/socorro/';
+$path_outputbase = $on_moz_server?'':'/home/robert/git-kairo/testbed/socorro/';
+
+if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
+else { chdir('/mnt/mozilla/projects/socorro/'); }
 
 // *** code start ***
 
@@ -104,8 +110,19 @@ foreach ($reports as $rep) {
     if (!array_key_exists($anadir, $flashdata)) { break; }
 
     // make sure we have the crashdata csv
-    $anafcsv = $anadir.'/'.$fcsv;
-    if (!file_exists($anafcsv)) { break; }
+    if ($on_moz_server) {
+      $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
+      if (!file_exists($anafcsvgz)) { break; }
+    }
+    else {
+      $anafcsv = $anadir.'/'.$fcsv;
+      if (!file_exists($anafcsv)) {
+        print('Fetching '.$anafcsv.' from the web'."\n");
+        $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
+        if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
+      }
+      if (!file_exists($anafcsv)) { break; }
+    }
 
     // Get plugin sides of flash hangs for the product.
     $anafhdplugin = $anadir.'/'.$fhdplugin;
@@ -117,8 +134,13 @@ foreach ($reports as $rep) {
       $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
               .(strlen($ver)?' && $8 ~ /^'.awk_quote($ver, '/').'$/':'')
               .' && $22 ~ /^1/ && $23 !~ /^\\\\N$/ && $25 ~ /^plugin$/'
-              .' {printf "%s;%s;%s\n",$1,$23,$22}\' '.$anafcsv.' > '.$anafhdplugin;
-      shell_exec($cmd);
+              .' {printf "%s;%s;%s\n",$1,$23,$22}\'';
+      if ($on_moz_server) {
+        shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' > '.$anafhdplugin);
+      }
+      else {
+        shell_exec($cmd.' '.$anafcsv.' > '.$anafhdplugin);
+      }
     }
 
     // Get browser sides of flash hangs for the product.
@@ -131,8 +153,13 @@ foreach ($reports as $rep) {
       $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
               .(strlen($ver)?' && $8 ~ /^'.awk_quote($ver, '/').'$/':'')
               .' && $25 !~ /^plugin$/'
-              .' {printf "%s;%s\n",$1,$23}\' '.$anafcsv.' > '.$anafhdbrowser;
-      shell_exec($cmd);
+              .' {printf "%s;%s\n",$1,$23}\'';
+      if ($on_moz_server) {
+        shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' > '.$anafhdbrowser);
+      }
+      else {
+        shell_exec($cmd.' '.$anafcsv.' > '.$anafhdbrowser);
+      }
     }
 
     // Get summarized list with counts per flash version and hang/crash.
@@ -299,7 +326,7 @@ foreach ($reports as $rep) {
       }
 
       $doc->saveHTMLFile($anafweb);
-      copy($anafweb, $path_outputbase.$fweb);
+      if (strlen($path_outputbase)) { copy($anafweb, $path_outputbase.$fweb); }
     }
 
     print("\n");
@@ -307,7 +334,6 @@ foreach ($reports as $rep) {
   // debug only line
   // print_r($flashdata);
 }
-copy($_SERVER['SCRIPT_FILENAME'], $path_outputbase.basename($_SERVER['SCRIPT_FILENAME']));
 
 // *** helper functions ***
 

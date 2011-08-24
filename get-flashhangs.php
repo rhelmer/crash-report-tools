@@ -66,7 +66,13 @@ $backlog_days = 7;
 
 // *** URLs ***
 
-$path_outputbase = '/home/robert/git-kairo/testbed/socorro/';
+$on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
+$url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
+                             :'http://people.mozilla.com/crash_analysis/';
+$path_outputbase = $on_moz_server?'':'/home/robert/git-kairo/testbed/socorro/';
+
+if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
+else { chdir('/mnt/mozilla/projects/socorro/'); }
 
 // *** code start ***
 
@@ -106,8 +112,19 @@ foreach ($reports as $rep) {
 
     if (!array_key_exists($anadir, $flashdata)) {
       // make sure we have the crashdata csv
-      $anafcsv = $anadir.'/'.$fcsv;
-      if (!file_exists($anafcsv)) { break; }
+      if ($on_moz_server) {
+        $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
+        if (!file_exists($anafcsvgz)) { break; }
+      }
+      else {
+        $anafcsv = $anadir.'/'.$fcsv;
+        if (!file_exists($anafcsv)) {
+          print('Fetching '.$anafcsv.' from the web'."\n");
+          $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
+          if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
+        }
+        if (!file_exists($anafcsv)) { break; }
+      }
 
       // get flash hang data for the product
       $anafrawdata = $anadir.'/'.$frawdata;
@@ -118,8 +135,13 @@ foreach ($reports as $rep) {
         // $7 is product, $8 is version, $22 is flash version, $23 is hang id
         $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
                .(strlen($ver)?' && $8 ~ /^'.awk_quote($ver, '/').'$/':'')
-               .' {printf "\t%s;%s\n",($23!="\\\\N"),$22}\' '.$anafcsv.' > '.$anafrawdata;
-        shell_exec($cmd);
+               .' {printf "\t%s;%s\n",($23!="\\\\N"),$22}\'';
+        if ($on_moz_server) {
+          shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' > '.$anafrawdata);
+        }
+        else {
+          shell_exec($cmd.' '.$anafcsv.' > '.$anafrawdata);
+        }
       }
 
       // get summarized list with counts per flash version and hang/crash
@@ -274,7 +296,7 @@ foreach ($reports as $rep) {
       }
 
       $doc->saveHTMLFile($anafweb);
-      copy($anafweb, $path_outputbase.$fweb);
+      if (strlen($path_outputbase)) { copy($anafweb, $path_outputbase.$fweb); }
     }
 
     print("\n");
@@ -359,10 +381,9 @@ foreach ($reports as $rep) {
     }
 
     $doc->saveHTMLFile($fwebsum);
-    copy($fwebsum, $path_outputbase.$fwebsum);
+    if (strlen($path_outputbase)) { copy($fwebsum, $path_outputbase.$fwebsum); }
   }
 }
-copy($_SERVER['SCRIPT_FILENAME'], $path_outputbase.basename($_SERVER['SCRIPT_FILENAME']));
 
 // *** helper functions ***
 
