@@ -332,7 +332,8 @@ foreach ($reports as $rep) {
 
     $para = $body->appendChild($doc->createElement('p',
         'Columns: Flash hangs and crashes in absolute numbers and % of total'
-        .' hangs/crashes, sum of both as percentage of total sum of reports.'));
+        .' hangs/crashes, sum of both as percentage of total sum of reports.'
+        .' For hangs, half of all reports are 100% as reports come in pairs.'));
 
     $table = $body->appendChild($doc->createElement('table'));
     $table->setAttribute('border', '1');
@@ -354,15 +355,16 @@ foreach ($reports as $rep) {
     $th = $tr->appendChild($doc->createElement('th', '% of total'));
 
     foreach (array_reverse($flashdata) as $date=>$fd) {
+      $total_hang_pairs = $fd['total']['hang'] / 2;
       $hang_rate = $fd['total']['hang']
-                   ? $fd['total_flash']['hang'] / $fd['total']['hang']
+                   ? $fd['total_flash']['hang'] / $total_hang_pairs
                    : 0;
       $crash_rate = $fd['total']['crash']
                    ? $fd['total_flash']['crash'] / $fd['total']['crash']
                    : 0;
-      $total_rate = $fd['total']['crash'] + $fd['total']['hang']
+      $total_rate = $fd['total']['crash'] + $total_hang_pairs
                     ? ($fd['total_flash']['crash'] + $fd['total_flash']['hang'])
-                    / ($fd['total']['crash'] + $fd['total']['hang'])
+                    / ($fd['total']['crash'] + $total_hang_pairs)
                     : 0;
       if ($total_rate) {
         $tr = $table->appendChild($doc->createElement('tr'));
