@@ -33,25 +33,21 @@ date_default_timezone_set('America/Los_Angeles');
 //   version - empty is all versions
 
 $reports = array(array('product'=>'Firefox',
-                       'version'=>'9.0a1',
-                      ),
-                 array('product'=>'Firefox',
-                       'version'=>'8.0a2',
+                       'version'=>'4plus',
+                       'version_regex'=>'([4-9]|\d\d)\..*',
+                       'version_display'=>'4+',
                       ),
                  array('product'=>'Firefox',
                        'version'=>'7.0',
                       ),
                  array('product'=>'Firefox',
-                       'version'=>'8.0a1',
-                      ),
-                 array('product'=>'Firefox',
-                       'version'=>'7.0a2',
-                      ),
-                 array('product'=>'Firefox',
                        'version'=>'6.0',
                       ),
                  array('product'=>'Firefox',
-                       'version'=>'5.0',
+                       'version'=>'8.0a2',
+                      ),
+                 array('product'=>'Firefox',
+                       'version'=>'9.0a1',
                       ),
                 );
 
@@ -79,7 +75,7 @@ foreach ($reports as $rep) {
   $ver = $rep['version'];
   $dashver = strlen($ver)?'-'.$ver:$ver;
   $dotver = strlen($ver)?'.'.$ver:$ver;
-  $spcver = strlen($ver)?' '.$ver:$ver;
+  $spcver = strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):$ver;
 
   $prd = strtolower($rep['product']);
   $prdshort = ($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':$prd);
@@ -132,7 +128,7 @@ foreach ($reports as $rep) {
       // some parts from that split into total and crashcount blocks, though
       // $1 is signature, $7 is product, $8 is version, $22 is flash version, $23 is hang id, $25 is process type
       $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-              .(strlen($ver)?' && $8 ~ /^'.awk_quote($ver, '/').'$/':'')
+              .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
               .' && $22 ~ /^1/ && $23 !~ /^\\\\N$/ && $25 ~ /^plugin$/'
               .' {printf "%s;%s;%s\n",$1,$23,$22}\'';
       if ($on_moz_server) {
@@ -151,7 +147,7 @@ foreach ($reports as $rep) {
       // some parts from that split into total and crashcount blocks, though
       // $1 is signature, $7 is product, $8 is version, $22 is flash version, $23 is hang id, $25 is process type
       $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-              .(strlen($ver)?' && $8 ~ /^'.awk_quote($ver, '/').'$/':'')
+              .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
               .' && $25 !~ /^plugin$/'
               .' {printf "%s;%s\n",$1,$23}\'';
       if ($on_moz_server) {
