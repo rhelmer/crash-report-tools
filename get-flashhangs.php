@@ -198,7 +198,7 @@ foreach ($reports as $rep) {
     }
 
     $anafweb = $anadir.'/'.$fweb;
-    if (!file_exists($anafweb) && $flashdata[$anadir]['total_flash']['hang']) {
+    if (false && !file_exists($anafweb) && $flashdata[$anadir]['total_flash']['hang']) {
       // create out an HTML page
       print('Writing HTML output'."\n");
       $doc = new DOMDocument('1.0', 'utf-8');
@@ -309,7 +309,7 @@ foreach ($reports as $rep) {
   // debug only line
   // print_r($flashdata);
 
-  if (count($flashdata) &&
+  if (false && count($flashdata) &&
       (!file_exists($fwebsum) || (filemtime($fwebsum) < filemtime($fdfile)))) {
     // create out an HTML page
     print('Writing HTML output'."\n");

@@ -231,7 +231,7 @@ foreach ($reports as $rep) {
     }
 
     $anafweb = $anadir.'/'.$fweb;
-    if (!file_exists($anafweb) && count($hangdata)) {
+    if (false && !file_exists($anafweb) && count($hangdata)) {
       // create out an HTML page
       print('Writing HTML output'."\n");
       $doc = new DOMDocument('1.0', 'utf-8');
