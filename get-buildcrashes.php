@@ -173,7 +173,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   }
 
   $anafweb = $anadir.'/'.$fweb;
-  if (false && !file_exists($anafweb)) {
+  if (!file_exists($anafweb)) {
     // create out an HTML page
     print('Write HTML output'."\n");
 
