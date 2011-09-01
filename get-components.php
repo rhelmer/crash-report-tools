@@ -197,6 +197,40 @@ foreach ($reports as $rep) {
       $head = $root->appendChild($doc->createElement('head'));
       $title = $head->appendChild($doc->createElement('title',
           $anadir.' '.$rep['product'].$spcver.' Crash Components Report'));
+      $script = $head->appendChild($doc->createElement('script'));
+      $script->setAttribute('type', 'text/javascript');
+      $script->appendChild($doc->createCDATASection(
+          'function toggleVisibility(aClass) {'."\n"
+          .'  // state to set it to!'."\n"
+          .'  var topElem = document.getElementById(aClass);'."\n"
+          .'  var open = topElem.className != "toplevel-open";'."\n"
+          .'  if (open) {'."\n"
+          .'    topElem.className = "toplevel-open";'."\n"
+          .'    topElem.textContent = "-";'."\n"
+          .'  }'."\n"
+          .'  else {'."\n"
+          .'    topElem.className = "toplevel-closed";'."\n"
+          .'    topElem.textContent = "+";'."\n"
+          .'  }'."\n"
+          .'  var rows = document.getElementsByClassName(aClass);'."\n"
+          .'  for (var i = 0; i < rows.length; ++i) {'."\n"
+          .'    if (open)'."\n"
+          .'      rows[i].style.display = "table-row";'."\n"
+          .'    else'."\n"
+          .'      rows[i].style.display = "none";'."\n"
+          .'  }'."\n"
+          .'}'."\n"
+      ));
+      $style = $head->appendChild($doc->createElement('style'));
+      $style->setAttribute('type', 'text/css');
+      $style->appendChild($doc->createCDATASection(
+          '.toplevel-open {'."\n"
+          .'  background-color: #DDFFDD;'."\n"
+          .'}'."\n"
+          .'.toplevel-closed {'."\n"
+          .'  background-color: #FFDDDD;'."\n"
+          .'}'."\n"
+      ));
 
       $body = $root->appendChild($doc->createElement('body'));
       $h1 = $body->appendChild($doc->createElement('h1',
@@ -219,15 +253,26 @@ foreach ($reports as $rep) {
       $th = $tr->appendChild($doc->createElement('th', '%'));
 
       foreach ($cd['tree'] as $path=>$pdata) {
+        $classname = str_replace('.', '_', $path);
         $tr = $table->appendChild($doc->createElement('tr'));
         $td = $tr->appendChild($doc->createElement('td', $path));
-        $td->setAttribute('colspan', '2');
+        if (array_key_exists('.files', $pdata)) {
+          $td = $tr->appendChild($doc->createElement('td', '+'));
+          $td->setAttribute('id', $classname);
+          $td->setAttribute('class', 'toplevel-closed');
+          $td->setAttribute('onclick', 'toggleVisibility("'.$classname.'");');
+        }
+        else {
+          $td->setAttribute('colspan', '2');
+        }
         $td = $tr->appendChild($doc->createElement('td', $pdata['.count']));
         $td = $tr->appendChild($doc->createElement('td',
             sprintf('%.1f', 100 * $pdata['.count'] / $cd['total']).'%'));
         if (array_key_exists('.files', $pdata)) {
           foreach ($pdata['.files'] as $fname=>$fdata) {
             $tr = $table->appendChild($doc->createElement('tr'));
+            $tr->setAttribute('class', $classname);
+            $tr->setAttribute('style', 'display: none;');
             $td = $tr->appendChild($doc->createElement('td'));
             $td = $tr->appendChild($doc->createElement('td', $fname));
             $td = $tr->appendChild($doc->createElement('td', $fdata['.count']));

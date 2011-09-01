@@ -9,3 +9,4 @@ cd `dirname $_`
 ./get-buildcrashes.php
 ./get-flashhangs.php
 ./get-flashhangdetails.php
+./get-components.php
