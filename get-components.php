@@ -213,9 +213,11 @@ foreach ($reports as $rep) {
       $style->appendChild($doc->createCDATASection(
           '.toplevel-open {'."\n"
           .'  background-color: #DDFFDD;'."\n"
+          .'  text-align: center;'."\n"
           .'}'."\n"
           .'.toplevel-closed {'."\n"
           .'  background-color: #FFDDDD;'."\n"
+          .'  text-align: center;'."\n"
           .'}'."\n"
       ));
 
