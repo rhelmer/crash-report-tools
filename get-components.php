@@ -135,47 +135,34 @@ foreach ($reports as $rep) {
               $cd['tree'][$pregs[1]]['.files'][$pregs[2]]['.count'] = 1;
             }
           }
-          else {
-            if (array_key_exists('.unknown', $cd['tree'])) {
-              $cd['tree']['.unknown']['.count']++;
-            }
-            else {
-              $cd['tree']['.unknown'] = array('.count' => 1,
-                                              '.files' => array());
-            }
-            if (array_key_exists($path, $cd['tree']['.unknown']['.files'])) {
-              $cd['tree']['.unknown']['.files'][$path]['.count']++;
-            }
-            else {
-              $cd['tree']['.unknown']['.files'][$path]['.count'] = 1;
-            }
-          }
         }
         elseif (preg_match('/^F_?\d+_+/', $rawline, $regs)) {
-          if (array_key_exists('.flash', $cd['tree'])) {
-            $cd['tree']['.flash']['.count']++;
+          $tlname = '.flash';
+          if (array_key_exists($tlname, $cd['tree'])) {
+            $cd['tree'][$tlname]['.count']++;
           }
           else {
-            $cd['tree']['.flash']['.count'] = 1;
+            $cd['tree'][$tlname]['.count'] = 1;
           }
         }
         else {
-          if (array_key_exists('.nonhg', $cd['tree'])) {
-            $cd['tree']['.nonhg']['.count']++;
+          $tlname = '.unknown';
+          if (array_key_exists($tlname, $cd['tree'])) {
+            $cd['tree'][$tlname]['.count']++;
           }
           else {
-            $cd['tree']['.nonhg'] = array('.count' => 1,
-                                          '.files' => array());
+            $cd['tree'][$tlname] = array('.count' => 1,
+                                         '.files' => array());
           }
-          if (array_key_exists($rawline, $cd['tree']['.nonhg']['.files'])) {
-            $cd['tree']['.nonhg']['.files'][$rawline]['.count']++;
+          if (array_key_exists($rawline, $cd['tree'][$tlname]['.files'])) {
+            $cd['tree'][$tlname]['.files'][$rawline]['.count']++;
           }
           else {
-            $cd['tree']['.nonhg']['.files'][$rawline]['.count'] = 1;
+            $cd['tree'][$tlname]['.files'][$rawline]['.count'] = 1;
           }
         }
       }
-      ksort($cd); // sort by date (key), ascending
+      //ksort($cd); // sort by date (key), ascending
 
       file_put_contents($anafcompdata, json_encode($cd));
     }
@@ -274,7 +261,8 @@ foreach ($reports as $rep) {
             $tr->setAttribute('class', $classname);
             $tr->setAttribute('style', 'display: none;');
             $td = $tr->appendChild($doc->createElement('td'));
-            $td = $tr->appendChild($doc->createElement('td', $fname));
+            $td = $tr->appendChild($doc->createElement('td',
+                strlen($fname)?$fname:'(empty)'));
             $td = $tr->appendChild($doc->createElement('td', $fdata['.count']));
             $td = $tr->appendChild($doc->createElement('td',
                 sprintf('%.1f', 100 * $fdata['.count'] / $cd['total']).'%'));
