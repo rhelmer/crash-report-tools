@@ -135,7 +135,7 @@ foreach ($reports as $rep) {
             $objdir = isset($oregs[1]); // is this in the objdir?
             $toplevel = $objdir?$oregs[1]:$pregs[1]; // toplevel directory
             $subfile = $objdir?'(objdir)'.$oregs[2]:$pregs[2]; // file path inside the toplevel
-            if (array_key_exists($pregs[1], $cd['tree'])) {
+            if (array_key_exists($toplevel, $cd['tree'])) {
               $cd['tree'][$toplevel]['.count']++;
             }
             else {
