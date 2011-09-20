@@ -41,7 +41,7 @@ $reports = array(array('product'=>'Firefox',
                 );
 
 // for how many days back to get the data
-$backlog_days = -2;
+$backlog_days = 7;
 
 // *** URLs ***
 
