@@ -35,6 +35,9 @@ date_default_timezone_set('America/Los_Angeles');
 $reports = array(array('product'=>'Firefox',
                        'version'=>'9.0a1',
                       ),
+                array('product'=>'Firefox',
+                      'channel'=>'nightly',
+                      ),
                 );
 
 // for how many days back to get the data
@@ -56,12 +59,16 @@ $curtime = time();
 
 foreach ($reports as $rep) {
   $ver = $rep['version'];
-  $dashver = strlen($ver)?'-'.$ver:$ver;
-  $dotver = strlen($ver)?'.'.$ver:$ver;
-  $spcver = strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):$ver;
-
   $prd = strtolower($rep['product']);
-  $prdshort = ($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':$prd);
+  $prdvershort = ($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':$prd)
+                 .(strlen($rep['channel'])?'-'.$rep['channel']:'')
+                 .(strlen($ver)?'-'.$ver:'');
+  $prdverfile = $prd
+                .(strlen($rep['channel'])?'.'.$rep['channel']:'')
+                .(strlen($ver)?'.'.$ver:'');
+  $prdverdisplay = $rep['product']
+                   .(strlen($rep['channel'])?' '.ucfirst($rep['channel']):'')
+                   .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
@@ -70,9 +77,9 @@ foreach ($reports as $rep) {
     if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
-    $frawdata = $prdshort.$dashver.'-components-raw.csv';
-    $fcompdata = $prdshort.$dashver.'-components.json';
-    $fweb = $anadir.'.'.$prd.$dotver.'.components.html';
+    $frawdata = $prdvershort.'-components-raw.csv';
+    $fcompdata = $prdvershort.'-components.json';
+    $fweb = $anadir.'.'.$prdverfile.'.components.html';
 
     // make sure we have the crashdata csv
     if ($on_moz_server) {
@@ -92,13 +99,14 @@ foreach ($reports as $rep) {
     // get components data for the product
     $anafrawdata = $anadir.'/'.$frawdata;
     if (!file_exists($anafrawdata)) {
-      print('Getting raw '.$rep['product'].$spcver.' components data'."\n");
+      print('Getting raw '.$prdverdisplay.' components data'."\n");
       // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
       // some parts from that split into total and crashcount blocks, though
-      // $7 is product, $8 is version, $20 is topmost_filename
+      // $1 is signature, $7 is product, $8 is version, $20 is topmost_filename, $29 is release_channel
       $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
+              .(strlen($rep['channel'])?' && $29 ~ /^'.awk_quote($rep['channel'], '/').'$/':'')
               .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
-              .' {printf "%s\n",$20}\'';
+              .' {printf "%s;%s\n",$1,$20}\'';
       if ($on_moz_server) {
         shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' > '.$anafrawdata);
       }
@@ -116,10 +124,11 @@ foreach ($reports as $rep) {
                   'tree' => array());
       foreach ($anarawdata as $rawline) {
         $cd['total']++;
-        if (preg_match('/^hg:([^:]+):([^:]+):([^:]+)$/', $rawline, $regs)) {
-          $repo = $regs[1]; // currently ignorable, e.g. 'hg.mozilla.org/mozilla-central'
-          $path = $regs[2]; // *the meat*, e.g. 'dom/plugins/ipc/PluginInstanceChild.cpp'
-          $rev = $regs[3]; // hg revision, e.g. 'f41df039db03'
+        if (preg_match('/^(.*);hg:([^:]+):([^:]+):([^:]+)$/', $rawline, $regs)) {
+          $sig = $regs[1]; // signature
+          $repo = $regs[2]; // currently ignorable, e.g. 'hg.mozilla.org/mozilla-central'
+          $path = $regs[3]; // *the meat*, e.g. 'dom/plugins/ipc/PluginInstanceChild.cpp'
+          $rev = $regs[4]; // hg revision, e.g. 'f41df039db03'
           if (preg_match('/^([^\/]+)(.*)$/', $path, $pregs)) {
             if (array_key_exists($pregs[1], $cd['tree'])) {
               $cd['tree'][$pregs[1]]['.count']++;
@@ -134,9 +143,16 @@ foreach ($reports as $rep) {
             else {
               $cd['tree'][$pregs[1]]['.files'][$pregs[2]]['.count'] = 1;
             }
+            if (array_key_exists($sig, $cd['tree'][$pregs[1]]['.sigs'])) {
+              $cd['tree'][$pregs[1]]['.sigs'][$sig]['.count']++;
+            }
+            else {
+              $cd['tree'][$pregs[1]]['.sigs'][$sig]['.count'] = 1;
+            }
           }
         }
-        elseif (preg_match('/^F_?\d+_+/', $rawline, $regs)) {
+        elseif (preg_match('/^(.*);F_?\d+_+/', $rawline, $regs)) {
+          $sig = $regs[1]; // signature
           $tlname = '.flash';
           if (array_key_exists($tlname, $cd['tree'])) {
             $cd['tree'][$tlname]['.count']++;
@@ -144,8 +160,16 @@ foreach ($reports as $rep) {
           else {
             $cd['tree'][$tlname]['.count'] = 1;
           }
+          if (array_key_exists($sig, $cd['tree'][$tlname]['.sigs'])) {
+            $cd['tree'][$tlname]['.sigs'][$sig]['.count']++;
+          }
+          else {
+            $cd['tree'][$tlname]['.sigs'][$sig]['.count'] = 1;
+          }
         }
-        else {
+        elseif (preg_match('/^(.*);(.*)$/', $rawline, $regs)) { // always matches
+          $sig = $regs[1]; // signature
+          $path = $regs[2]; // should be a file path of some kind
           $tlname = '.unknown';
           if (array_key_exists($tlname, $cd['tree'])) {
             $cd['tree'][$tlname]['.count']++;
@@ -154,11 +178,17 @@ foreach ($reports as $rep) {
             $cd['tree'][$tlname] = array('.count' => 1,
                                          '.files' => array());
           }
-          if (array_key_exists($rawline, $cd['tree'][$tlname]['.files'])) {
-            $cd['tree'][$tlname]['.files'][$rawline]['.count']++;
+          if (array_key_exists($path, $cd['tree'][$tlname]['.files'])) {
+            $cd['tree'][$tlname]['.files'][$path]['.count']++;
           }
           else {
-            $cd['tree'][$tlname]['.files'][$rawline]['.count'] = 1;
+            $cd['tree'][$tlname]['.files'][$path]['.count'] = 1;
+          }
+          if (array_key_exists($sig, $cd['tree'][$tlname]['.sigs'])) {
+            $cd['tree'][$tlname]['.sigs'][$sig]['.count']++;
+          }
+          else {
+            $cd['tree'][$tlname]['.sigs'][$sig]['.count'] = 1;
           }
         }
       }
@@ -183,7 +213,7 @@ foreach ($reports as $rep) {
       $root = $doc->appendChild($doc->createElement('html'));
       $head = $root->appendChild($doc->createElement('head'));
       $title = $head->appendChild($doc->createElement('title',
-          $anadir.' '.$rep['product'].$spcver.' Crash Components Report'));
+          $anadir.' '.$prdverdisplay.' Crash Components Report'));
       $script = $head->appendChild($doc->createElement('script'));
       $script->setAttribute('type', 'text/javascript');
       $script->appendChild($doc->createCDATASection(
@@ -223,12 +253,11 @@ foreach ($reports as $rep) {
 
       $body = $root->appendChild($doc->createElement('body'));
       $h1 = $body->appendChild($doc->createElement('h1',
-          $anadir.' '.$rep['product'].$spcver.' Crash Components Report'));
+          $anadir.' '.$prdverdisplay.' Crash Components Report'));
 
       // description
       $para = $body->appendChild($doc->createElement('p',
-          'Splitting all reports '
-          .' on '.$rep['product'].$spcver
+          'Splitting all reports  on '.$prdverdisplay
           .' by the file location of their topmost frame.'));
 
       $table = $body->appendChild($doc->createElement('table'));
