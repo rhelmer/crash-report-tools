@@ -58,16 +58,17 @@ else { chdir('/mnt/mozilla/projects/socorro/'); }
 $curtime = time();
 
 foreach ($reports as $rep) {
-  $ver = $rep['version'];
+  $channel = array_key_exists('channel', $rep)?$rep['channel']:'';
+  $ver = array_key_exists('version', $rep)?$rep['version']:'';
   $prd = strtolower($rep['product']);
   $prdvershort = ($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':$prd)
-                 .(strlen($rep['channel'])?'-'.$rep['channel']:'')
+                 .(strlen($channel)?'-'.$channel:'')
                  .(strlen($ver)?'-'.$ver:'');
   $prdverfile = $prd
-                .(strlen($rep['channel'])?'.'.$rep['channel']:'')
+                .(strlen($channel)?'.'.$channel:'')
                 .(strlen($ver)?'.'.$ver:'');
   $prdverdisplay = $rep['product']
-                   .(strlen($rep['channel'])?' '.ucfirst($rep['channel']):'')
+                   .(strlen($channel)?' '.ucfirst($channel):'')
                    .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
@@ -104,7 +105,7 @@ foreach ($reports as $rep) {
       // some parts from that split into total and crashcount blocks, though
       // $1 is signature, $7 is product, $8 is version, $20 is topmost_filename, $29 is release_channel
       $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-              .(strlen($rep['channel'])?' && $29 ~ /^'.awk_quote($rep['channel'], '/').'$/':'')
+              .(strlen($channel)?' && $29 ~ /^'.awk_quote($channel, '/').'$/':'')
               .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
               .' {printf "%s;%s\n",$1,$20}\'';
       if ($on_moz_server) {
@@ -135,7 +136,8 @@ foreach ($reports as $rep) {
             }
             else {
               $cd['tree'][$pregs[1]] = array('.count' => 1,
-                                             '.files' => array());
+                                             '.files' => array(),
+                                             '.sigs' => array());
             }
             if (array_key_exists($pregs[2], $cd['tree'][$pregs[1]]['.files'])) {
               $cd['tree'][$pregs[1]]['.files'][$pregs[2]]['.count']++;
@@ -158,7 +160,8 @@ foreach ($reports as $rep) {
             $cd['tree'][$tlname]['.count']++;
           }
           else {
-            $cd['tree'][$tlname]['.count'] = 1;
+            $cd['tree'][$tlname] = array('.count' => 1,
+                                         '.sigs' => array());
           }
           if (array_key_exists($sig, $cd['tree'][$tlname]['.sigs'])) {
             $cd['tree'][$tlname]['.sigs'][$sig]['.count']++;
@@ -176,7 +179,8 @@ foreach ($reports as $rep) {
           }
           else {
             $cd['tree'][$tlname] = array('.count' => 1,
-                                         '.files' => array());
+                                         '.files' => array(),
+                                         '.sigs' => array());
           }
           if (array_key_exists($path, $cd['tree'][$tlname]['.files'])) {
             $cd['tree'][$tlname]['.files'][$path]['.count']++;
