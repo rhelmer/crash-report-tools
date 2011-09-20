@@ -130,10 +130,11 @@ foreach ($reports as $rep) {
           $repo = $regs[2]; // currently ignorable, e.g. 'hg.mozilla.org/mozilla-central'
           $path = $regs[3]; // *the meat*, e.g. 'dom/plugins/ipc/PluginInstanceChild.cpp'
           $rev = $regs[4]; // hg revision, e.g. 'f41df039db03'
-          if (preg_match('/^(obj\-[a-z]+\/)?([^\/]+)(.*)$/', $path, $pregs)) {
-            $objdir = isset($pregs[1]); // is this in the objdir?
-            $toplevel = $pregs[2]; // toplevel directory
-            $subfile = ($objdir?'(objdir)':'').$pregs[3]; // file path inside the toplevel
+          if (preg_match('/^obj\-[a-z]+\/([^\/]+)(.*)$/', $path, $oregs) ||
+              preg_match('/^([^\/]+)(.*)$/', $path, $pregs)) {
+            $objdir = isset($oregs[1]); // is this in the objdir?
+            $toplevel = $objdir?$oregs[1]:$pregs[1]; // toplevel directory
+            $subfile = $objdir?'(objdir)'.$oregs[2]:$pregs[2]; // file path inside the toplevel
             if (array_key_exists($pregs[1], $cd['tree'])) {
               $cd['tree'][$toplevel]['.count']++;
             }
