@@ -130,26 +130,29 @@ foreach ($reports as $rep) {
           $repo = $regs[2]; // currently ignorable, e.g. 'hg.mozilla.org/mozilla-central'
           $path = $regs[3]; // *the meat*, e.g. 'dom/plugins/ipc/PluginInstanceChild.cpp'
           $rev = $regs[4]; // hg revision, e.g. 'f41df039db03'
-          if (preg_match('/^([^\/]+)(.*)$/', $path, $pregs)) {
+          if (preg_match('/^(obj\-[a-z]+\/)?([^\/]+)(.*)$/', $path, $pregs)) {
+            $objdir = isset($pregs[1]); // is this in the objdir?
+            $toplevel = $pregs[2]; // toplevel directory
+            $subfile = ($objdir?'(objdir)':'').$pregs[3]; // file path inside the toplevel
             if (array_key_exists($pregs[1], $cd['tree'])) {
-              $cd['tree'][$pregs[1]]['.count']++;
+              $cd['tree'][$toplevel]['.count']++;
             }
             else {
-              $cd['tree'][$pregs[1]] = array('.count' => 1,
+              $cd['tree'][$toplevel] = array('.count' => 1,
                                              '.files' => array(),
                                              '.sigs' => array());
             }
-            if (array_key_exists($pregs[2], $cd['tree'][$pregs[1]]['.files'])) {
-              $cd['tree'][$pregs[1]]['.files'][$pregs[2]]['.count']++;
+            if (array_key_exists($subfile, $cd['tree'][$toplevel]['.files'])) {
+              $cd['tree'][$toplevel]['.files'][$subfile]['.count']++;
             }
             else {
-              $cd['tree'][$pregs[1]]['.files'][$pregs[2]]['.count'] = 1;
+              $cd['tree'][$toplevel]['.files'][$subfile]['.count'] = 1;
             }
-            if (array_key_exists($sig, $cd['tree'][$pregs[1]]['.sigs'])) {
-              $cd['tree'][$pregs[1]]['.sigs'][$sig]['.count']++;
+            if (array_key_exists($sig, $cd['tree'][$toplevel]['.sigs'])) {
+              $cd['tree'][$toplevel]['.sigs'][$sig]['.count']++;
             }
             else {
-              $cd['tree'][$pregs[1]]['.sigs'][$sig]['.count'] = 1;
+              $cd['tree'][$toplevel]['.sigs'][$sig]['.count'] = 1;
             }
           }
         }
