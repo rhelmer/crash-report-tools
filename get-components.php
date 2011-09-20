@@ -41,7 +41,7 @@ $reports = array(array('product'=>'Firefox',
                 );
 
 // for how many days back to get the data
-$backlog_days = 7;
+$backlog_days = -2;
 
 // *** URLs ***
 
@@ -61,7 +61,7 @@ foreach ($reports as $rep) {
   $channel = array_key_exists('channel', $rep)?$rep['channel']:'';
   $ver = array_key_exists('version', $rep)?$rep['version']:'';
   $prd = strtolower($rep['product']);
-  $prdvershort = ($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':$prd)
+  $prdvershort = (($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':$prd))
                  .(strlen($channel)?'-'.$channel:'')
                  .(strlen($ver)?'-'.$ver:'');
   $prdverfile = $prd
