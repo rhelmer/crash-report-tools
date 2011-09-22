@@ -48,6 +48,8 @@ $backlog_days = 7;
 $on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
 $url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
                              :'http://people.mozilla.com/crash_analysis/';
+$url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
+$url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
 
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
 else { chdir('/mnt/mozilla/projects/socorro/'); }
@@ -297,6 +299,9 @@ foreach ($reports as $rep) {
       $table = $body->appendChild($doc->createElement('table'));
       $table->setAttribute('border', '1');
 
+      $header = $body->appendChild($doc->createElement('h2', 'Sums & Files'));
+      $header->setAttribute('id', 'files');
+
       // table head
       $tr = $table->appendChild($doc->createElement('tr'));
       $th = $tr->appendChild($doc->createElement('th', 'Toplevel'));
@@ -307,7 +312,9 @@ foreach ($reports as $rep) {
       foreach ($cd['tree'] as $path=>$pdata) {
         $classname = str_replace('.', '_', $path);
         $tr = $table->appendChild($doc->createElement('tr'));
-        $td = $tr->appendChild($doc->createElement('td', $path));
+        $td = $tr->appendChild($doc->createElement('td'));
+        $link = $td->appendChild($doc->createElement('a', $path));
+        $link->setAttribute('href', '#'.$path);
         if (array_key_exists('.files', $pdata)) {
           $td = $tr->appendChild($doc->createElement('td', '+'));
           $td->setAttribute('id', $classname);
@@ -331,6 +338,48 @@ foreach ($reports as $rep) {
             $td = $tr->appendChild($doc->createElement('td', $fdata['.count']));
             $td = $tr->appendChild($doc->createElement('td',
                 sprintf('%.1f', 100 * $fdata['.count'] / $cd['total']).'%'));
+          }
+        }
+      }
+
+      $header = $body->appendChild($doc->createElement('h2', 'Top Signatures'));
+      $header->setAttribute('id', 'sigs');
+
+      $table = $body->appendChild($doc->createElement('table'));
+      $table->setAttribute('border', '1');
+
+      // table head
+      $tr = $table->appendChild($doc->createElement('tr'));
+      $th = $tr->appendChild($doc->createElement('th', 'Signature'));
+      $th = $tr->appendChild($doc->createElement('th', 'Crashes'));
+      $th = $tr->appendChild($doc->createElement('th', '%'));
+
+      foreach ($cd['tree'] as $path=>$pdata) {
+        $tr = $table->appendChild($doc->createElement('tr'));
+        $th = $tr->appendChild($doc->createElement('th', $path));
+        $th->setAttribute('colspan', '3');
+        $th->setAttribute('id', $path);
+        if (array_key_exists('.sigs', $pdata)) {
+          foreach ($pdata['.sigs'] as $sname=>$sdata) {
+            $tr = $table->appendChild($doc->createElement('tr'));
+            $td = $tr->appendChild($doc->createElement('td'));
+            $style = 'font-size: small;';
+            $td->setAttribute('style', $style);
+            if (!strlen($sname)) {
+              $link = $td->appendChild($doc->createElement('a', '(empty signature)'));
+              $link->setAttribute('href', $url_nullsiglink);
+            }
+            elseif ($sname == '\N') {
+              $td->appendChild($doc->createTextNode('(processing failure - "'.$sname.'")'));
+            }
+            else {
+              // common case, useful signature
+              $link = $td->appendChild($doc->createElement('a', htmlentities($sname)));
+              $link->setAttribute('href', $url_siglinkbase.rawurlencode($sname));
+            }
+            $td = $tr->appendChild($doc->createElement('td', $sdata['.count']));
+            $td = $tr->appendChild($doc->createElement('td',
+                sprintf('%.1f', 100 * $sdata['.count'] / $cd['total']).'%'));
           }
         }
       }
