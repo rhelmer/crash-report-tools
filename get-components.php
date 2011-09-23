@@ -299,7 +299,7 @@ foreach ($reports as $rep) {
       $table = $body->appendChild($doc->createElement('table'));
       $table->setAttribute('border', '1');
 
-      $header = $body->appendChild($doc->createElement('h2', 'Sums & Files'));
+      $header = $body->appendChild($doc->createElement('h2', 'Sums &amp; Files'));
       $header->setAttribute('id', 'files');
 
       // table head
