@@ -31,8 +31,8 @@ date_default_timezone_set('America/Los_Angeles');
 // channels
 $channels = array('beta' => '7\.0',
                   'release' => '6\.0(\.\d)?',
-                  'aurora' => '8\.0a2',
-                  'nightly' => '9\.0a1');
+                  'aurora' => '[89]\.0a2',
+                  'nightly' => '(9|10)\.0a1');
 
 // products
 $products = array('Firefox','Fennec');
@@ -59,6 +59,7 @@ $notes = array('Firefox-5.0-20110427143820' => '5.0b1',
                'Firefox-7.0-20110902161802' => '7.0b4',
                'Firefox-7.0-20110908135051' => '7.0b5',
                'Firefox-7.0-20110916091512' => '7.0b6',
+               'Firefox-7.0-20110922153450' => 'official',
                'Firefox-6.0.2-20110902133214' => 'official',
                'Firefox-6.0.1-20110830092941' => 'official',
                'Firefox-6.0-20110811165603' => 'official',
