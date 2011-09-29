@@ -43,6 +43,9 @@ $reports = array(array('product'=>'Firefox',
                       ),
                 );
 
+// maximum shown signatures per component
+$max_shown_sigs = 10;
+
 // for how many days back to get the data
 $backlog_days = 7;
 
@@ -231,7 +234,16 @@ foreach ($reports as $rep) {
           }
         }
       }
-      //ksort($cd); // sort by date (key), ascending
+
+      uasort($cd['tree'], 'count_compare'); // sort by count, highest-first
+      foreach ($cd['tree'] as $path=>$pdata) {
+        if (array_key_exists('.files', $pdata)) {
+          uasort($cd['tree'][$path]['.files'], 'count_compare'); // sort by count, highest-first
+        }
+        if (array_key_exists('.sigs', $pdata)) {
+          uasort($cd['tree'][$path]['.sigs'], 'count_compare'); // sort by count, highest-first
+        }
+      }
 
       file_put_contents($anafcompdata, json_encode($cd));
     }
@@ -258,7 +270,7 @@ foreach ($reports as $rep) {
       $script->appendChild($doc->createCDATASection(
           'function toggleVisibility(aClass) {'."\n"
           .'  // state to set it to!'."\n"
-          .'  var topElem = document.getElementById(aClass);'."\n"
+          .'  var topElem = document.getElementById("top_" + aClass);'."\n"
           .'  var open = topElem.className != "toplevel-open";'."\n"
           .'  if (open) {'."\n"
           .'    topElem.className = "toplevel-open";'."\n"
@@ -268,7 +280,7 @@ foreach ($reports as $rep) {
           .'    topElem.className = "toplevel-closed";'."\n"
           .'    topElem.textContent = "+";'."\n"
           .'  }'."\n"
-          .'  var rows = document.getElementsByClassName(aClass);'."\n"
+          .'  var rows = document.getElementsByClassName("cat_" + aClass);'."\n"
           .'  for (var i = 0; i < rows.length; ++i) {'."\n"
           .'    if (open)'."\n"
           .'      rows[i].style.display = "table-row";'."\n"
@@ -288,6 +300,12 @@ foreach ($reports as $rep) {
           .'  background-color: #FFDDDD;'."\n"
           .'  text-align: center;'."\n"
           .'}'."\n"
+          .'.sig {'."\n"
+          .'  font-size: small;'."\n"
+          .'}'."\n"
+          .'.num, .pct {'."\n"
+          .'  text-align: right;'."\n"
+          .'}'."\n"
       ));
 
       $body = $root->appendChild($doc->createElement('body'));
@@ -299,11 +317,11 @@ foreach ($reports as $rep) {
           'Splitting all reports  on '.$prdverdisplay
           .' by the file location of their topmost frame.'));
 
-      $table = $body->appendChild($doc->createElement('table'));
-      $table->setAttribute('border', '1');
-
       $header = $body->appendChild($doc->createElement('h2', 'Sums &amp; Files'));
       $header->setAttribute('id', 'files');
+
+      $table = $body->appendChild($doc->createElement('table'));
+      $table->setAttribute('border', '1');
 
       // table head
       $tr = $table->appendChild($doc->createElement('tr'));
@@ -320,7 +338,7 @@ foreach ($reports as $rep) {
         $link->setAttribute('href', '#'.$path);
         if (array_key_exists('.files', $pdata)) {
           $td = $tr->appendChild($doc->createElement('td', '+'));
-          $td->setAttribute('id', $classname);
+          $td->setAttribute('id', 'top_'.$classname);
           $td->setAttribute('class', 'toplevel-closed');
           $td->setAttribute('onclick', 'toggleVisibility("'.$classname.'");');
         }
@@ -328,24 +346,29 @@ foreach ($reports as $rep) {
           $td->setAttribute('colspan', '2');
         }
         $td = $tr->appendChild($doc->createElement('td', $pdata['.count']));
+        $td->setAttribute('class', 'num');
         $td = $tr->appendChild($doc->createElement('td',
             sprintf('%.1f', 100 * $pdata['.count'] / $cd['total']).'%'));
+        $td->setAttribute('class', 'pct');
         if (array_key_exists('.files', $pdata)) {
           foreach ($pdata['.files'] as $fname=>$fdata) {
             $tr = $table->appendChild($doc->createElement('tr'));
-            $tr->setAttribute('class', $classname);
+            $tr->setAttribute('class', 'cat_'.$classname);
             $tr->setAttribute('style', 'display: none;');
             $td = $tr->appendChild($doc->createElement('td'));
             $td = $tr->appendChild($doc->createElement('td',
                 strlen($fname)?$fname:'(empty)'));
             $td = $tr->appendChild($doc->createElement('td', $fdata['.count']));
+            $td->setAttribute('class', 'num');
             $td = $tr->appendChild($doc->createElement('td',
                 sprintf('%.1f', 100 * $fdata['.count'] / $cd['total']).'%'));
+            $td->setAttribute('class', 'pct');
           }
         }
       }
 
-      $header = $body->appendChild($doc->createElement('h2', 'Top Signatures'));
+      $header = $body->appendChild($doc->createElement('h2',
+          'Top '.$max_shown_sigs.' Signatures Per Component'));
       $header->setAttribute('id', 'sigs');
 
       $table = $body->appendChild($doc->createElement('table'));
@@ -353,6 +376,7 @@ foreach ($reports as $rep) {
 
       // table head
       $tr = $table->appendChild($doc->createElement('tr'));
+      $th = $tr->appendChild($doc->createElement('th', '#'));
       $th = $tr->appendChild($doc->createElement('th', 'Signature'));
       $th = $tr->appendChild($doc->createElement('th', 'Crashes'));
       $th = $tr->appendChild($doc->createElement('th', '%'));
@@ -360,14 +384,16 @@ foreach ($reports as $rep) {
       foreach ($cd['tree'] as $path=>$pdata) {
         $tr = $table->appendChild($doc->createElement('tr'));
         $th = $tr->appendChild($doc->createElement('th', $path));
-        $th->setAttribute('colspan', '3');
+        $th->setAttribute('colspan', '4');
         $th->setAttribute('id', $path);
         if (array_key_exists('.sigs', $pdata)) {
+          $count = 1;
           foreach ($pdata['.sigs'] as $sname=>$sdata) {
             $tr = $table->appendChild($doc->createElement('tr'));
+            $td = $tr->appendChild($doc->createElement('td', $count));
+            $td->setAttribute('class', 'num');
             $td = $tr->appendChild($doc->createElement('td'));
-            $style = 'font-size: small;';
-            $td->setAttribute('style', $style);
+            $td->setAttribute('class', 'sig');
             if (!strlen($sname)) {
               $link = $td->appendChild($doc->createElement('a', '(empty signature)'));
               $link->setAttribute('href', $url_nullsiglink);
@@ -381,8 +407,12 @@ foreach ($reports as $rep) {
               $link->setAttribute('href', $url_siglinkbase.rawurlencode($sname));
             }
             $td = $tr->appendChild($doc->createElement('td', $sdata['.count']));
+            $td->setAttribute('class', 'num');
             $td = $tr->appendChild($doc->createElement('td',
                 sprintf('%.1f', 100 * $sdata['.count'] / $cd['total']).'%'));
+            $td->setAttribute('class', 'pct');
+            $count++;
+            if ($count > $max_shown_sigs) { break; }
           }
         }
       }
@@ -397,6 +427,12 @@ foreach ($reports as $rep) {
 }
 
 // *** helper functions ***
+
+// Comparison function using .count member (reverse sort!)
+function count_compare($a, $b) {
+  if ($a['.count'] == $b['.count']) { return 0; }
+  return ($a['.count'] > $b['.count']) ? -1 : 1;
+}
 
 // Function to safely escape variables handed to awk
 function awk_quote($string) {
