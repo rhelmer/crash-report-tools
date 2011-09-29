@@ -29,8 +29,8 @@ date_default_timezone_set('America/Los_Angeles');
 // *** data gathering variables ***
 
 // channels
-$channels = array('beta' => '[78]\.0',
-                  'release' => '6\.0(\.\d)?',
+$channels = array('beta' => '8\.0',
+                  'release' => '[67]\.0(\.\d)?',
                   'aurora' => '[89]\.0a2',
                   'nightly' => '(9|10)\.0a1');
 
@@ -60,6 +60,7 @@ $notes = array('Firefox-5.0-20110427143820' => '5.0b1',
                'Firefox-7.0-20110908135051' => '7.0b5',
                'Firefox-7.0-20110916091512' => '7.0b6',
                'Firefox-8.0-20110928060149' => '8.0b1',
+               'Firefox-7.0.1-20110928134238' => 'official',
                'Firefox-7.0-20110922153450' => 'official',
                'Firefox-6.0.2-20110902133214' => 'official',
                'Firefox-6.0.1-20110830092941' => 'official',
