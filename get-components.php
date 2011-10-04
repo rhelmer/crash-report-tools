@@ -33,7 +33,13 @@ date_default_timezone_set('America/Los_Angeles');
 //   version - empty is all versions
 
 $reports = array(array('product'=>'Firefox',
-                       'version'=>'10.0a1',
+                       'version'=>'7.0',
+                       'version_regex'=>'7\.0(\.\d)?',
+                       'version_display'=>'7',
+                      ),
+                 array('product'=>'Firefox',
+                       'channel'=>'beta',
+                       'version'=>'8.0',
                       ),
                  array('product'=>'Firefox',
                        'channel'=>'nightly',
