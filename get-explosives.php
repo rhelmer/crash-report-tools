@@ -132,13 +132,18 @@ else { chdir('/mnt/mozilla/projects/socorro/'); }
 $curtime = time();
 
 foreach ($reports as $rep) {
-  $ver = $rep['version'];
-  $dashver = strlen($ver)?'-'.$ver:$ver;
-  $dotver = strlen($ver)?'.'.$ver:$ver;
-  $spcver = strlen($ver)?' '.$ver:$ver;
-
+  $channel = array_key_exists('channel', $rep)?$rep['channel']:'';
+  $ver = array_key_exists('version', $rep)?$rep['version']:'';
   $prd = strtolower($rep['product']);
-  $prdshort = ($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':$prd);
+  $prdvershort = (($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':$prd))
+                 .(strlen($channel)?'-'.$channel:'')
+                 .(strlen($ver)?'-'.$ver:'');
+  $prdverfile = $prd
+                .(strlen($channel)?'.'.$channel:'')
+                .(strlen($ver)?'.'.$ver:'');
+  $prdverdisplay = $rep['product']
+                   .(strlen($channel)?' '.ucfirst($channel):'')
+                   .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
   $crdata = array();
   $adu = array();
@@ -165,12 +170,12 @@ foreach ($reports as $rep) {
     if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
-    $fsigs = $prdshort.$dashver.'-sigs.csv';
-    $ftotal = $prdshort.$dashver.'-total.csv';
-    $fcrcnt = $prdshort.$dashver.'-crashcount.csv';
-    $fadu = $prdshort.$dashver.'-adu.csv';
-    $fexpdata = $prdshort.$dashver.'-expdata.json';
-    $fweb = $anadir.'.'.$prd.$dotver.'.explosiveness.html';
+    $fsigs = $prdvershort.'-sigs.csv';
+    $ftotal = $prdvershort.'-total.csv';
+    $fcrcnt = $prdvershort.'-crashcount.csv';
+    $fadu = $prdvershort.'-adu.csv';
+    $fexpdata = $prdvershort.'-expdata.json';
+    $fweb = $anadir.'.'.$prdverfile.'.explosiveness.html';
 
     $t_factor[$anadir] = (!is_null($rep['throttlestart']) &&
                           ($rep['throttlestart'] <= $anatime)) ? 10 : 1;
@@ -193,12 +198,13 @@ foreach ($reports as $rep) {
     // get signature list for the product
     $anafsigs = $anadir.'/'.$fsigs;
     if (!file_exists($anafsigs)) {
-      print('Getting all '.$rep['product'].$spcver.' signatures'."\n");
+      print('Getting all '.$prdverdisplay.' signatures'."\n");
       // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
       // some parts from that split into total and crashcount blocks, though
-      // $7 is product, $8 is version, $28 is duplicate_of
+      // $7 is product, $8 is version, $28 is duplicate_of, $29 is release_channel
       $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-             .(strlen($ver)?' && $8 ~ /^'.awk_quote($ver, '/').'/':'')
+             .(strlen($channel)?' && $29 ~ /^'.awk_quote($channel, '/').'$/':'')
+             .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
 //             .' && $28 != "\\\\N"'
              .' {printf "\t%s\n",$1}\'';
       if ($on_moz_server) {
@@ -227,7 +233,7 @@ foreach ($reports as $rep) {
 
     // fetch ADU
     $anafadu = $anadir.'/'.$fadu;
-    if (file_exists($adufile) && (!file_exists($anafadu) || !filesize($anafadu))) {
+    if (file_exists($adufile) && (!file_exists($anafadu) || !filesize($anafadu)) && !strlen($channel)) {
       print('Getting ADU for this day'."\n");
       // fetch total ADU for that day from metrics data
       $cmd = 'awk \'-F,\' \'$1 ~ /^date$/\' '.$adufile;
@@ -333,16 +339,16 @@ foreach ($reports as $rep) {
         $root = $doc->appendChild($doc->createElement('html'));
         $head = $root->appendChild($doc->createElement('head'));
         $title = $head->appendChild($doc->createElement('title',
-            $anadir.' '.$rep['product'].$spcver.' Explosiveness Report'));
+            $anadir.' '.$prdverdisplay.' Explosiveness Report'));
 
         $body = $root->appendChild($doc->createElement('body'));
         $h1 = $body->appendChild($doc->createElement('h1',
-            $anadir.' '.$rep['product'].$spcver.' Explosiveness Report'));
+            $anadir.' '.$prdverdisplay.' Explosiveness Report'));
 
         // description
         $para = $body->appendChild($doc->createElement('p',
             'All signatures with more than '.$rep['mincount']
-            .' crashes on '.$rep['product'].$spcver.'*,'
+            .' crashes on '.$prdverdisplay.'*,'
             .' ordered by explosiveness (max of the two values),'
             .' with topcrash rank noted.'));
         $para->appendChild($doc->createElement('br'));
