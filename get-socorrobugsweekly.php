@@ -169,7 +169,7 @@ if (count($bugdata)) {
       }
       else {
         $pnum = $pnav->appendChild($doc->createElement('a'));
-        $link->setAttribute('href', sprintf($fweb, $i));
+        $pnum->setAttribute('href', sprintf($fweb, $i));
         $pnum->setAttribute('class', 'pagenum');
       }
       $pnum->appendChild($doc->createTextNode($i));
