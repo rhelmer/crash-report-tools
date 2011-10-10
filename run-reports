@@ -10,3 +10,4 @@ cd `dirname $_`
 ./get-flashhangs.php
 ./get-flashhangdetails.php
 ./get-components.php
+./get-socorrobugsweekly.php

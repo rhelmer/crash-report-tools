@@ -115,7 +115,7 @@ foreach ($calcweeks as $wkdef) {
 
 if (count($bugdata)) {
   $firstyear = date('Y', strtotime(min(array_keys($bugdata))));
-  $lastyear = date('Y', strtotime(min(array_keys($bugdata))));
+  $lastyear = date('Y', strtotime(max(array_keys($bugdata))));
   print('Data found for '.$firstyear.' through '.$lastyear.', writing output...'."\n");
 
   for ($year = $firstyear; $year <= $lastyear; $year++) {
@@ -126,14 +126,14 @@ if (count($bugdata)) {
     $doc = new DOMDocument('1.0', 'utf-8');
     $doc->formatOutput = true; // we want a nice output
 
-        $cgraph = array('scale_x'=>10, 'height'=>300,
-                        'offset_x'=>2, 'offset_y'=>2,
-                        'rows'=>array(array('tblcolumn'=>2, 'scale'=>300, 'stack'=>false, 'fill'=>true,
-                                            'color'=>'rgba(255, 127, 0, .5)'),
-                                      array('tblcolumn'=>3, 'scale'=>300, 'stack'=>false, 'fill'=>true,
-                                            'color'=>'rgba(0, 204, 0, .5)'),
-                                      array('tblcolumn'=>4, 'scale'=>300, 'stack'=>true, 'fill'=>true,
-                                            'color'=>'rgba(0, 0, 255, .5)')));
+    $cgraph = array('scale_x'=>10, 'height'=>300,
+                    'offset_x'=>2, 'offset_y'=>2,
+                    'rows'=>array(array('tblcolumn'=>2, 'scale'=>50, 'stack'=>false, 'fill'=>true,
+                                        'color'=>'rgba(255, 127, 0, .5)'),
+                                  array('tblcolumn'=>3, 'scale'=>50, 'stack'=>false, 'fill'=>true,
+                                        'color'=>'rgba(0, 204, 0, .5)'),
+                                  array('tblcolumn'=>4, 'scale'=>50, 'stack'=>true, 'fill'=>true,
+                                        'color'=>'rgba(0, 0, 255, .5)')));
 
     $root = $doc->appendChild($doc->createElement('html'));
     $head = $root->appendChild($doc->createElement('head'));
