@@ -114,8 +114,8 @@ foreach ($calcweeks as $wkdef) {
 }
 
 if (count($bugdata)) {
-  $firstyear = date('Y', strtotime(min(array_keys($bugdata))));
-  $lastyear = date('Y', strtotime(max(array_keys($bugdata))));
+  $firstyear = date('o', strtotime(min(array_keys($bugdata))));
+  $lastyear = date('o', strtotime(max(array_keys($bugdata))));
   print('Data found for '.$firstyear.' through '.$lastyear.', writing output...'."\n");
 
   for ($year = $firstyear; $year <= $lastyear; $year++) {
@@ -185,6 +185,7 @@ if (count($bugdata)) {
         $link->setAttribute('href', sprintf($fweb, $year+1));
       }
       // last page
+      $pnav->appendChild($doc->createTextNode(' '));
       $link = $pnav->appendChild($doc->createElement('a', '&gt;|'));
       $link->setAttribute('href', sprintf($fweb, $lastyear));
       $link->setAttribute('class', 'pagefirstlast');
@@ -312,8 +313,36 @@ if (count($bugdata)) {
     $style = $head->appendChild($doc->createElement('style'));
     $style->setAttribute('type', 'text/css');
     $style->appendChild($doc->createCDATASection(
-        '.small {'."\n"
-        .'  font-size: small;'."\n"
+        'body {'."\n"
+        .' background: #FFFFFF;'."\n"
+        .' color: #000000;'."\n"
+        .' font-family: sans-serif;'."\n"
+        .'}'."\n"
+        .'.small {'."\n"
+        .' font-size: small;'."\n"
+        .'}'."\n"
+        .'.dis { color: #808080; }'."\n"
+        .'th { font-size: small; }'."\n"
+        .'table.border {'."\n"
+        .' border-spacing: 0px;'."\n"
+        .' border-collapse: collapse;'."\n"
+        .' empty-cells: show;'."\n"
+        .' border-left: 1px solid #404040;'."\n"
+        .' border-top: 1px solid #404040;'."\n"
+        .'}'."\n"
+        .'table.border th, table.border td {'."\n"
+        .' border-bottom: 1px solid #404040;'."\n"
+        .' border-right: 1px solid #404040;'."\n"
+        .'}'."\n"
+        .'table.border td {'."\n"
+        .' padding-left: 3px;'."\n"
+        .' padding-right: 3px;'."\n"
+        .'}'."\n"
+        .'td.num {'."\n"
+        .' text-align: right;'."\n"
+        .'}'."\n"
+        .'p.pages .pagenum.curpage, p.pages #curpage {'."\n"
+        .' font-weight: bold; color: #000000;'."\n"
         .'}'."\n"
     ));
 

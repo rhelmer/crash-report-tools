@@ -336,7 +336,10 @@ foreach ($reports as $rep) {
       // description
       $para = $body->appendChild($doc->createElement('p',
           'Splitting all reports  on '.$prdverdisplay
-          .' by the file location of their topmost frame.'));
+          .' by the file location of their topmost frame.'
+          .' (Actually, it\'s the topmost frame on the stack which we can'
+          .' derive a file location for, which does not necessarily correspond'
+          .' exactly to the frame(s) used in the signature.)'));
 
       $header = $body->appendChild($doc->createElement('h2', 'Sums &amp; Files'));
       $header->setAttribute('id', 'files');
