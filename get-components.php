@@ -164,44 +164,23 @@ foreach ($reports as $rep) {
             $objdir = isset($oregs[1]); // is this in the objdir?
             $toplevel = $objdir?$oregs[1]:$pregs[1]; // toplevel directory
             $subfile = $objdir?'(objdir)'.$oregs[2]:$pregs[2]; // file path inside the toplevel
-            if (array_key_exists($toplevel, $cd['tree'])) {
-              $cd['tree'][$toplevel]['.count']++;
+            addCount($cd['tree'], $toplevel);
+            if ($cd['tree'][$toplevel]['.count'] == 1) {
+              $cd['tree'][$toplevel]['.files'] = array();
+              $cd['tree'][$toplevel]['.sigs'] = array();
             }
-            else {
-              $cd['tree'][$toplevel] = array('.count' => 1,
-                                             '.files' => array(),
-                                             '.sigs' => array());
-            }
-            if (array_key_exists($subfile, $cd['tree'][$toplevel]['.files'])) {
-              $cd['tree'][$toplevel]['.files'][$subfile]['.count']++;
-            }
-            else {
-              $cd['tree'][$toplevel]['.files'][$subfile]['.count'] = 1;
-            }
-            if (array_key_exists($sig, $cd['tree'][$toplevel]['.sigs'])) {
-              $cd['tree'][$toplevel]['.sigs'][$sig]['.count']++;
-            }
-            else {
-              $cd['tree'][$toplevel]['.sigs'][$sig]['.count'] = 1;
-            }
+            addCount($cd['tree'][$toplevel]['.files'], $subfile);
+            addCount($cd['tree'][$toplevel]['.sigs'], $sig);
           }
         }
         elseif (preg_match('/^(.*);F_?\d+_+/', $rawline, $regs)) {
           $sig = $regs[1]; // signature
           $tlname = '.flash';
-          if (array_key_exists($tlname, $cd['tree'])) {
-            $cd['tree'][$tlname]['.count']++;
+          addCount($cd['tree'], $tlname);
+          if ($cd['tree'][$tlname]['.count'] == 1) {
+            $cd['tree'][$tlname]['.sigs'] = array();
           }
-          else {
-            $cd['tree'][$tlname] = array('.count' => 1,
-                                         '.sigs' => array());
-          }
-          if (array_key_exists($sig, $cd['tree'][$tlname]['.sigs'])) {
-            $cd['tree'][$tlname]['.sigs'][$sig]['.count']++;
-          }
-          else {
-            $cd['tree'][$tlname]['.sigs'][$sig]['.count'] = 1;
-          }
+          addCount($cd['tree'][$tlname]['.sigs'], $sig);
         }
         elseif (preg_match('/^(.*);(.*)$/', $rawline, $regs)) { // always matches
           $sig = $regs[1]; // signature
@@ -209,49 +188,23 @@ foreach ($reports as $rep) {
           if (preg_match('/^(\.\.\/)+([^\/]+)(.*)$/', $path, $pregs)) { // relative paths give modules
             $toplevel = $pregs[2]; // toplevel directory
             $subfile = $pregs[3]; // file path inside the toplevel
-            if (array_key_exists($toplevel, $cd['tree'])) {
-              $cd['tree'][$toplevel]['.count']++;
+            addCount($cd['tree'], $toplevel);
+            if ($cd['tree'][$toplevel]['.count'] == 1) {
+              $cd['tree'][$toplevel]['.files'] = array();
+              $cd['tree'][$toplevel]['.sigs'] = array();
             }
-            else {
-              $cd['tree'][$toplevel] = array('.count' => 1,
-                                             '.files' => array(),
-                                             '.sigs' => array());
-            }
-            if (array_key_exists($subfile, $cd['tree'][$toplevel]['.files'])) {
-              $cd['tree'][$toplevel]['.files'][$subfile]['.count']++;
-            }
-            else {
-              $cd['tree'][$toplevel]['.files'][$subfile]['.count'] = 1;
-            }
-            if (array_key_exists($sig, $cd['tree'][$toplevel]['.sigs'])) {
-              $cd['tree'][$toplevel]['.sigs'][$sig]['.count']++;
-            }
-            else {
-              $cd['tree'][$toplevel]['.sigs'][$sig]['.count'] = 1;
-            }
+            addCount($cd['tree'][$toplevel]['.files'], $subfile);
+            addCount($cd['tree'][$toplevel]['.sigs'], $sig);
           }
           else { // absolute paths --> "unknown"
             $tlname = '.unknown';
-            if (array_key_exists($tlname, $cd['tree'])) {
-              $cd['tree'][$tlname]['.count']++;
+            addCount($cd['tree'], $tlname);
+            if ($cd['tree'][$tlname]['.count'] == 1) {
+              $cd['tree'][$tlname]['.files'] = array();
+              $cd['tree'][$tlname]['.sigs'] = array();
             }
-            else {
-              $cd['tree'][$tlname] = array('.count' => 1,
-                                           '.files' => array(),
-                                           '.sigs' => array());
-            }
-            if (array_key_exists($path, $cd['tree'][$tlname]['.files'])) {
-              $cd['tree'][$tlname]['.files'][$path]['.count']++;
-            }
-            else {
-              $cd['tree'][$tlname]['.files'][$path]['.count'] = 1;
-            }
-            if (array_key_exists($sig, $cd['tree'][$tlname]['.sigs'])) {
-              $cd['tree'][$tlname]['.sigs'][$sig]['.count']++;
-            }
-            else {
-              $cd['tree'][$tlname]['.sigs'][$sig]['.count'] = 1;
-            }
+            addCount($cd['tree'][$tlname]['.files'], $path);
+            addCount($cd['tree'][$tlname]['.sigs'], $sig);
           }
         }
       }
@@ -464,4 +417,13 @@ function awk_quote($string) {
                array('`'=>'\140',"'"=>'\047'));
 }
 
+// Function to bump the counter of an element or initialize it
+function addCount(&$basevar, $sub) {
+  if (array_key_exists($sub, $basevar)) {
+    $basevar[$sub]['.count']++;
+  }
+  else {
+    $basevar[$sub]['.count'] = 1;
+  }
+}
 ?>
