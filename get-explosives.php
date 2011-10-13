@@ -104,6 +104,18 @@ $reports = array(array('product'=>'Firefox',
                        'fake_adu'=>true,
                        'mincount'=>10,
                       ),
+                 array('product'=>'Fennec',
+                       'channel'=>'aurora',
+                       'throttlestart'=>null,
+                       'fake_adu'=>true,
+                       'mincount'=>10,
+                      ),
+                 array('product'=>'Fennec',
+                       'channel'=>'nightly',
+                       'throttlestart'=>null,
+                       'fake_adu'=>true,
+                       'mincount'=>10,
+                      ),
                 );
 
 // for how many days back to get the data
