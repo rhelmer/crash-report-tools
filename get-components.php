@@ -175,12 +175,12 @@ foreach ($reports as $rep) {
         }
         elseif (preg_match('/^(.*);F_?\d+_+/', $rawline, $regs)) {
           $sig = $regs[1]; // signature
-          $tlname = '.flash';
-          addCount($cd['tree'], $tlname);
-          if ($cd['tree'][$tlname]['.count'] == 1) {
-            $cd['tree'][$tlname]['.sigs'] = array();
+          $toplevel = '.flash';
+          addCount($cd['tree'], $toplevel);
+          if ($cd['tree'][$toplevel]['.count'] == 1) {
+            $cd['tree'][$toplevel]['.sigs'] = array();
           }
-          addCount($cd['tree'][$tlname]['.sigs'], $sig);
+          addCount($cd['tree'][$toplevel]['.sigs'], $sig);
         }
         elseif (preg_match('/^(.*);(.*)$/', $rawline, $regs)) { // always matches
           $sig = $regs[1]; // signature
@@ -197,14 +197,14 @@ foreach ($reports as $rep) {
             addCount($cd['tree'][$toplevel]['.sigs'], $sig);
           }
           else { // absolute paths --> "unknown"
-            $tlname = '.unknown';
-            addCount($cd['tree'], $tlname);
-            if ($cd['tree'][$tlname]['.count'] == 1) {
-              $cd['tree'][$tlname]['.files'] = array();
-              $cd['tree'][$tlname]['.sigs'] = array();
+            $toplevel = '.unknown';
+            addCount($cd['tree'], $toplevel);
+            if ($cd['tree'][$toplevel]['.count'] == 1) {
+              $cd['tree'][$toplevel]['.files'] = array();
+              $cd['tree'][$toplevel]['.sigs'] = array();
             }
-            addCount($cd['tree'][$tlname]['.files'], $path);
-            addCount($cd['tree'][$tlname]['.sigs'], $sig);
+            addCount($cd['tree'][$toplevel]['.files'], $path);
+            addCount($cd['tree'][$toplevel]['.sigs'], $sig);
           }
         }
       }
