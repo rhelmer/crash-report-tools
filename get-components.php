@@ -164,23 +164,16 @@ foreach ($reports as $rep) {
             $objdir = isset($oregs[1]); // is this in the objdir?
             $toplevel = $objdir?$oregs[1]:$pregs[1]; // toplevel directory
             $subfile = $objdir?'(objdir)'.$oregs[2]:$pregs[2]; // file path inside the toplevel
-            addCount($cd['tree'], $toplevel);
-            if ($cd['tree'][$toplevel]['.count'] == 1) {
-              $cd['tree'][$toplevel]['.files'] = array();
-              $cd['tree'][$toplevel]['.sigs'] = array();
-            }
-            addCount($cd['tree'][$toplevel]['.files'], $subfile);
-            addCount($cd['tree'][$toplevel]['.sigs'], $sig);
+          }
+          else { // should never ever be hit
+            $toplevel = '.unknown';
+            $subfile = $path;
           }
         }
         elseif (preg_match('/^(.*);F_?\d+_+/', $rawline, $regs)) {
           $sig = $regs[1]; // signature
           $toplevel = '.flash';
-          addCount($cd['tree'], $toplevel);
-          if ($cd['tree'][$toplevel]['.count'] == 1) {
-            $cd['tree'][$toplevel]['.sigs'] = array();
-          }
-          addCount($cd['tree'][$toplevel]['.sigs'], $sig);
+          $subfile = null;
         }
         elseif (preg_match('/^(.*);(.*)$/', $rawline, $regs)) { // always matches
           $sig = $regs[1]; // signature
@@ -188,25 +181,24 @@ foreach ($reports as $rep) {
           if (preg_match('/^(\.\.\/)+([^\/]+)(.*)$/', $path, $pregs)) { // relative paths give modules
             $toplevel = $pregs[2]; // toplevel directory
             $subfile = $pregs[3]; // file path inside the toplevel
-            addCount($cd['tree'], $toplevel);
-            if ($cd['tree'][$toplevel]['.count'] == 1) {
-              $cd['tree'][$toplevel]['.files'] = array();
-              $cd['tree'][$toplevel]['.sigs'] = array();
-            }
-            addCount($cd['tree'][$toplevel]['.files'], $subfile);
-            addCount($cd['tree'][$toplevel]['.sigs'], $sig);
           }
           else { // absolute paths --> "unknown"
             $toplevel = '.unknown';
-            addCount($cd['tree'], $toplevel);
-            if ($cd['tree'][$toplevel]['.count'] == 1) {
-              $cd['tree'][$toplevel]['.files'] = array();
-              $cd['tree'][$toplevel]['.sigs'] = array();
-            }
-            addCount($cd['tree'][$toplevel]['.files'], $path);
-            addCount($cd['tree'][$toplevel]['.sigs'], $sig);
+            $subfile = $path;
           }
         }
+        // add fields / bump counts
+        addCount($cd['tree'], $toplevel);
+        if ($cd['tree'][$toplevel]['.count'] == 1) {
+          if (!is_null($subfile)) {
+            $cd['tree'][$toplevel]['.files'] = array();
+          }
+          $cd['tree'][$toplevel]['.sigs'] = array();
+        }
+        if (!is_null($subfile)) {
+          addCount($cd['tree'][$toplevel]['.files'], $subfile);
+        }
+        addCount($cd['tree'][$toplevel]['.sigs'], $sig);
       }
 
       uasort($cd['tree'], 'count_compare'); // sort by count, highest-first
