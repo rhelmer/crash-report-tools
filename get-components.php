@@ -187,6 +187,45 @@ foreach ($reports as $rep) {
             $subfile = $path;
           }
         }
+        // apply some additional filtering for cases where we obviously get it wrong
+        if (($toplevel != '.unknown') && ($toplevel != '.flash') &&
+            (preg_match('/\.(dll|so|dylib)@0x/', $sig))) {
+          // signature in a plain library is not our code
+          if (preg_match('/npswf32\.dll/', $sig)) {
+            $subfile = null;
+            $toplevel = '.flash';
+          }
+          else {
+            $subfile = '>'.$toplevel.$subfile;
+            $toplevel = '.unknown';
+          }
+        }
+        if (preg_match('/^(hang \| )?mozilla::plugins::/', $sig)) {
+          // this is really a plugins thing
+          $subfile = '>'.$toplevel.$subfile;
+          $toplevel = 'dom/plugins';
+        }
+        if (($toplevel == 'dom') && preg_match('/^\/(plugins)(\/.*)$/', $subfile, $regs)) {
+          // also group actual dom/plugins code
+          $subfile = $regs[2];
+          $toplevel = $toplevel.'/'.$regs[1];
+        }
+        if (($toplevel == 'toolkit') && preg_match('/^\/(crashreporter)(\/.*)$/', $subfile, $regs)) {
+          // filter out crashreporter, as those are probably wrongly categorized
+          $subfile = $regs[2];
+          $toplevel = $toplevel.'/'.$regs[1];
+        }
+        if (($toplevel == 'modules') && preg_match('/^\/([^\/]+)(\/.*)$/', $subfile, $regs)) {
+          // modules/ needs to be subcategorized
+          $subfile = $regs[2];
+          $toplevel = $toplevel.'/'.$regs[1];
+        }
+        if (($toplevel == 'widget') && preg_match('/^\/(src\/[^\/]+)(\/.*)$/', $subfile, $regs)) {
+          // widget/ should be subcategorized
+          $subfile = $regs[2];
+          $toplevel = $toplevel.'/'.$regs[1];
+        }
+
         // add fields / bump counts
         addCount($cd['tree'], $toplevel);
         if ($cd['tree'][$toplevel]['.count'] == 1) {
