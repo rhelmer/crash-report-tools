@@ -38,6 +38,12 @@ $reports = array(array('product'=>'Firefox',
                        'version_display'=>'7',
                       ),
                  array('product'=>'Firefox',
+                       'channel'=>'release',
+                       'version'=>'7.0',
+                       'version_regex'=>'7\.0(\.\d)?',
+                       'version_display'=>'7',
+                      ),
+                 array('product'=>'Firefox',
                        'channel'=>'beta',
                        'version'=>'8.0',
                       ),
@@ -212,6 +218,21 @@ foreach ($reports as $rep) {
         }
         if (($toplevel == 'toolkit') && preg_match('/^\/(crashreporter)(\/.*)$/', $subfile, $regs)) {
           // filter out crashreporter, as those are probably wrongly categorized
+          $subfile = $regs[2];
+          $toplevel = $toplevel.'/'.$regs[1];
+        }
+        if (($toplevel == 'db') && preg_match('/^\/([^\/]+)(\/.*)$/', $subfile, $regs)) {
+          // db/ needs to be subcategorized
+          $subfile = $regs[2];
+          $toplevel = $toplevel.'/'.$regs[1];
+        }
+        if (($toplevel == 'extensions') && preg_match('/^\/([^\/]+)(\/.*)$/', $subfile, $regs)) {
+          // extensions/ needs to be subcategorized
+          $subfile = $regs[2];
+          $toplevel = $toplevel.'/'.$regs[1];
+        }
+        if (($toplevel == 'media') && preg_match('/^\/([^\/]+)(\/.*)$/', $subfile, $regs)) {
+          // media/ needs to be subcategorized
           $subfile = $regs[2];
           $toplevel = $toplevel.'/'.$regs[1];
         }
