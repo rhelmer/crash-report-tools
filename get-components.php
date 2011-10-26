@@ -290,7 +290,7 @@ foreach ($reports as $rep) {
       $script = $head->appendChild($doc->createElement('script'));
       $script->setAttribute('type', 'text/javascript');
       $script->appendChild($doc->createCDATASection(
-          'function toggleVisibility(aClass) {'."\n"
+           'function toggleVisibility(aClass) {'."\n"
           .'  // state to set it to!'."\n"
           .'  var topElem = document.getElementById("top_" + aClass);'."\n"
           .'  var open = topElem.className != "toplevel-open";'."\n"
@@ -314,7 +314,7 @@ foreach ($reports as $rep) {
       $style = $head->appendChild($doc->createElement('style'));
       $style->setAttribute('type', 'text/css');
       $style->appendChild($doc->createCDATASection(
-          '.toplevel-open {'."\n"
+           '.toplevel-open {'."\n"
           .'  background-color: #DDFFDD;'."\n"
           .'  text-align: center;'."\n"
           .'}'."\n"
@@ -328,6 +328,12 @@ foreach ($reports as $rep) {
           .'.num, .pct {'."\n"
           .'  text-align: right;'."\n"
           .'}'."\n"
+          .'tr.sigheader {'."\n"
+          .'  background: #EEEEAA;'."\n"
+          .'}'."\n"
+          .'tr.sigheader:target {'."\n"
+          .'  background: #EECCAA;'."\n"
+          .'}'."\n"
       ));
 
       $body = $root->appendChild($doc->createElement('body'));
@@ -336,11 +342,14 @@ foreach ($reports as $rep) {
 
       // description
       $para = $body->appendChild($doc->createElement('p',
-          'Splitting all reports  on '.$prdverdisplay
+          'Splitting all reports on '.$prdverdisplay
           .' by the file location of their topmost frame.'
           .' (Actually, it\'s the topmost frame on the stack which we can'
           .' derive a file location for, which does not necessarily correspond'
           .' exactly to the frame(s) used in the signature.)'));
+
+      $para = $body->appendChild($doc->createElement('p',
+          'Total crashes analyzed in this report: '.$cd['total']));
 
       $header = $body->appendChild($doc->createElement('h2', 'Sums &amp; Files'));
       $header->setAttribute('id', 'files');
@@ -408,9 +417,15 @@ foreach ($reports as $rep) {
 
       foreach ($cd['tree'] as $path=>$pdata) {
         $tr = $table->appendChild($doc->createElement('tr'));
+        $tr->setAttribute('id', $path);
+        $tr->setAttribute('class', 'sigheader');
         $th = $tr->appendChild($doc->createElement('th', $path));
-        $th->setAttribute('colspan', '4');
-        $th->setAttribute('id', $path);
+        $th->setAttribute('colspan', '2');
+        $th = $tr->appendChild($doc->createElement('td', $pdata['.count']));
+        $th->setAttribute('class', 'num');
+        $th = $tr->appendChild($doc->createElement('td',
+            sprintf('%.1f', 100 * $pdata['.count'] / $cd['total']).'%'));
+        $th->setAttribute('class', 'pct');
         if (array_key_exists('.sigs', $pdata)) {
           $count = 1;
           foreach ($pdata['.sigs'] as $sname=>$sdata) {
