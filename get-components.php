@@ -189,11 +189,11 @@ foreach ($reports as $rep) {
             $subfile = $path;
           }
         }
-        // apply some additional filtering for cases where we obviously get it wrong
-        if (($toplevel != '.unknown') && ($toplevel != '.flash') &&
-            (preg_match('/\.(dll|so|dylib)@0x/', $sig))) {
-          // signature in a plain library is not our code
-          if (preg_match('/npswf32\.dll/', $sig)) {
+        // Apply some additional filtering for cases where we obviously get it wrong.
+        if (($toplevel != '.flash') && (preg_match('/.+@0x[0-9a-f]+$/', $sig))) {
+          // Signature in a plain library is not our code.
+          if (preg_match('/npswf\d\d\.dll/', $sig) ||
+              preg_match('/flash asset.x\d\d\@0x/i', $sig)) {
             $subfile = null;
             $toplevel = '.flash';
           }
@@ -202,45 +202,40 @@ foreach ($reports as $rep) {
             $toplevel = '.unknown';
           }
         }
-        if (preg_match('/^(hang \| )?mozilla::plugins::/', $sig)) {
-          // this is really a plugins thing
+        // Signatures starting in mozilla::plugins belong into dom/plugins.
+        elseif (preg_match('/^(hang \| )?mozilla::plugins::/', $sig)) {
           $subfile = '>'.$toplevel.$subfile;
           $toplevel = 'dom/plugins';
         }
-        if (($toplevel == 'dom') && preg_match('/^\/(plugins)(\/.*)$/', $subfile, $regs)) {
-          // also group actual dom/plugins code
+        // Signatures starting in mozalloc_abort leading to mozilla::plugins belong into dom/plugins.
+        elseif (preg_match('/^mozalloc_abort.*| mozilla::plugins::/', $sig)) {
+          $subfile = '>'.$toplevel.$subfile;
+          $toplevel = 'dom/plugins';
+        }
+        // Signatures starting in mozalloc_abort leading to mozilla::ipc belong into ipc.
+        elseif (preg_match('/^mozalloc_abort.*| mozilla::ipc::/', $sig)) {
+          $subfile = '>'.$toplevel.$subfile;
+          $toplevel = 'ipc';
+        }
+        // Those dirs need to be subcategorized by their direct subdirs.
+        $subcat_tls = array('db', 'extensions', 'media', 'modules');
+        if (in_array($toplevel, $subcat_tls) && preg_match('/^\/([^\/]+)(\/.*)$/', $subfile, $regs)) {
           $subfile = $regs[2];
           $toplevel = $toplevel.'/'.$regs[1];
         }
-        if (($toplevel == 'toolkit') && preg_match('/^\/(crashreporter)(\/.*)$/', $subfile, $regs)) {
-          // filter out crashreporter, as those are probably wrongly categorized
-          $subfile = $regs[2];
-          $toplevel = $toplevel.'/'.$regs[1];
-        }
-        if (($toplevel == 'db') && preg_match('/^\/([^\/]+)(\/.*)$/', $subfile, $regs)) {
-          // db/ needs to be subcategorized
-          $subfile = $regs[2];
-          $toplevel = $toplevel.'/'.$regs[1];
-        }
-        if (($toplevel == 'extensions') && preg_match('/^\/([^\/]+)(\/.*)$/', $subfile, $regs)) {
-          // extensions/ needs to be subcategorized
-          $subfile = $regs[2];
-          $toplevel = $toplevel.'/'.$regs[1];
-        }
-        if (($toplevel == 'media') && preg_match('/^\/([^\/]+)(\/.*)$/', $subfile, $regs)) {
-          // media/ needs to be subcategorized
-          $subfile = $regs[2];
-          $toplevel = $toplevel.'/'.$regs[1];
-        }
-        if (($toplevel == 'modules') && preg_match('/^\/([^\/]+)(\/.*)$/', $subfile, $regs)) {
-          // modules/ needs to be subcategorized
-          $subfile = $regs[2];
-          $toplevel = $toplevel.'/'.$regs[1];
-        }
-        if (($toplevel == 'widget') && preg_match('/^\/(src\/[^\/]+)(\/.*)$/', $subfile, $regs)) {
-          // widget/ should be subcategorized
-          $subfile = $regs[2];
-          $toplevel = $toplevel.'/'.$regs[1];
+        // Some toplevels need to be subcategorized with special (regex) filters.
+        $subfilters = array();
+        // Actual dom/plugins code should go in the same group as mozilla::plugins hangs.
+        $subfilters['dom'] = '/^\/(plugins)(\/.*)$/';
+        // Filter out crashreporter, as those are probably wrongly categorized.
+        $subfilters['toolkit'] = '/^\/(crashreporter)(\/.*)$/';
+        // widget/ always has a src/ layer in between.
+        $subfilters['widget'] = '/^\/(src\/[^\/]+)(\/.*)$/';
+        foreach ($subfilters as $sub_tl => $sub_filter) {
+          if (($toplevel == $sub_tl) && preg_match($sub_filter, $subfile, $regs)) {
+            $subfile = $regs[2];
+            $toplevel = $toplevel.'/'.$regs[1];
+          }
         }
 
         // add fields / bump counts
