@@ -180,7 +180,7 @@ foreach ($reports as $rep) {
           $plugin_sig = $regs[1];
           $hangid = $regs[2];
           $flash_ver = $regs[3];
-          $browser_sig = array_key_exists($hangid, $bsigs)?$bsigs[$hangid]:'';
+          $browser_sig = array_key_exists($hangid, $bsigs)?$bsigs[$hangid]:null;
 
           $rawhangdata[$hangid] = array('plugin' => $plugin_sig,
                                         'browser' => $browser_sig,
@@ -204,9 +204,9 @@ foreach ($reports as $rep) {
         // Care that entries in the array exist.
         if (!array_key_exists($sig_id, $hangdata)) {
           $hangdata[$sig_id] = array('plugin' => $hangentry['plugin'],
-                                      'browser' => $hangentry['browser'],
-                                      'count' => 0,
-                                      'count_flash' => array());
+                                     'browser' => $hangentry['browser'],
+                                     'count' => 0,
+                                     'count_flash' => array());
         }
         if (!array_key_exists($hangentry['flash-ver'], $hangdata[$sig_id]['count_flash'])) {
           $hangdata[$sig_id]['count_flash'][$hangentry['flash-ver']] = 0;
@@ -299,7 +299,10 @@ foreach ($reports as $rep) {
 
         $td = $tr->appendChild($doc->createElement('td'));
         $td->setAttribute('style', 'font-size: small;');
-        if (!strlen($hangentry['browser'])) {
+        if (is_null($hangentry['browser'])) {
+          $td->appendChild($doc->createTextNode('(no report found)'));
+        }
+        elseif (!strlen($hangentry['browser'])) {
           $link = $td->appendChild($doc->createElement('a', '(empty signature)'));
           $link->setAttribute('href', $url_nullsiglink.'&process_type=browser&hang_type=hang');
         }
