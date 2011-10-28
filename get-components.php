@@ -209,7 +209,7 @@ foreach ($reports as $rep) {
           $toplevel = 'dom/plugins';
         }
         // Signatures starting in mozalloc_abort leading to mozilla::plugins belong into dom/plugins.
-        elseif (preg_match('/^mozalloc_abort.*\| mozilla::plugins::/', $sig)) {
+        elseif (preg_match('/^(hang \| )?mozalloc_abort.*\| mozilla::plugins::/', $sig)) {
           $subfile = '>'.$toplevel.$subfile;
           $toplevel = 'dom/plugins';
         }
