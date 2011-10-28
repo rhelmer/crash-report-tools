@@ -193,6 +193,7 @@ foreach ($reports as $rep) {
         if (($toplevel != '.flash') && (preg_match('/.+@0x[0-9a-f]+$/', $sig))) {
           // Signature in a plain library is not our code.
           if (preg_match('/npswf\d\d\.dll/', $sig) ||
+              preg_match('/libflashpayer.so/', $sig)) ||
               preg_match('/flash asset.x\d\d\@0x/i', $sig)) {
             $subfile = null;
             $toplevel = '.flash';
