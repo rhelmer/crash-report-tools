@@ -60,12 +60,15 @@ $reports = array(array('product'=>'Firefox',
                       ),
                  array('product'=>'Fennec',
                        'channel'=>'nightly',
+                       'weekly'=>true,
                       ),
                  array('product'=>'Fennec',
                        'channel'=>'nightly-birch',
+                       'weekly'=>true,
                       ),
                  array('product'=>'Fennec',
                        'channel'=>'aurora',
+                       'weekly'=>true,
                       ),
                 );
 
@@ -114,7 +117,9 @@ foreach ($reports as $rep) {
     $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
     $frawdata = $prdvershort.'-components-raw.csv';
     $fcompdata = $prdvershort.'-components.json';
-    $fweb = $anadir.'.'.$prdverfile.'.components.html';
+    $fwebmask = '%s.'.$prdverfile.'.components.html';
+    $fweb = sprintf($fwebmask, $anadir);
+    $fwebweek = $anadir.'.'.$prdverfile.'.components.weekly.html';
 
     // make sure we have the crashdata csv
     if ($on_moz_server) {
@@ -275,188 +280,256 @@ foreach ($reports as $rep) {
     // debug only line
     //print_r($cd);
 
-    $anafweb = $anadir.'/'.$fweb;
-    if (!file_exists($anafweb) && $cd['total']) {
-      // create out an HTML page
-      print('Writing HTML output'."\n");
-      $doc = new DOMDocument('1.0', 'utf-8');
-      $doc->formatOutput = true; // we want a nice output
+    $webreports = array('day' => $fweb);
+    if (@$rep['weekly']) { $webreports['week'] = $fwebweek; }
 
-      $root = $doc->appendChild($doc->createElement('html'));
-      $head = $root->appendChild($doc->createElement('head'));
-      $title = $head->appendChild($doc->createElement('title',
-          $anadir.' '.$prdverdisplay.' Crash Components Report'));
-      $script = $head->appendChild($doc->createElement('script'));
-      $script->setAttribute('type', 'text/javascript');
-      $script->appendChild($doc->createCDATASection(
-           'function toggleVisibility(aClass) {'."\n"
-          .'  // state to set it to!'."\n"
-          .'  var topElem = document.getElementById("top_" + aClass);'."\n"
-          .'  var open = topElem.className != "toplevel-open";'."\n"
-          .'  if (open) {'."\n"
-          .'    topElem.className = "toplevel-open";'."\n"
-          .'    topElem.textContent = "-";'."\n"
-          .'  }'."\n"
-          .'  else {'."\n"
-          .'    topElem.className = "toplevel-closed";'."\n"
-          .'    topElem.textContent = "+";'."\n"
-          .'  }'."\n"
-          .'  var rows = document.getElementsByClassName("cat_" + aClass);'."\n"
-          .'  for (var i = 0; i < rows.length; ++i) {'."\n"
-          .'    if (open)'."\n"
-          .'      rows[i].style.display = "table-row";'."\n"
-          .'    else'."\n"
-          .'      rows[i].style.display = "none";'."\n"
-          .'  }'."\n"
-          .'}'."\n"
-      ));
-      $style = $head->appendChild($doc->createElement('style'));
-      $style->setAttribute('type', 'text/css');
-      $style->appendChild($doc->createCDATASection(
-           '.toplevel-open {'."\n"
-          .'  background-color: #DDFFDD;'."\n"
-          .'  text-align: center;'."\n"
-          .'}'."\n"
-          .'.toplevel-closed {'."\n"
-          .'  background-color: #FFDDDD;'."\n"
-          .'  text-align: center;'."\n"
-          .'}'."\n"
-          .'.sig {'."\n"
-          .'  font-size: small;'."\n"
-          .'}'."\n"
-          .'.num, .pct {'."\n"
-          .'  text-align: right;'."\n"
-          .'}'."\n"
-          .'tr.sigheader {'."\n"
-          .'  background: #EEEEAA;'."\n"
-          .'}'."\n"
-          .'tr.sigheader:target {'."\n"
-          .'  background: #EECCAA;'."\n"
-          .'}'."\n"
-      ));
-
-      $body = $root->appendChild($doc->createElement('body'));
-      $h1 = $body->appendChild($doc->createElement('h1',
-          $anadir.' '.$prdverdisplay.' Crash Components Report'));
-
-      // description
-      $para = $body->appendChild($doc->createElement('p',
-          'Splitting all reports on '.$prdverdisplay
-          .' by the file location of their topmost frame.'
-          .' (Actually, it\'s the topmost frame on the stack which we can'
-          .' derive a file location for, which does not necessarily correspond'
-          .' exactly to the frame(s) used in the signature.)'));
-
-      $para = $body->appendChild($doc->createElement('p',
-          'Total crashes analyzed in this report: '.$cd['total']));
-
-      $header = $body->appendChild($doc->createElement('h2', 'Sums &amp; Files'));
-      $header->setAttribute('id', 'files');
-
-      $table = $body->appendChild($doc->createElement('table'));
-      $table->setAttribute('border', '1');
-
-      // table head
-      $tr = $table->appendChild($doc->createElement('tr'));
-      $th = $tr->appendChild($doc->createElement('th', 'Toplevel'));
-      $th = $tr->appendChild($doc->createElement('th', 'Path'));
-      $th = $tr->appendChild($doc->createElement('th', 'Crashes'));
-      $th = $tr->appendChild($doc->createElement('th', '%'));
-
-      foreach ($cd['tree'] as $path=>$pdata) {
-        $classname = str_replace('.', '_', $path);
-        $tr = $table->appendChild($doc->createElement('tr'));
-        $td = $tr->appendChild($doc->createElement('td'));
-        $link = $td->appendChild($doc->createElement('a', $path));
-        $link->setAttribute('href', '#'.$path);
-        if (array_key_exists('.files', $pdata)) {
-          $td = $tr->appendChild($doc->createElement('td', '+'));
-          $td->setAttribute('id', 'top_'.$classname);
-          $td->setAttribute('class', 'toplevel-closed');
-          $td->setAttribute('onclick', 'toggleVisibility("'.$classname.'");');
-        }
-        else {
-          $td->setAttribute('colspan', '2');
-        }
-        $td = $tr->appendChild($doc->createElement('td', $pdata['.count']));
-        $td->setAttribute('class', 'num');
-        $td = $tr->appendChild($doc->createElement('td',
-            sprintf('%.1f', 100 * $pdata['.count'] / $cd['total']).'%'));
-        $td->setAttribute('class', 'pct');
-        if (array_key_exists('.files', $pdata)) {
-          foreach ($pdata['.files'] as $fname=>$fdata) {
-            $tr = $table->appendChild($doc->createElement('tr'));
-            $tr->setAttribute('class', 'cat_'.$classname);
-            $tr->setAttribute('style', 'display: none;');
-            $td = $tr->appendChild($doc->createElement('td'));
-            $td = $tr->appendChild($doc->createElement('td',
-                strlen($fname)?$fname:'(empty)'));
-            $td = $tr->appendChild($doc->createElement('td', $fdata['.count']));
-            $td->setAttribute('class', 'num');
-            $td = $tr->appendChild($doc->createElement('td',
-                sprintf('%.1f', 100 * $fdata['.count'] / $cd['total']).'%'));
-            $td->setAttribute('class', 'pct');
+    foreach ($webreports as $type=>$fwebcur) {
+      $anafweb = $anadir.'/'.$fwebcur;
+      if ($type == 'week') {
+        if (!file_exists($anafweb)) {
+          // assemble 7-day "weekly" overview
+          print('Calculating weekly data'."\n");
+          $curcd = $cd;
+          for ($pastday = 1; $pastday < 7; $pastday++) {
+            $pasttime = strtotime($anadir.' -'.$pastday.' day');
+            $pastdir = date('Y-m-d', $pasttime);
+            print('Adding '.$pastdir);
+            $pastfcompdata = $pastdir.'/'.$fcompdata;
+            if (file_exists($pastfcompdata)) {
+              // Load that data and merge it into $curcd.
+              $pastcd = json_decode(file_get_contents($pastfcompdata), true);
+              $curcd['total'] += $pastcd['total'];
+              foreach ($pastcd['tree'] as $path=>$pdata) {
+                print(':');
+                addCount($curcd['tree'], $path, $pdata['.count']);
+                if (array_key_exists('.files', $pdata)) {
+                  if (!array_key_exists('.files', $curcd['tree'][$path])) {
+                    print('.');
+                    $curcd['tree'][$path]['.files'] = array();
+                  }
+                  foreach ($pdata['.files'] as $fname=>$fdata) {
+                    print('.');
+                    addCount($curcd['tree'][$path]['.files'], $fname, $fdata['.count']);
+                  }
+                }
+                if (!array_key_exists('.sigs', $curcd['tree'][$path])) {
+                  print('.');
+                  $curcd['tree'][$path]['.sigs'] = array();
+                }
+                foreach ($pdata['.sigs'] as $sname=>$sdata) {
+                  print('.');
+                  addCount($curcd['tree'][$path]['.sigs'], $sname, $sdata['.count']);
+                }
+              }
+              print("\n");
+            }
+            else { print(' - '.$pastfcompdata.' not found.'."\n"); }
+          }
+          if ($curcd['total'] == $cd['total']) {
+            // Not more than what the day had, so set to 0 which omits creating an HTML.
+            $curcd['total'] = 0;
+          }
+          else {
+            uasort($curcd['tree'], 'count_compare'); // sort by count, highest-first
+            foreach ($curcd['tree'] as $path=>$pdata) {
+              if (array_key_exists('.files', $pdata)) {
+                uasort($curcd['tree'][$path]['.files'], 'count_compare'); // sort by count, highest-first
+              }
+              if (array_key_exists('.sigs', $pdata)) {
+                uasort($curcd['tree'][$path]['.sigs'], 'count_compare'); // sort by count, highest-first
+              }
+            }
           }
         }
       }
-
-      $header = $body->appendChild($doc->createElement('h2',
-          'Top '.$max_shown_sigs.' Signatures Per Component'));
-      $header->setAttribute('id', 'sigs');
-
-      $table = $body->appendChild($doc->createElement('table'));
-      $table->setAttribute('border', '1');
-
-      // table head
-      $tr = $table->appendChild($doc->createElement('tr'));
-      $th = $tr->appendChild($doc->createElement('th', '#'));
-      $th = $tr->appendChild($doc->createElement('th', 'Signature'));
-      $th = $tr->appendChild($doc->createElement('th', 'Crashes'));
-      $th = $tr->appendChild($doc->createElement('th', '%'));
-
-      foreach ($cd['tree'] as $path=>$pdata) {
-        $tr = $table->appendChild($doc->createElement('tr'));
-        $tr->setAttribute('id', $path);
-        $tr->setAttribute('class', 'sigheader');
-        $th = $tr->appendChild($doc->createElement('th', $path));
-        $th->setAttribute('colspan', '2');
-        $th = $tr->appendChild($doc->createElement('td', $pdata['.count']));
-        $th->setAttribute('class', 'num');
-        $th = $tr->appendChild($doc->createElement('td',
-            sprintf('%.1f', 100 * $pdata['.count'] / $cd['total']).'%'));
-        $th->setAttribute('class', 'pct');
-        if (array_key_exists('.sigs', $pdata)) {
-          $count = 1;
-          foreach ($pdata['.sigs'] as $sname=>$sdata) {
-            $tr = $table->appendChild($doc->createElement('tr'));
-            $td = $tr->appendChild($doc->createElement('td', $count));
-            $td->setAttribute('class', 'num');
-            $td = $tr->appendChild($doc->createElement('td'));
-            $td->setAttribute('class', 'sig');
-            if (!strlen($sname)) {
-              $link = $td->appendChild($doc->createElement('a', '(empty signature)'));
-              $link->setAttribute('href', $url_nullsiglink);
-            }
-            elseif ($sname == '\N') {
-              $td->appendChild($doc->createTextNode('(processing failure - "'.$sname.'")'));
-            }
-            else {
-              // common case, useful signature
-              $link = $td->appendChild($doc->createElement('a', htmlentities($sname)));
-              $link->setAttribute('href', $url_siglinkbase.rawurlencode($sname));
-            }
-            $td = $tr->appendChild($doc->createElement('td', $sdata['.count']));
-            $td->setAttribute('class', 'num');
-            $td = $tr->appendChild($doc->createElement('td',
-                sprintf('%.1f', 100 * $sdata['.count'] / $cd['total']).'%'));
-            $td->setAttribute('class', 'pct');
-            $count++;
-            if ($count > $max_shown_sigs) { break; }
-          }
-        }
+      else {
+        // single-day data
+        $curcd = $cd;
       }
 
-      $doc->saveHTMLFile($anafweb);
+      if (!file_exists($anafweb) && $curcd['total']) {
+        // create out an HTML page
+        print('Writing'.($type == 'week'?' weekly':' daily').' HTML output'."\n");
+        $doc = new DOMDocument('1.0', 'utf-8');
+        $doc->formatOutput = true; // we want a nice output
+
+        $root = $doc->appendChild($doc->createElement('html'));
+        $head = $root->appendChild($doc->createElement('head'));
+        $title = $head->appendChild($doc->createElement('title',
+            $anadir.' '.$prdverdisplay.($type == 'week'?' Weekly':'').' Crash Components Report'));
+        $script = $head->appendChild($doc->createElement('script'));
+        $script->setAttribute('type', 'text/javascript');
+        $script->appendChild($doc->createCDATASection(
+            'function toggleVisibility(aClass) {'."\n"
+            .'  // state to set it to!'."\n"
+            .'  var topElem = document.getElementById("top_" + aClass);'."\n"
+            .'  var open = topElem.className != "toplevel-open";'."\n"
+            .'  if (open) {'."\n"
+            .'    topElem.className = "toplevel-open";'."\n"
+            .'    topElem.textContent = "-";'."\n"
+            .'  }'."\n"
+            .'  else {'."\n"
+            .'    topElem.className = "toplevel-closed";'."\n"
+            .'    topElem.textContent = "+";'."\n"
+            .'  }'."\n"
+            .'  var rows = document.getElementsByClassName("cat_" + aClass);'."\n"
+            .'  for (var i = 0; i < rows.length; ++i) {'."\n"
+            .'    if (open)'."\n"
+            .'      rows[i].style.display = "table-row";'."\n"
+            .'    else'."\n"
+            .'      rows[i].style.display = "none";'."\n"
+            .'  }'."\n"
+            .'}'."\n"
+        ));
+        $style = $head->appendChild($doc->createElement('style'));
+        $style->setAttribute('type', 'text/css');
+        $style->appendChild($doc->createCDATASection(
+            '.toplevel-open {'."\n"
+            .'  background-color: #DDFFDD;'."\n"
+            .'  text-align: center;'."\n"
+            .'}'."\n"
+            .'.toplevel-closed {'."\n"
+            .'  background-color: #FFDDDD;'."\n"
+            .'  text-align: center;'."\n"
+            .'}'."\n"
+            .'.sig {'."\n"
+            .'  font-size: small;'."\n"
+            .'}'."\n"
+            .'.num, .pct {'."\n"
+            .'  text-align: right;'."\n"
+            .'}'."\n"
+            .'tr.sigheader {'."\n"
+            .'  background: #EEEEAA;'."\n"
+            .'}'."\n"
+            .'tr.sigheader:target {'."\n"
+            .'  background: #EECCAA;'."\n"
+            .'}'."\n"
+        ));
+
+        $body = $root->appendChild($doc->createElement('body'));
+        $h1 = $body->appendChild($doc->createElement('h1',
+            $anadir.' '.$prdverdisplay.($type == 'week'?' Weekly':'').' Crash Components Report'));
+
+        // description
+        $para = $body->appendChild($doc->createElement('p',
+            'Splitting all reports on '.$prdverdisplay
+            .' by the file location of their topmost frame.'
+            .' (Actually, it\'s the topmost frame on the stack which we can'
+            .' derive a file location for, which does not necessarily correspond'
+            .' exactly to the frame(s) used in the signature.)'));
+
+        $para = $body->appendChild($doc->createElement('p',
+            'Total crashes analyzed in this report: '.$curcd['total']
+            .($type == 'week'?' - covering 7 days up to and including '.$anadir.'.':'')));
+
+        $header = $body->appendChild($doc->createElement('h2', 'Sums &amp; Files'));
+        $header->setAttribute('id', 'files');
+
+        $table = $body->appendChild($doc->createElement('table'));
+        $table->setAttribute('border', '1');
+
+        // table head
+        $tr = $table->appendChild($doc->createElement('tr'));
+        $th = $tr->appendChild($doc->createElement('th', 'Toplevel'));
+        $th = $tr->appendChild($doc->createElement('th', 'Path'));
+        $th = $tr->appendChild($doc->createElement('th', 'Crashes'));
+        $th = $tr->appendChild($doc->createElement('th', '%'));
+
+        foreach ($curcd['tree'] as $path=>$pdata) {
+          $classname = str_replace('.', '_', $path);
+          $tr = $table->appendChild($doc->createElement('tr'));
+          $td = $tr->appendChild($doc->createElement('td'));
+          $link = $td->appendChild($doc->createElement('a', $path));
+          $link->setAttribute('href', '#'.$path);
+          if (array_key_exists('.files', $pdata)) {
+            $td = $tr->appendChild($doc->createElement('td', '+'));
+            $td->setAttribute('id', 'top_'.$classname);
+            $td->setAttribute('class', 'toplevel-closed');
+            $td->setAttribute('onclick', 'toggleVisibility("'.$classname.'");');
+          }
+          else {
+            $td->setAttribute('colspan', '2');
+          }
+          $td = $tr->appendChild($doc->createElement('td', $pdata['.count']));
+          $td->setAttribute('class', 'num');
+          $td = $tr->appendChild($doc->createElement('td',
+              sprintf('%.1f', 100 * $pdata['.count'] / $curcd['total']).'%'));
+          $td->setAttribute('class', 'pct');
+          if (array_key_exists('.files', $pdata)) {
+            foreach ($pdata['.files'] as $fname=>$fdata) {
+              $tr = $table->appendChild($doc->createElement('tr'));
+              $tr->setAttribute('class', 'cat_'.$classname);
+              $tr->setAttribute('style', 'display: none;');
+              $td = $tr->appendChild($doc->createElement('td'));
+              $td = $tr->appendChild($doc->createElement('td',
+                  strlen($fname)?$fname:'(empty)'));
+              $td = $tr->appendChild($doc->createElement('td', $fdata['.count']));
+              $td->setAttribute('class', 'num');
+              $td = $tr->appendChild($doc->createElement('td',
+                  sprintf('%.1f', 100 * $fdata['.count'] / $curcd['total']).'%'));
+              $td->setAttribute('class', 'pct');
+            }
+          }
+        }
+
+        $header = $body->appendChild($doc->createElement('h2',
+            'Top '.$max_shown_sigs.' Signatures Per Component'));
+        $header->setAttribute('id', 'sigs');
+
+        $table = $body->appendChild($doc->createElement('table'));
+        $table->setAttribute('border', '1');
+
+        // table head
+        $tr = $table->appendChild($doc->createElement('tr'));
+        $th = $tr->appendChild($doc->createElement('th', '#'));
+        $th = $tr->appendChild($doc->createElement('th', 'Signature'));
+        $th = $tr->appendChild($doc->createElement('th', 'Crashes'));
+        $th = $tr->appendChild($doc->createElement('th', '%'));
+
+        foreach ($curcd['tree'] as $path=>$pdata) {
+          $tr = $table->appendChild($doc->createElement('tr'));
+          $tr->setAttribute('id', $path);
+          $tr->setAttribute('class', 'sigheader');
+          $th = $tr->appendChild($doc->createElement('th', $path));
+          $th->setAttribute('colspan', '2');
+          $th = $tr->appendChild($doc->createElement('td', $pdata['.count']));
+          $th->setAttribute('class', 'num');
+          $th = $tr->appendChild($doc->createElement('td',
+              sprintf('%.1f', 100 * $pdata['.count'] / $curcd['total']).'%'));
+          $th->setAttribute('class', 'pct');
+          if (array_key_exists('.sigs', $pdata)) {
+            $count = 1;
+            foreach ($pdata['.sigs'] as $sname=>$sdata) {
+              $tr = $table->appendChild($doc->createElement('tr'));
+              $td = $tr->appendChild($doc->createElement('td', $count));
+              $td->setAttribute('class', 'num');
+              $td = $tr->appendChild($doc->createElement('td'));
+              $td->setAttribute('class', 'sig');
+              if (!strlen($sname)) {
+                $link = $td->appendChild($doc->createElement('a', '(empty signature)'));
+                $link->setAttribute('href', $url_nullsiglink);
+              }
+              elseif ($sname == '\N') {
+                $td->appendChild($doc->createTextNode('(processing failure - "'.$sname.'")'));
+              }
+              else {
+                // common case, useful signature
+                $link = $td->appendChild($doc->createElement('a', htmlentities($sname)));
+                $link->setAttribute('href', $url_siglinkbase.rawurlencode($sname));
+              }
+              $td = $tr->appendChild($doc->createElement('td', $sdata['.count']));
+              $td->setAttribute('class', 'num');
+              $td = $tr->appendChild($doc->createElement('td',
+                  sprintf('%.1f', 100 * $sdata['.count'] / $curcd['total']).'%'));
+              $td->setAttribute('class', 'pct');
+              $count++;
+              if ($count > $max_shown_sigs) { break; }
+            }
+          }
+        }
+
+        $doc->saveHTMLFile($anafweb);
+      }
     }
 
     print("\n");
@@ -480,12 +553,12 @@ function awk_quote($string) {
 }
 
 // Function to bump the counter of an element or initialize it
-function addCount(&$basevar, $sub) {
+function addCount(&$basevar, $sub, $addnum = 1) {
   if (array_key_exists($sub, $basevar)) {
-    $basevar[$sub]['.count']++;
+    $basevar[$sub]['.count'] += $addnum;
   }
   else {
-    $basevar[$sub]['.count'] = 1;
+    $basevar[$sub]['.count'] = $addnum;
   }
 }
 ?>
