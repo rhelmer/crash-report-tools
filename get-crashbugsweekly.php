@@ -86,13 +86,29 @@ while ($starttime < ($curtime - 12*3600)) {
   $starttime = $nw_starttime;
 }
 
+$queryinfo = array('new' =>     array('title' => 'New',
+                                      'desc' => 'New bugs filed in the given week',
+                                      'color' => 'rgba(255, 127, 0, .5)'),
+                   'fixed' =>   array('title' => 'Fixed',
+                                      'desc' => 'Bugs marked as FIXED in the given week',
+                                      'color' => 'rgba(0, 204, 0, .5)'),
+                   'triaged' => array('title' => 'Triaged',
+                                      'desc' => 'Bugs resolved with a different resolution than FIXED in the given week (i.e. DUPLICATE, WORKSFORME, INVALID, etc.)',
+                                      'color' => 'rgba(0, 0, 255, .5)'),
+                   'open' =>    array('title' => 'Open',
+                                      'desc' => 'Bugs open at the end of the given week (approximation as the query cannot account for reopened bugs)',
+                                      'color' => ''),
+                  );
+
+$bugqueries = array_keys($queryinfo);
+
 // get stats for requested weeks
 foreach ($calcweeks as $wkdef) {
   $weekstart = date('Y-m-d', $wkdef['start']);
   print('Fetching crash bug data for week of '.$weekstart."\n");
 
   $weekdata = array();
-  foreach (array('new','fixed','triaged') as $querytype) {
+  foreach ($bugqueries as $querytype) {
     $bugzilla_url = getPeriodBugURL($querytype, $wkdef['start'], $wkdef['end']);
     $bugcount = getBugCount($bugzilla_url);
     if ($bugcount !== false) {
@@ -129,11 +145,11 @@ if (count($bugdata)) {
     $cgraph = array('scale_x'=>10, 'height'=>300,
                     'offset_x'=>2, 'offset_y'=>2,
                     'rows'=>array(array('tblcolumn'=>2, 'scale'=>200, 'stack'=>false, 'fill'=>true,
-                                        'color'=>'rgba(255, 127, 0, .5)'),
+                                        'color'=>$queryinfo['new']['color']),
                                   array('tblcolumn'=>3, 'scale'=>200, 'stack'=>false, 'fill'=>true,
-                                        'color'=>'rgba(0, 204, 0, .5)'),
+                                        'color'=>$queryinfo['fixed']['color']),
                                   array('tblcolumn'=>4, 'scale'=>200, 'stack'=>true, 'fill'=>true,
-                                        'color'=>'rgba(0, 0, 255, .5)')));
+                                        'color'=>$queryinfo['triaged']['color'])));
 
     $root = $doc->appendChild($doc->createElement('html'));
     $head = $root->appendChild($doc->createElement('head'));
@@ -197,8 +213,6 @@ if (count($bugdata)) {
       $canvas->setAttribute('id', 'graphcanvas');
     }
 
-    $bugqueries = array('new', 'fixed', 'triaged');
-
     // extract weeks belonging to this year
     $yeardata = array();
     foreach ($bugdata as $weekstart=>$weekdata) {
@@ -217,12 +231,12 @@ if (count($bugdata)) {
       $trow->appendChild($doc->createElement('th', 'Week'));
       $trow->appendChild($doc->createElement('th', 'Start'));
       $trow->appendChild($doc->createElement('th', 'End'));
-      $th = $trow->appendChild($doc->createElement('th', 'New'));
-      $th->setAttribute('style', 'background-color: '.$cgraph['rows'][0]['color'].';');
-      $th = $trow->appendChild($doc->createElement('th', 'Fixed'));
-      $th->setAttribute('style', 'background-color: '.$cgraph['rows'][1]['color'].';');
-      $th = $trow->appendChild($doc->createElement('th', 'Triaged'));
-      $th->setAttribute('style', 'background-color: '.$cgraph['rows'][2]['color'].';');
+      foreach ($queryinfo as $querytype=>$qinfo) {
+        $th = $trow->appendChild($doc->createElement('th', $qinfo['title']));
+        if (strlen($qinfo['color'])) {
+          $th->setAttribute('style', 'background-color: '.$qinfo['color'].';');
+        }
+      }
 
       $tbody = $table->appendChild($doc->createElement('tbody'));
       foreach ($yeardata as $weekstart=>$weekdata) {
@@ -349,6 +363,19 @@ if (count($bugdata)) {
 
     $body->appendChild($pgnav);
 
+    $body->appendChild($doc->createElement('p', 'Legend:'));
+    $table = $body->appendChild($doc->createElement('table'));
+    $table->setAttribute('class', 'border');
+    $tbody = $table->appendChild($doc->createElement('tbody'));
+    foreach ($queryinfo as $querytype=>$qinfo) {
+      $trow = $tbody->appendChild($doc->createElement('tr'));
+      $th = $trow->appendChild($doc->createElement('th', $qinfo['title']));
+      if (strlen($qinfo['color'])) {
+        $th->setAttribute('style', 'background-color: '.$qinfo['color'].';');
+      }
+      $td = $trow->appendChild($doc->createElement('td', $qinfo['desc']));
+    }
+
     $doc->saveHTMLFile($yearfweb);
   }
 
@@ -385,6 +412,13 @@ function getPeriodBugURL($scheme, $date_start, $date_end = null) {
       $bugzilla_url .= '&resolution=MOVED';
       $bugzilla_url .= '&chfieldfrom='.$ymd_start;
       $bugzilla_url .= '&chfieldto='.$ymd_end.'&chfield=resolution';
+      break;
+    case 'open':
+      // open bugs at the end of the period (ignores bugs that get reopened)
+      $bugzilla_url .= '&field0-0-0=creation_ts&type0-0-0=lessthan&value0-0-0='.$ymd_end;
+      $bugzilla_url .= '&negate1=1';
+      $bugzilla_url .= '&field1-0-0=bug_status&type1-0-0=changedto&value1-0-0=RESOLVED';
+      $bugzilla_url .= '&field1-1-0=bug_status&type1-1-0=changedbefore&value1-1-0='.$ymd_end;
       break;
     case 'default':
       $bugzilla_url = '';
