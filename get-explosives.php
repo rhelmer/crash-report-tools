@@ -128,6 +128,12 @@ $reports = array(array('product'=>'Firefox',
                        'fake_adu'=>true,
                        'mincount'=>10,
                       ),
+                 array('product'=>'Fennec',
+                       'channel'=>'nightly-birch',
+                       'throttlestart'=>null,
+                       'fake_adu'=>true,
+                       'mincount'=>6,
+                      ),
                 );
 
 // for how many days back to get the data
