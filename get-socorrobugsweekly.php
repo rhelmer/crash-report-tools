@@ -29,7 +29,7 @@ date_default_timezone_set('America/Los_Angeles');
 // *** data gathering variables ***
 
 // Start date to calculate stats for - always goes up until current week
-$startdate = time() - 28.5 * 86400; //strtotime('2011-01-01');
+$startdate = time() - 14.5 * 86400; //strtotime('2011-01-01');
 
 
 $fake_counts = false; //true; // DEBUG only!
