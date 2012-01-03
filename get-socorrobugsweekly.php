@@ -29,7 +29,7 @@ date_default_timezone_set('America/Los_Angeles');
 // *** data gathering variables ***
 
 // Start date to calculate stats for - always goes up until current week
-$startdate = time() - 14.5 * 86400; //strtotime('2011-01-01');
+$startdate = time() - 28.5 * 86400; //strtotime('2011-01-01');
 
 
 $fake_counts = false; //true; // DEBUG only!
@@ -365,7 +365,9 @@ function getPeriodBugURL($scheme, $date_start, $date_end = null) {
   }
   $ymd_end = date('Y-m-d', $date_end);
 
-  $bugzilla_url = 'https://bugzilla.mozilla.org/buglist.cgi?product=Webtools&component=Socorro';
+  $bugzilla_url = 'https://bugzilla.mozilla.org/buglist.cgi?';
+  $bugzilla_url .= 'field0-0-0=longdesc&type0-0-0=equals&value0-0-0=Socorro';
+  $bugzilla_url .= '&field0-0-1=product&type0-0-1=equals&value0-0-1=Socorro';
   switch ($scheme) {
     case 'new':
       // new bugs
