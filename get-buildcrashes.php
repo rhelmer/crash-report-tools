@@ -35,7 +35,7 @@ $channels = array('beta' => '10\.0',
                   'nightly' => '12\.0a1');
 
 // products
-$products = array('Firefox','Fennec');
+$products = array('Firefox','Fennec','FennecAndroid');
 
 // how many days back to look at
 $backlog_days = 7;
