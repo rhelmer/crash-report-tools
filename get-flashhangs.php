@@ -56,12 +56,6 @@ $reports = array(array('product'=>'Firefox',
                  array('product'=>'Firefox',
                        'version'=>'12.0a1',
                       ),
-                 array('product'=>'Firefox',
-                       'version'=>'10.0a2',
-                      ),
-                 array('product'=>'Firefox',
-                       'version'=>'11.0a1',
-                      ),
                 );
 
 // for how many days back to get the data
