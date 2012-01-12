@@ -30,9 +30,9 @@ date_default_timezone_set('America/Los_Angeles');
 
 // channels
 $channels = array('beta' => '10\.0',
-                  'release' => '[89]\.0(\.\d)?',
-                  'aurora' => '1[01]\.0a2',
-                  'nightly' => '1[12]\.0a1');
+                  'release' => '9\.0(\.\d)?',
+                  'aurora' => '11\.0a2',
+                  'nightly' => '12\.0a1');
 
 // products
 $products = array('Firefox','Fennec');
