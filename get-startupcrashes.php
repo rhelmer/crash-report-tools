@@ -152,12 +152,12 @@ foreach ($reports as $rep) {
       print('Getting raw '.$prdverdisplay.' startup data'."\n");
       // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
       // some parts from that split into total and crashcount blocks, though
-      // $1 is signature, $7 is product, $8 is version, $17 is uptime_seconds, $29 is release_channel
+      // $1 is signature, $7 is product, $8 is version, $17 is uptime_seconds, $25 is process type, $29 is release_channel
       $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
               .(strlen($channel)?' && $29 ~ /^'.awk_quote($channel, '/').'$/':'')
               .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
               .' && $17 <= '.$max_uptime
-              .' {printf "%s\n",$1}\'';
+              .' {printf "%s;%s\n",$25,$1}\'';
       if ($on_moz_server) {
         shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' | sort | uniq -c | sort -nr > '.$anafdata);
       }
@@ -168,8 +168,10 @@ foreach ($reports as $rep) {
 
     $anacrashes = array();
     foreach (explode("\n", shell_exec('cat '.$anafdata)) as $crashline) {
-      if (preg_match('/^\s*(\d+)\s+(.*)$/', $crashline, $regs)) {
-        $anacrashes[] = array('sig' => $regs[2], 'count' => $regs[1]);
+      if (preg_match('/^\s*(\d+)\s+(.*);(.*)$/', $crashline, $regs)) {
+        $anacrashes[] = array('sig' => $regs[3],
+                              'process_type' => (strlen($regs[2]) && $regs[2] != '\\N')?$regs[2]:'browser',
+                              'count' => $regs[1]);
       }
     }
 
@@ -194,6 +196,12 @@ foreach ($reports as $rep) {
           .'.num, .pct {'."\n"
           .'  text-align: right;'."\n"
           .'}'."\n"
+          .'.cent {'."\n"
+          .'  text-align: center;'."\n"
+          .'}'."\n"
+          .'.light {'."\n"
+          .'  color: #808080;'."\n"
+          .'}'."\n"
       ));
 
       $body = $root->appendChild($doc->createElement('body'));
@@ -211,6 +219,7 @@ foreach ($reports as $rep) {
       // table head
       $tr = $table->appendChild($doc->createElement('tr'));
       $th = $tr->appendChild($doc->createElement('th', 'Signature'));
+      $th = $tr->appendChild($doc->createElement('th', 'Process'));
       $th = $tr->appendChild($doc->createElement('th', 'Count'));
 
       // signatures rows
@@ -230,6 +239,13 @@ foreach ($reports as $rep) {
           $link->setAttribute('href', $url_siglinkbase.rawurlencode($anacrash['sig']));
         }
         $td->setAttribute('class', 'sig');
+        $td = $tr->appendChild($doc->createElement('td', $anacrash['process_type']));
+        if ($anacrash['process_type'] == 'browser') {
+          $td->setAttribute('class', 'cent');
+        }
+        else {
+          $td->setAttribute('class', 'light cent');
+        }
         $td = $tr->appendChild($doc->createElement('td', $anacrash['count']));
         $td->setAttribute('class', 'num');
       }
