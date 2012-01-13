@@ -149,7 +149,7 @@ foreach ($reports as $rep) {
     // get startup data for the product
     $anafdata = $anadir.'/'.$fdata;
     if (!file_exists($anafdata)) {
-      print('Getting raw '.$prdverdisplay.' startup data'."\n");
+      print('Getting '.$prdverdisplay.' startup data'."\n");
       // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
       // some parts from that split into total and crashcount blocks, though
       // $1 is signature, $7 is product, $8 is version, $17 is uptime_seconds, $25 is process type, $29 is release_channel
