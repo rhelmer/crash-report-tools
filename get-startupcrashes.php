@@ -43,7 +43,7 @@ date_default_timezone_set('America/Los_Angeles');
 //   product - product name
 //   version - empty is all versions
 
-$reports = array(/*array('product'=>'Firefox',
+$reports = array(array('product'=>'Firefox',
                        'channel'=>'release',
                        'version'=>'8.0',
                        'version_regex'=>'8\.0.*',
@@ -76,11 +76,11 @@ $reports = array(/*array('product'=>'Firefox',
                        'version'=>'9.0',
                        'version_regex'=>'9\.0.*',
                        'version_display'=>'9',
-                      ),*/
+                      ),
                  array('product'=>'Fennec',
                        'channel'=>'beta',
                        'version'=>'10.0',
-                      ),/*
+                      ),
                  array('product'=>'Fennec',
                        'channel'=>'nightly',
                       ),
@@ -92,14 +92,14 @@ $reports = array(/*array('product'=>'Firefox',
                       ),
                  array('product'=>'FennecAndroid',
                        'channel'=>'aurora',
-                      ),*/
+                      ),
                 );
 
 // maximum uptime that is counted as startup (seconds)
 $max_uptime = 60;
 
 // for how many days back to get the data
-$backlog_days = 1;
+$backlog_days = 7;
 
 // *** URLs ***
 
