@@ -20,6 +20,9 @@ if (php_sapi_name() != 'cli') {
 // turn on error reporting in the script output
 ini_set('display_errors', 1);
 
+// make sure new files are set to -rw-r--r-- permissions
+umask(022);
+
 // set default time zone - right now, always the one the server is in!
 date_default_timezone_set('America/Los_Angeles');
 
