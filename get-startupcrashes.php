@@ -336,7 +336,7 @@ foreach ($reports as $rep) {
 
     // description
     $para = $body->appendChild($doc->createElement('p',
-        'Daily sums of browser and other process startup crash reports '.
+        'Daily sums of browser and other process startup crash reports '
         .'(and percentage of total daily crashes) on '.$prdverdisplay.','
         .' where crashes occurring less than '.$max_uptime
         .' seconds after launch are considered startup.'));
