@@ -185,6 +185,7 @@ foreach ($reports as $rep) {
         // reduce dubled vendor names in device names
         $devname = str_replace('HTC HTC', 'HTC', $devname);
         $devname = str_replace('Samsung SAMSUNG-', 'Samsung ', $devname);
+        $devname = str_replace('Dell Inc. Dell', 'Dell', $devname);
         if (!array_key_exists($devname, $dd['devices'])) {
           $dd['devices'][$devname] = array('android_versions' => array(),
                                            'signatures' => array(),

@@ -6,6 +6,16 @@
 
 // This script creates reports on startup crashes.
 
+//TODO:
+/*
+<smooney> KaiRo: is there a way to flag a signature if it has over 50% startup crashes. Also, can we get a count of the total startup crashes - I wanted to get a %  of total crashes.
+<smooney> Just tell me if I am asking for too much stuff :-)
+<KaiRo> smooney: flagging a signature for over 50% isn't easy in how I'm gathering info
+<smooney> that's fine...forget that
+<KaiRo> smooney: totals should be possible
+<smooney> The % would be nice if that's doable...the way we show for flash issues
+*/
+
 // *** non-commandline handling ***
 
 if (php_sapi_name() != 'cli') {
