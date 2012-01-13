@@ -1,12 +1,10 @@
 #!/usr/bin/php
 <?php
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// get-buildcrashes.php 0.1
-// retrieve crash stats for builds
-//
-// (c) Robert Kaiser <kairo@kairo.at>
-// This script can be used and modified free by anyone, as long as the copyright line stays intact.
-// There is no warranty in any way that this script does not harm your system.
+// This script retrieves crash stats for builds.
 
 // *** non-commandline handling ***
 
