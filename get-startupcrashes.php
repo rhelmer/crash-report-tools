@@ -111,7 +111,7 @@ foreach ($reports as $rep) {
   $channel = array_key_exists('channel', $rep)?$rep['channel']:'';
   $ver = array_key_exists('version', $rep)?$rep['version']:'';
   $prd = strtolower($rep['product']);
-  $prdvershort = (($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':$prd))
+  $prdvershort = (($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':(($prd == 'fennecandroid')?'fna':$prd)))
                  .(strlen($channel)?'-'.$channel:'')
                  .(strlen($ver)?'-'.$ver:'');
   $prdverfile = $prd
@@ -206,7 +206,7 @@ foreach ($reports as $rep) {
 
       $body = $root->appendChild($doc->createElement('body'));
       $h1 = $body->appendChild($doc->createElement('h1',
-          $anadir.' '.$prdverdisplay.'  Startup Crash Report'));
+          $anadir.' '.$prdverdisplay.' Startup Crash Report'));
 
       // description
       $para = $body->appendChild($doc->createElement('p',

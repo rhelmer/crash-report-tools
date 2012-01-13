@@ -552,7 +552,7 @@ foreach ($reports as $rep) {
     print("\n");
   }
   // debug only line
-  // print_r($flashdata);
+  // print_r($cd);
 }
 
 // *** helper functions ***
