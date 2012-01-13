@@ -168,7 +168,7 @@ foreach ($reports as $rep) {
           $devname = ucfirst($regs[2].' '.$regs[1]);
           $andver = null;
         }
-        elseif (preg_match('/^\s*([^\|]+ [^\|]+) \| [^:]+:(\d\.[^\/]+)\/[^:]+:/', $appnotes, $regs)) {
+        elseif (preg_match('/^\s*([^\|]+ [^\|]+) \| [^:]+:(\d\.[^\/]+|AOSP)\/[^:]+:/', $appnotes, $regs)) {
           $devname = ucfirst($regs[1]);
           $andver = $regs[2];
         }
@@ -182,6 +182,9 @@ foreach ($reports as $rep) {
             print('*** unknown device - notes: '.$appnotes."\n");
           }
         }
+        // reduce dubled vendor names in device names
+        $devname = str_replace('HTC HTC', 'HTC', $devname);
+        $devname = str_replace('Samsung SAMSUNG-', 'Samsung ', $devname);
         if (!array_key_exists($devname, $dd['devices'])) {
           $dd['devices'][$devname] = array('android_versions' => array(),
                                            'signatures' => array(),
