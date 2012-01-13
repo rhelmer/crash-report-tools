@@ -63,6 +63,17 @@ $reports = array(array('product'=>'Fennec',
                       ),
                 );
 
+// ignorable (as not actionable) app note fields that result in unknown devices
+$ignore_unknown_notes = array(
+  '\\N',
+  "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Android'.",
+  "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Imagination Technologies'.",
+  "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'NVIDIA'.",
+  "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Android'. | WebGL? GL Context? GL Context+ | WebGL+",
+  "WebGL? EGL? EGL+ | GL Context? GL Context+ | WebGL+",
+  "xpcom_runtime_abort(###",
+);
+
 // maximum uptime that is counted as startup (seconds)
 $max_uptime = 60;
 
@@ -157,14 +168,19 @@ foreach ($reports as $rep) {
           $devname = ucfirst($regs[2].' '.$regs[1]);
           $andver = null;
         }
-        elseif (preg_match('/^([^\|]+ [^\|]+) \| [^\/]+\/[^:]+:(\d\.[^\/]+)\/[^:]+:/', $appnotes, $regs)) {
+        elseif (preg_match('/^\s*([^\|]+ [^\|]+) \| [^:]+:(\d\.[^\/]+)\/[^:]+:/', $appnotes, $regs)) {
           $devname = ucfirst($regs[1]);
           $andver = $regs[2];
+        }
+        elseif (preg_match('/^\s*([^\|]+ [^\|]+) \| (unknown|xxxxxx)/', $appnotes, $regs)) {
+          $devname = ucfirst($regs[1]);
         }
         else {
           $devname = 'unknown';
           $andver = null;
-          print('*** unknown device - notes: '.$appnotes."\n");
+          if (!in_array($appnotes, $ignore_unknown_notes)) {
+            print('*** unknown device - notes: '.$appnotes."\n");
+          }
         }
         if (!array_key_exists($devname, $dd['devices'])) {
           $dd['devices'][$devname] = array('android_versions' => array(),
@@ -266,7 +282,7 @@ foreach ($reports as $rep) {
         $idstring = 'dev-'.strtolower(str_replace(array(' ', '.'), '_', $devname));
         $tr = $table->appendChild($doc->createElement('tr'));
         $td = $tr->appendChild($doc->createElement('td'));
-        $link = $td->appendChild($doc->createElement('a', $devname));
+        $link = $td->appendChild($doc->createElement('a', htmlentities($devname)));
         $link->setAttribute('href', '#'.$idstring);
         $td = $tr->appendChild($doc->createElement('td', $count));
         $td->setAttribute('class', 'num');
@@ -288,7 +304,7 @@ foreach ($reports as $rep) {
         $tr = $table->appendChild($doc->createElement('tr'));
         $tr->setAttribute('id', $idstring);
         $tr->setAttribute('class', 'devheader');
-        $th = $tr->appendChild($doc->createElement('th', $devname));
+        $th = $tr->appendChild($doc->createElement('th', htmlentities($devname)));
         $th->setAttribute('colspan', 2);
 
         $tr = $table->appendChild($doc->createElement('tr'));
