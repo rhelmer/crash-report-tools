@@ -43,7 +43,7 @@ date_default_timezone_set('America/Los_Angeles');
 //   product - product name
 //   version - empty is all versions
 
-$reports = array(array('product'=>'Firefox',
+$reports = array(/*array('product'=>'Firefox',
                        'channel'=>'release',
                        'version'=>'8.0',
                        'version_regex'=>'8\.0.*',
@@ -76,11 +76,11 @@ $reports = array(array('product'=>'Firefox',
                        'version'=>'9.0',
                        'version_regex'=>'9\.0.*',
                        'version_display'=>'9',
-                      ),
+                      ),*/
                  array('product'=>'Fennec',
                        'channel'=>'beta',
                        'version'=>'10.0',
-                      ),
+                      ),/*
                  array('product'=>'Fennec',
                        'channel'=>'nightly',
                       ),
@@ -92,14 +92,14 @@ $reports = array(array('product'=>'Firefox',
                       ),
                  array('product'=>'FennecAndroid',
                        'channel'=>'aurora',
-                      ),
+                      ),*/
                 );
 
 // maximum uptime that is counted as startup (seconds)
 $max_uptime = 60;
 
 // for how many days back to get the data
-$backlog_days = 7;
+$backlog_days = 1;
 
 // *** URLs ***
 
@@ -131,6 +131,17 @@ foreach ($reports as $rep) {
                    .(strlen($channel)?' '.ucfirst($channel):'')
                    .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
+  $sdfile = $prdvershort.'.startup.json';
+  $fwebsum = $prdverfile.'.startupsummary.html';
+
+  if (file_exists($sdfile)) {
+    print('Read stored data'."\n");
+    $startupdata = json_decode(file_get_contents($sdfile), true);
+  }
+  else {
+    $startupdata = array();
+  }
+
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
@@ -139,50 +150,81 @@ foreach ($reports as $rep) {
 
     $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
     $fdata = $prdvershort.'-startup.csv';
+    $ftotal = $prdvershort.'-total.csv';
     $fweb = $anadir.'.'.$prdverfile.'.startup.html';
 
-    // make sure we have the crashdata csv
-    if ($on_moz_server) {
-      $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-      if (!file_exists($anafcsvgz)) { break; }
-    }
-    else {
-      $anafcsv = $anadir.'/'.$fcsv;
-      if (!file_exists($anafcsv)) {
-        print('Fetching '.$anafcsv.' from the web'."\n");
-        $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-        if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
-      }
-      if (!file_exists($anafcsv)) { break; }
-    }
-
-    // get startup data for the product
-    $anafdata = $anadir.'/'.$fdata;
-    if (!file_exists($anafdata)) {
-      print('Getting '.$prdverdisplay.' startup data'."\n");
-      // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
-      // some parts from that split into total and crashcount blocks, though
-      // $1 is signature, $7 is product, $8 is version, $17 is uptime_seconds, $25 is process type, $29 is release_channel
-      $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-              .(strlen($channel)?' && $29 ~ /^'.awk_quote($channel, '/').'$/':'')
-              .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
-              .' && $17 <= '.$max_uptime
-              .' {printf "%s;%s\n",$25,$1}\'';
+    if (!array_key_exists($anadir, $startupdata)) {
+      // make sure we have the crashdata csv
       if ($on_moz_server) {
-        shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' | sort | uniq -c | sort -nr > '.$anafdata);
+        $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
+        if (!file_exists($anafcsvgz)) { break; }
       }
       else {
-        shell_exec($cmd.' '.$anafcsv.' | sort | uniq -c | sort -nr > '.$anafdata);
+        $anafcsv = $anadir.'/'.$fcsv;
+        if (!file_exists($anafcsv)) {
+          print('Fetching '.$anafcsv.' from the web'."\n");
+          $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
+          if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
+        }
+        if (!file_exists($anafcsv)) { break; }
       }
-    }
 
-    $anacrashes = array();
-    foreach (explode("\n", shell_exec('cat '.$anafdata)) as $crashline) {
-      if (preg_match('/^\s*(\d+)\s+(.*);(.*)$/', $crashline, $regs)) {
-        $anacrashes[] = array('sig' => $regs[3],
-                              'process_type' => (strlen($regs[2]) && $regs[2] != '\\N')?$regs[2]:'browser',
-                              'count' => $regs[1]);
+      // get startup data for the product
+      $anafdata = $anadir.'/'.$fdata;
+      if (!file_exists($anafdata)) {
+        print('Getting '.$prdverdisplay.' startup data'."\n");
+        // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
+        // some parts from that split into total and crashcount blocks, though
+        // $1 is signature, $7 is product, $8 is version, $17 is uptime_seconds, $25 is process type, $29 is release_channel
+        $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
+                .(strlen($channel)?' && $29 ~ /^'.awk_quote($channel, '/').'$/':'')
+                .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
+                .' && $17 <= '.$max_uptime
+                .' {printf "%s;%s\n",$25,$1}\'';
+        if ($on_moz_server) {
+          shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' | sort | uniq -c | sort -nr > '.$anafdata);
+        }
+        else {
+          shell_exec($cmd.' '.$anafcsv.' | sort | uniq -c | sort -nr > '.$anafdata);
+        }
       }
+
+      // get total crash count
+      $anaftotal = $anadir.'/'.$ftotal;
+      if (!file_exists($anaftotal)) {
+        print('Getting total crash count'."\n");
+        $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
+                .(strlen($channel)?' && $29 ~ /^'.awk_quote($channel, '/').'$/':'')
+                .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
+                .' {printf "%s\n",$1}\'';
+        if ($on_moz_server) {
+          shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' | wc -l > '.$anaftotal);
+        }
+        else {
+          shell_exec($cmd.' '.$anafcsv.' | wc -l > '.$anaftotal);
+        }
+      }
+      $anatotal = intval(file_get_contents($anaftotal));
+
+      $scrashes = array('all' => 0);
+      $anacrashes = array();
+      foreach (explode("\n", shell_exec('cat '.$anafdata)) as $crashline) {
+        if (preg_match('/^\s*(\d+)\s+([^;]*);(.*)$/', $crashline, $regs)) {
+          $ptype = (strlen($regs[2]) && $regs[2] != '\\N')?$regs[2]:'browser';
+          $anacrashes[] = array('sig' => $regs[3],
+                                'process_type' => $ptype,
+                                'count' => $regs[1]);
+
+          if (!in_array($ptype, array_keys($scrashes))) {
+            $scrashes[$ptype] = 0;
+          }
+          $scrashes[$ptype] += $regs[1];
+        }
+      }
+      $startupdata[$anadir] = array('startup' => $scrashes,
+                                    'total' => $anatotal);
+
+      file_put_contents($sdfile, json_encode($startupdata));
     }
 
     $anafweb = $anadir.'/'.$fweb;
@@ -267,6 +309,88 @@ foreach ($reports as $rep) {
   }
   // debug only line
   // print_r($anacrashes);
+
+  if (count($startupdata) &&
+      (!file_exists($fwebsum) || (filemtime($fwebsum) < filemtime($sdfile)))) {
+    // create out an HTML page
+    print('Writing HTML output'."\n");
+    $doc = new DOMDocument('1.0', 'utf-8');
+    $doc->formatOutput = true; // we want a nice output
+
+    $root = $doc->appendChild($doc->createElement('html'));
+    $head = $root->appendChild($doc->createElement('head'));
+    $title = $head->appendChild($doc->createElement('title',
+        $prdverdisplay.' Startup Summary Report'));
+
+      $style = $head->appendChild($doc->createElement('style'));
+      $style->setAttribute('type', 'text/css');
+      $style->appendChild($doc->createCDATASection(
+          '.num, .pct {'."\n"
+          .'  text-align: right;'."\n"
+          .'}'."\n"
+      ));
+
+    $body = $root->appendChild($doc->createElement('body'));
+    $h1 = $body->appendChild($doc->createElement('h1',
+        $prdverdisplay.' Startup Summary Report'));
+
+    // description
+    $para = $body->appendChild($doc->createElement('p',
+        'Daily sums of browser and other process startup crash reports '.
+        .'(and percentage of total daily crashes) on '.$prdverdisplay.','
+        .' where crashes occurring less than '.$max_uptime
+        .' seconds after launch are considered startup.'));
+
+    $table = $body->appendChild($doc->createElement('table'));
+    $table->setAttribute('border', '1');
+
+    // table head
+    $tr = $table->appendChild($doc->createElement('tr'));
+    $th = $tr->appendChild($doc->createElement('th', 'Date'));
+    $th->setAttribute('rowspan', '2');
+    $th = $tr->appendChild($doc->createElement('th', 'Browser Process'));
+    $th->setAttribute('colspan', '2');
+    $th = $tr->appendChild($doc->createElement('th', 'Other Processes'));
+    $th->setAttribute('colspan', '2');
+    $th = $tr->appendChild($doc->createElement('th', 'All'));
+    $th->setAttribute('colspan', '2');
+    $tr = $table->appendChild($doc->createElement('tr'));
+    $th = $tr->appendChild($doc->createElement('th', 'absoute'));
+    $th = $tr->appendChild($doc->createElement('th', '% of total'));
+    $th = $tr->appendChild($doc->createElement('th', 'absolute'));
+    $th = $tr->appendChild($doc->createElement('th', '% of total'));
+    $th = $tr->appendChild($doc->createElement('th', 'absolute'));
+    $th = $tr->appendChild($doc->createElement('th', '% of total'));
+
+    foreach (array_reverse($startupdata) as $date=>$sd) {
+      $all_count = array_sum($sd['startup']);
+      $browser_count = intval(@$sd['startup']['browser']);
+      $other_count = $all_count - $browser_count;
+      $browser_rate = $browser_count / $sd['total'];
+      $other_rate = $other_count / $sd['total'];
+      $all_rate = $all_count / $sd['total'];
+
+      $tr = $table->appendChild($doc->createElement('tr'));
+      $td = $tr->appendChild($doc->createElement('td', $date));
+      $td = $tr->appendChild($doc->createElement('td', $browser_count));
+      $td->setAttribute('class', 'num');
+      $td = $tr->appendChild($doc->createElement('td',
+                sprintf('%.1f', 100 * $browser_rate).'%'));
+      $td->setAttribute('class', 'pct');
+      $td = $tr->appendChild($doc->createElement('td', $other_count));
+      $td->setAttribute('class', 'num');
+      $td = $tr->appendChild($doc->createElement('td',
+                sprintf('%.1f', 100 * $other_rate).'%'));
+      $td->setAttribute('class', 'pct');
+      $td = $tr->appendChild($doc->createElement('td', $all_count));
+      $td->setAttribute('class', 'num');
+      $td = $tr->appendChild($doc->createElement('td',
+                sprintf('%.1f', 100 * $all_rate).'%'));
+      $td->setAttribute('class', 'pct');
+    }
+
+    $doc->saveHTMLFile($fwebsum);
+  }
 }
 
 // *** helper functions ***
