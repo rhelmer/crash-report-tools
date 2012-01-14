@@ -224,6 +224,8 @@ foreach ($reports as $rep) {
       $startupdata[$anadir] = array('startup' => $scrashes,
                                     'total' => $anatotal);
 
+      ksort($startupdata); // sort by date (key), ascending
+
       file_put_contents($sdfile, json_encode($startupdata));
     }
 
