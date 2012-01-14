@@ -368,9 +368,9 @@ foreach ($reports as $rep) {
       $all_count = array_sum($sd['startup']);
       $browser_count = intval(@$sd['startup']['browser']);
       $other_count = $all_count - $browser_count;
-      $browser_rate = $browser_count / $sd['total'];
-      $other_rate = $other_count / $sd['total'];
-      $all_rate = $all_count / $sd['total'];
+      $browser_rate = $sd['total'] ? $browser_count / $sd['total'] : 0;
+      $other_rate = $sd['total'] ? $other_count / $sd['total'] : 0;
+      $all_rate = $sd['total'] ? $all_count / $sd['total'] : 0;
 
       $tr = $table->appendChild($doc->createElement('tr'));
       $td = $tr->appendChild($doc->createElement('td', $date));
