@@ -153,42 +153,58 @@ foreach ($reports as $rep) {
     $ftotal = $prdvershort.'-total.csv';
     $fweb = $anadir.'.'.$prdverfile.'.startup.html';
 
-    if (!array_key_exists($anadir, $startupdata)) {
-      // make sure we have the crashdata csv
+    // make sure we have the crashdata csv
+    if ($on_moz_server) {
+      $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
+      if (!file_exists($anafcsvgz)) { break; }
+    }
+    else {
+      $anafcsv = $anadir.'/'.$fcsv;
+      if (!file_exists($anafcsv)) {
+        print('Fetching '.$anafcsv.' from the web'."\n");
+        $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
+        if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
+      }
+      if (!file_exists($anafcsv)) { break; }
+    }
+
+    // get startup data for the product
+    $anafdata = $anadir.'/'.$fdata;
+    if (!file_exists($anafdata)) {
+      print('Getting '.$prdverdisplay.' startup data'."\n");
+      // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
+      // some parts from that split into total and crashcount blocks, though
+      // $1 is signature, $7 is product, $8 is version, $17 is uptime_seconds, $25 is process type, $29 is release_channel
+      $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
+              .(strlen($channel)?' && $29 ~ /^'.awk_quote($channel, '/').'$/':'')
+              .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
+              .' && $17 <= '.$max_uptime
+              .' {printf "%s;%s\n",$25,$1}\'';
       if ($on_moz_server) {
-        $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-        if (!file_exists($anafcsvgz)) { break; }
+        shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' | sort | uniq -c | sort -nr > '.$anafdata);
       }
       else {
-        $anafcsv = $anadir.'/'.$fcsv;
-        if (!file_exists($anafcsv)) {
-          print('Fetching '.$anafcsv.' from the web'."\n");
-          $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-          if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
-        }
-        if (!file_exists($anafcsv)) { break; }
+        shell_exec($cmd.' '.$anafcsv.' | sort | uniq -c | sort -nr > '.$anafdata);
       }
+    }
 
-      // get startup data for the product
-      $anafdata = $anadir.'/'.$fdata;
-      if (!file_exists($anafdata)) {
-        print('Getting '.$prdverdisplay.' startup data'."\n");
-        // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
-        // some parts from that split into total and crashcount blocks, though
-        // $1 is signature, $7 is product, $8 is version, $17 is uptime_seconds, $25 is process type, $29 is release_channel
-        $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-                .(strlen($channel)?' && $29 ~ /^'.awk_quote($channel, '/').'$/':'')
-                .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
-                .' && $17 <= '.$max_uptime
-                .' {printf "%s;%s\n",$25,$1}\'';
-        if ($on_moz_server) {
-          shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' | sort | uniq -c | sort -nr > '.$anafdata);
+    $scrashes = array('all' => 0);
+    $anacrashes = array();
+    foreach (explode("\n", shell_exec('cat '.$anafdata)) as $crashline) {
+      if (preg_match('/^\s*(\d+)\s+([^;]*);(.*)$/', $crashline, $regs)) {
+        $ptype = (strlen($regs[2]) && $regs[2] != '\\N')?$regs[2]:'browser';
+        $anacrashes[] = array('sig' => $regs[3],
+                              'process_type' => $ptype,
+                              'count' => $regs[1]);
+
+        if (!in_array($ptype, array_keys($scrashes))) {
+          $scrashes[$ptype] = 0;
         }
-        else {
-          shell_exec($cmd.' '.$anafcsv.' | sort | uniq -c | sort -nr > '.$anafdata);
-        }
+        $scrashes[$ptype] += $regs[1];
       }
+    }
 
+    if (!array_key_exists($anadir, $startupdata) || (filemtime($sdfile) < filemtime($anafdata))) {
       // get total crash count
       $anaftotal = $anadir.'/'.$ftotal;
       if (!file_exists($anaftotal)) {
@@ -206,21 +222,6 @@ foreach ($reports as $rep) {
       }
       $anatotal = intval(file_get_contents($anaftotal));
 
-      $scrashes = array('all' => 0);
-      $anacrashes = array();
-      foreach (explode("\n", shell_exec('cat '.$anafdata)) as $crashline) {
-        if (preg_match('/^\s*(\d+)\s+([^;]*);(.*)$/', $crashline, $regs)) {
-          $ptype = (strlen($regs[2]) && $regs[2] != '\\N')?$regs[2]:'browser';
-          $anacrashes[] = array('sig' => $regs[3],
-                                'process_type' => $ptype,
-                                'count' => $regs[1]);
-
-          if (!in_array($ptype, array_keys($scrashes))) {
-            $scrashes[$ptype] = 0;
-          }
-          $scrashes[$ptype] += $regs[1];
-        }
-      }
       $startupdata[$anadir] = array('startup' => $scrashes,
                                     'total' => $anatotal);
 
