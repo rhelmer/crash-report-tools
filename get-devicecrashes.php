@@ -48,18 +48,23 @@ $reports = array(array('product'=>'Fennec',
                  array('product'=>'Fennec',
                        'channel'=>'beta',
                        'version'=>'10.0',
+                       'weekly'=>true,
                       ),
                  array('product'=>'Fennec',
                        'channel'=>'nightly',
+                       'weekly'=>true,
                       ),
                  array('product'=>'Fennec',
                        'channel'=>'aurora',
+                       'weekly'=>true,
                       ),
                  array('product'=>'FennecAndroid',
                        'channel'=>'nightly',
+                       'weekly'=>true,
                       ),
                  array('product'=>'FennecAndroid',
                        'channel'=>'aurora',
+                       'weekly'=>true,
                       ),
                 );
 
@@ -119,7 +124,9 @@ foreach ($reports as $rep) {
     $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
     $frawdata = $prdvershort.'-devices-raw.csv';
     $fdevdata = $prdvershort.'-devices.json';
-    $fweb = $anadir.'.'.$prdverfile.'.devices.html';
+    $fwebmask = '%s.'.$prdverfile.'.devices.html';
+    $fweb = sprintf($fwebmask, $anadir);
+    $fwebweek = $anadir.'.'.$prdverfile.'.devices.weekly.html';
 
     // make sure we have the crashdata csv
     if ($on_moz_server) {
@@ -164,7 +171,7 @@ foreach ($reports as $rep) {
       foreach (explode("\n", shell_exec('cat '.$anafrawdata)) as $crashline) {
         if (!strlen($crashline)) { break; }
         list($sig, $appnotes) = explode('!!!', $crashline);
-        if (preg_match("/Model: '.*', Product: '(.*)', Manufacturer: '(.*)', Hardware: '.*'/", $appnotes, $regs)) {
+        if (preg_match("/Model: '(.*)', Product: '.*', Manufacturer: '(.*)', Hardware: '.*'/", $appnotes, $regs)) {
           $devname = ucfirst($regs[2].' '.$regs[1]);
           $andver = null;
         }
@@ -218,134 +225,201 @@ foreach ($reports as $rep) {
       $dd = json_decode(file_get_contents($anafdevdata), true);
     }
 
-    $anafweb = $anadir.'/'.$fweb;
-    if (!file_exists($anafweb) && $dd['total_crashes']) {
-      // create out an HTML page
-      print('Write HTML output'."\n");
-      $doc = new DOMDocument('1.0', 'utf-8');
-      $doc->formatOutput = true; // we want a nice output
+    // debug only line
+    // print_r($dd);
 
-      $root = $doc->appendChild($doc->createElement('html'));
-      $head = $root->appendChild($doc->createElement('head'));
-      $title = $head->appendChild($doc->createElement('title',
-          $anadir.' '.$prdverdisplay.' Device Crash Report'));
+    $webreports = array('day' => $fweb);
+    if (@$rep['weekly']) { $webreports['week'] = $fwebweek; }
 
-      $style = $head->appendChild($doc->createElement('style'));
-      $style->setAttribute('type', 'text/css');
-      $style->appendChild($doc->createCDATASection(
-          '.sig {'."\n"
-          .'  font-size: small;'."\n"
-          .'}'."\n"
-          .'.num, .pct {'."\n"
-          .'  text-align: right;'."\n"
-          .'}'."\n"
-          .'tr.devheader {'."\n"
-          .'  background: #EEEEAA;'."\n"
-          .'}'."\n"
-          .'tr.devheader:target {'."\n"
-          .'  background: #EECCAA;'."\n"
-          .'}'."\n"
-          .'tr.subheader {'."\n"
-          .'  background: #FFFFCC;'."\n"
-          .'  color: #808080;'."\n"
-          .'  font-size: small;'."\n"
-          .'}'."\n"
-      ));
-
-      $body = $root->appendChild($doc->createElement('body'));
-      $h1 = $body->appendChild($doc->createElement('h1',
-          $anadir.' '.$prdverdisplay.' Device Crash Report'));
-
-      // description
-      $para = $body->appendChild($doc->createElement('p',
-          'All signatures of crashes listed by the devices '
-          .' they seem to be happening on.'));
-
-      $para = $body->appendChild($doc->createElement('p',
-          'Total crashes analyzed in this report: '.$dd['total_crashes']));
-
-      $header = $body->appendChild($doc->createElement('h2', 'Overview'));
-      $header->setAttribute('id', 'files');
-
-      $table = $body->appendChild($doc->createElement('table'));
-      $table->setAttribute('border', '1');
-
-      // table head
-      $tr = $table->appendChild($doc->createElement('tr'));
-      $th = $tr->appendChild($doc->createElement('th', 'Device'));
-      $th = $tr->appendChild($doc->createElement('th', 'Crashes'));
-      $th = $tr->appendChild($doc->createElement('th', '%'));
-
-      // create a list of all device to be sorted by crash totals
-      $devtotals = array();
-      foreach ($dd['devices'] as $devname=>$devdata) {
-        $devtotals[$devname] = $devdata['crashes'];
-      }
-      arsort($devtotals);
-
-      foreach ($devtotals as $devname=>$count) {
-        $idstring = 'dev-'.strtolower(str_replace(array(' ', '.'), '_', $devname));
-        $tr = $table->appendChild($doc->createElement('tr'));
-        $td = $tr->appendChild($doc->createElement('td'));
-        $link = $td->appendChild($doc->createElement('a', htmlentities($devname)));
-        $link->setAttribute('href', '#'.$idstring);
-        $td = $tr->appendChild($doc->createElement('td', $count));
-        $td->setAttribute('class', 'num');
-        $td = $tr->appendChild($doc->createElement('td',
-            sprintf('%.1f', 100 * $count / $dd['total_crashes']).'%'));
-        $td->setAttribute('class', 'pct');
-      }
-
-      $header = $body->appendChild($doc->createElement('h2',
-          'Top Signatures Per Device'));
-      $header->setAttribute('id', 'sigs');
-
-      $table = $body->appendChild($doc->createElement('table'));
-      $table->setAttribute('border', '1');
-
-      foreach ($dd['devices'] as $devname=>$devdata) {
-        $idstring = 'dev-'.strtolower(str_replace(array(' ', '.'), '_', $devname));
-
-        $tr = $table->appendChild($doc->createElement('tr'));
-        $tr->setAttribute('id', $idstring);
-        $tr->setAttribute('class', 'devheader');
-        $th = $tr->appendChild($doc->createElement('th', htmlentities($devname)));
-        $th->setAttribute('colspan', 2);
-
-        $tr = $table->appendChild($doc->createElement('tr'));
-        $tr->setAttribute('class', 'subheader');
-        $td = $tr->appendChild($doc->createElement('td',
-            'Android versions: '.(count($devdata['android_versions'])?implode(', ',$devdata['android_versions']):'unknown')));
-        $td->setAttribute('colspan', 2);
-
-        // signatures rows
-        foreach ($devdata['signatures'] as $sig=>$count) {
-          $tr = $table->appendChild($doc->createElement('tr'));
-          $td = $tr->appendChild($doc->createElement('td'));
-          if (!strlen($sig)) {
-            $link = $td->appendChild($doc->createElement('a', '(empty signature)'));
-            $link->setAttribute('href', $url_nullsiglink);
+    foreach ($webreports as $type=>$fwebcur) {
+      $anafweb = $anadir.'/'.$fwebcur;
+      if ($type == 'week') {
+        if (!file_exists($anafweb)) {
+          // assemble 7-day "weekly" overview
+          print('Calculating weekly data'."\n");
+          $curdd = $dd;
+          for ($pastday = 1; $pastday < 7; $pastday++) {
+            $pasttime = strtotime($anadir.' -'.$pastday.' day');
+            $pastdir = date('Y-m-d', $pasttime);
+            print('Adding '.$pastdir);
+            $pastfdevdata = $pastdir.'/'.$fdevdata;
+            if (file_exists($pastfdevdata)) {
+              // Load that data and merge it into $curcd.
+              $pastdd = json_decode(file_get_contents($pastfdevdata), true);
+              $curdd['total_crashes'] += $pastdd['total_crashes'];
+              foreach ($pastdd['devices'] as $devname=>$devdata) {
+                print(':');
+                if (array_key_exists($devname, $curdd['devices'])) {
+                  print('.');
+                  $curdd['devices'][$devname]['android_versions'] += $devdata['android_versions'];
+                  $curdd['devices'][$devname]['crashes'] += $devdata['crashes'];
+                  foreach ($devdata['signatures'] as $sig=>$count) {
+                    if (array_key_exists($sig, $curdd['devices'][$devname]['signatures'])) {
+                      $curdd['devices'][$devname]['signatures'][$sig] += $count;
+                    }
+                    else {
+                      $curdd['devices'][$devname]['signatures'][$sig] = $count;
+                    }
+                  }
+                }
+                else {
+                  print('.');
+                  $dd['devices'][$devname] = $devdata;
+                }
+              }
+              print("\n");
+            }
+            else { print(' - '.$pastfdevdata.' not found.'."\n"); }
           }
-          elseif ($sig == '\N') {
-            $td->appendChild($doc->createTextNode('(processing failure - "'.$sig.'")'));
+          if ($curdd['total_crashes'] == $dd['total_crashes']) {
+            // Not more than what the day had, so set to 0 which omits creating an HTML.
+            $curdd['total_crashes'] = 0;
           }
           else {
-            // common case, useful signature
-            $link = $td->appendChild($doc->createElement('a', htmlentities($sig)));
-            $link->setAttribute('href', $url_siglinkbase.rawurlencode($sig));
+            // sort devices alphabetically, signatures by count
+            ksort($curdd['devices']);
+            foreach ($curdd['devices'] as $devname=>$devdata) {
+              sort($curdd['devices'][$devname]['android_versions']);
+              arsort($curdd['devices'][$devname]['signatures']);
+            }
           }
-          $td->setAttribute('class', 'sig');
-          $td = $tr->appendChild($doc->createElement('td', $count));
-          $td->setAttribute('class', 'num');
         }
       }
+      else {
+        // single-day data
+        $curdd = $dd;
+      }
 
-      $doc->saveHTMLFile($anafweb);
+      if (!file_exists($anafweb) && $curdd['total_crashes']) {
+        // create out an HTML page
+        print('Writing'.($type == 'week'?' weekly':' daily').' HTML output'."\n");
+        $doc = new DOMDocument('1.0', 'utf-8');
+        $doc->formatOutput = true; // we want a nice output
+
+        $root = $doc->appendChild($doc->createElement('html'));
+        $head = $root->appendChild($doc->createElement('head'));
+        $title = $head->appendChild($doc->createElement('title',
+            $anadir.' '.$prdverdisplay.($type == 'week'?' Weekly':'')
+            .' Device Crash Report'));
+
+        $style = $head->appendChild($doc->createElement('style'));
+        $style->setAttribute('type', 'text/css');
+        $style->appendChild($doc->createCDATASection(
+            '.sig {'."\n"
+            .'  font-size: small;'."\n"
+            .'}'."\n"
+            .'.num, .pct {'."\n"
+            .'  text-align: right;'."\n"
+            .'}'."\n"
+            .'tr.devheader {'."\n"
+            .'  background: #EEEEAA;'."\n"
+            .'}'."\n"
+            .'tr.devheader:target {'."\n"
+            .'  background: #EECCAA;'."\n"
+            .'}'."\n"
+            .'tr.subheader {'."\n"
+            .'  background: #FFFFCC;'."\n"
+            .'  color: #808080;'."\n"
+            .'  font-size: small;'."\n"
+            .'}'."\n"
+        ));
+
+        $body = $root->appendChild($doc->createElement('body'));
+        $h1 = $body->appendChild($doc->createElement('h1',
+            $anadir.' '.$prdverdisplay.($type == 'week'?' Weekly':'')
+            .' Device Crash Report'));
+
+        // description
+        $para = $body->appendChild($doc->createElement('p',
+            'All signatures of crashes listed by the devices '
+            .' they seem to be happening on.'));
+
+        $para = $body->appendChild($doc->createElement('p',
+            'Total crashes analyzed in this report: '.$curdd['total_crashes']
+            .($type == 'week'?' - covering 7 days up to and including '.$anadir.'.':'')));
+
+        $header = $body->appendChild($doc->createElement('h2', 'Overview'));
+        $header->setAttribute('id', 'files');
+
+        $table = $body->appendChild($doc->createElement('table'));
+        $table->setAttribute('border', '1');
+
+        // table head
+        $tr = $table->appendChild($doc->createElement('tr'));
+        $th = $tr->appendChild($doc->createElement('th', 'Device'));
+        $th = $tr->appendChild($doc->createElement('th', 'Crashes'));
+        $th = $tr->appendChild($doc->createElement('th', '%'));
+
+        // create a list of all device to be sorted by crash totals
+        $devtotals = array();
+        foreach ($curdd['devices'] as $devname=>$devdata) {
+          $devtotals[$devname] = $devdata['crashes'];
+        }
+        arsort($devtotals);
+
+        foreach ($devtotals as $devname=>$count) {
+          $idstring = 'dev-'.strtolower(str_replace(array(' ', '.'), '_', $devname));
+          $tr = $table->appendChild($doc->createElement('tr'));
+          $td = $tr->appendChild($doc->createElement('td'));
+          $link = $td->appendChild($doc->createElement('a', htmlentities($devname)));
+          $link->setAttribute('href', '#'.$idstring);
+          $td = $tr->appendChild($doc->createElement('td', $count));
+          $td->setAttribute('class', 'num');
+          $td = $tr->appendChild($doc->createElement('td',
+              sprintf('%.1f', 100 * $count / $curdd['total_crashes']).'%'));
+          $td->setAttribute('class', 'pct');
+        }
+
+        $header = $body->appendChild($doc->createElement('h2',
+            'Top Signatures Per Device'));
+        $header->setAttribute('id', 'sigs');
+
+        $table = $body->appendChild($doc->createElement('table'));
+        $table->setAttribute('border', '1');
+
+        foreach ($curdd['devices'] as $devname=>$devdata) {
+          $idstring = 'dev-'.strtolower(str_replace(array(' ', '.'), '_', $devname));
+
+          $tr = $table->appendChild($doc->createElement('tr'));
+          $tr->setAttribute('id', $idstring);
+          $tr->setAttribute('class', 'devheader');
+          $th = $tr->appendChild($doc->createElement('th', htmlentities($devname)));
+          $th->setAttribute('colspan', 2);
+
+          $tr = $table->appendChild($doc->createElement('tr'));
+          $tr->setAttribute('class', 'subheader');
+          $td = $tr->appendChild($doc->createElement('td',
+              'Android versions: '.(count($devdata['android_versions'])?implode(', ',$devdata['android_versions']):'unknown')));
+          $td->setAttribute('colspan', 2);
+
+          // signatures rows
+          foreach ($devdata['signatures'] as $sig=>$count) {
+            $tr = $table->appendChild($doc->createElement('tr'));
+            $td = $tr->appendChild($doc->createElement('td'));
+            if (!strlen($sig)) {
+              $link = $td->appendChild($doc->createElement('a', '(empty signature)'));
+              $link->setAttribute('href', $url_nullsiglink);
+            }
+            elseif ($sig == '\N') {
+              $td->appendChild($doc->createTextNode('(processing failure - "'.$sig.'")'));
+            }
+            else {
+              // common case, useful signature
+              $link = $td->appendChild($doc->createElement('a', htmlentities($sig)));
+              $link->setAttribute('href', $url_siglinkbase.rawurlencode($sig));
+            }
+            $td->setAttribute('class', 'sig');
+            $td = $tr->appendChild($doc->createElement('td', $count));
+            $td->setAttribute('class', 'num');
+          }
+        }
+
+        $doc->saveHTMLFile($anafweb);
+      }
     }
+
     print("\n");
   }
-  // debug only line
-  // print_r($dd);
 }
 
 // *** helper functions ***

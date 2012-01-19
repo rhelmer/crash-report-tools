@@ -373,7 +373,8 @@ foreach ($reports as $rep) {
         $root = $doc->appendChild($doc->createElement('html'));
         $head = $root->appendChild($doc->createElement('head'));
         $title = $head->appendChild($doc->createElement('title',
-            $anadir.' '.$prdverdisplay.($type == 'week'?' Weekly':'').' Crash Components Report'));
+            $anadir.' '.$prdverdisplay.($type == 'week'?' Weekly':'')
+            .' Crash Components Report'));
         $script = $head->appendChild($doc->createElement('script'));
         $script->setAttribute('type', 'text/javascript');
         $script->appendChild($doc->createCDATASection(
@@ -425,7 +426,8 @@ foreach ($reports as $rep) {
 
         $body = $root->appendChild($doc->createElement('body'));
         $h1 = $body->appendChild($doc->createElement('h1',
-            $anadir.' '.$prdverdisplay.($type == 'week'?' Weekly':'').' Crash Components Report'));
+            $anadir.' '.$prdverdisplay.($type == 'week'?' Weekly':'')
+            .' Crash Components Report'));
 
         // description
         $para = $body->appendChild($doc->createElement('p',
@@ -551,8 +553,6 @@ foreach ($reports as $rep) {
 
     print("\n");
   }
-  // debug only line
-  // print_r($cd);
 }
 
 // *** helper functions ***
