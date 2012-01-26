@@ -194,6 +194,7 @@ foreach ($reports as $rep) {
         $devname = str_replace('Samsung SAMSUNG-', 'Samsung ', $devname);
         $devname = str_replace('Sony Sony', 'Sony', $devname);
         $devname = str_replace('Dell Inc. Dell', 'Dell', $devname);
+        $devname = str_replace('Unknown Amazon ', 'Amazon ', $devname);
         if (!array_key_exists($devname, $dd['devices'])) {
           $dd['devices'][$devname] = array('android_versions' => array(),
                                            'signatures' => array(),
