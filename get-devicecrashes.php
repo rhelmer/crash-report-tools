@@ -181,11 +181,15 @@ foreach ($reports as $rep) {
       foreach (explode("\n", shell_exec('cat '.$anafrawdata)) as $crashline) {
         if (!strlen($crashline)) { break; }
         list($sig, $appnotes) = explode('!!!', $crashline);
-        if (preg_match("/Model: '(.*)', Product: '.*', Manufacturer: '(.*)', Hardware: '.*'/", $appnotes, $regs)) {
+        if (preg_match("/Model: '(.*)', Product: '.*', Manufacturer: '(.*)', Hardware: '.*'.*\| [^:\s]+:(\d\.[^\/\s]+|AOSP)\/[^:\s]+:[^\s]*keys/", $appnotes, $regs)) {
+          $devname = ucfirst($regs[2].' '.$regs[1]);
+          $andver = $regs[3];
+        }
+        elseif (preg_match("/Model: '(.*)', Product: '.*', Manufacturer: '(.*)', Hardware: '.*'/", $appnotes, $regs)) {
           $devname = ucfirst($regs[2].' '.$regs[1]);
           $andver = null;
         }
-        elseif (preg_match('/^\s*([^\|]+ [^\|]+) \| [^:]+:(\d\.[^\/]+|AOSP)\/[^:]+:/', $appnotes, $regs)) {
+        elseif (preg_match('/^\s*([^\|]+ [^\|]+) \| [^:\s]+:(\d\.[^\/\s]+|AOSP)\/[^:\s]+:[^\s]*keys/', $appnotes, $regs)) {
           $devname = ucfirst($regs[1]);
           $andver = $regs[2];
         }
