@@ -32,7 +32,7 @@ date_default_timezone_set('America/Los_Angeles');
 // channels
 $channels = array('beta' => '11\.0',
                   'release' => '(9|10)\.0(\.\d)?',
-                  'aurora' => '11\.0a2',
+                  'aurora' => '12\.0a2',
                   'nightly' => '13\.0a1');
 
 // products
@@ -79,6 +79,9 @@ $notes = array('Firefox-5.0-20110427143820' => '5.0b1',
                'Firefox-10.0-20120118081945' => '10.0b5',
                'Firefox-10.0-20120123235200' => '10.0b6',
                'Firefox-11.0-20120201153158' => '11.0b1',
+               'Firefox-11.0-20120208012847' => '11.0b2',
+               'Firefox-10.0.1-20120208062825' => 'ESR',
+               'Firefox-10.0.1-20120208060813' => 'official',
                'Firefox-10.0-20120130064731' => 'ESR',
                'Firefox-10.0-20120129021758' => 'official',
                'Firefox-9.0.1-20111220165912' => 'official',
