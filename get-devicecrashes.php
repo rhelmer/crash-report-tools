@@ -86,6 +86,7 @@ $ignore_unknown_notes = array(
   "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'NVIDIA'.",
   "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Android'. | WebGL? GL Context? GL Context+ | WebGL+",
   "WebGL? EGL? EGL+ | GL Context? GL Context+ | WebGL+",
+  "WebGL? EGL? EGL+ | GL Context? GL Context+ | WebGL+ | xpcom_runtime_abort(###",
   "xpcom_runtime_abort(###",
 );
 
@@ -189,11 +190,11 @@ foreach ($reports as $rep) {
           $devname = ucfirst($regs[2].' '.$regs[1]);
           $andver = null;
         }
-        elseif (preg_match('/^\s*([^\|]+ [^\|]+) \| [^:\s]+:(\d\.[^\/\s]+|AOSP)\/[^:\s]+:[^\s]*keys/', $appnotes, $regs)) {
+        elseif (preg_match('/([^\|]+ [^\|]+) \| [^:\s]+:(\d\.[^\/\s]+|AOSP)\/[^:\s]+:[^\s]*keys/', $appnotes, $regs)) {
           $devname = ucfirst($regs[1]);
           $andver = $regs[2];
         }
-        elseif (preg_match('/^\s*([^\|]+ [^\|]+) \| (unknown|xxxxxx)/', $appnotes, $regs)) {
+        elseif (preg_match('/([^\|]+ [^\|]+) \| (unknown|xxxxxx)/', $appnotes, $regs)) {
           $devname = ucfirst($regs[1]);
         }
         else {
