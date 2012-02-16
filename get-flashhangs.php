@@ -243,9 +243,11 @@ foreach ($reports as $rep) {
 
         foreach ($fd[$fvertype]['hang'] as $fver=>$num) {
           if (strlen($fver)) {
-            $hang_rate = $num / $fd['total_flash']['hang'];
+            $hang_rate = $fd['total_flash']['hang']?
+                         $num / $fd['total_flash']['hang']:0;
             $cnum = intval(@$fd[$fvertype]['crash'][$fver]);
-            $crash_rate = $cnum / $fd['total_flash']['crash'];
+            $crash_rate = $fd['total_flash']['crash']?
+                          $cnum / $fd['total_flash']['crash']:0;
 
             $tr = $table->appendChild($doc->createElement('tr'));
             $td = $tr->appendChild($doc->createElement('td', $fver));
