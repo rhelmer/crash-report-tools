@@ -12,5 +12,6 @@ cd `dirname $_`
 ./get-components.php
 ./get-startupcrashes.php
 ./get-devicecrashes.php
+./get-socorrodata.php
 ./get-socorrobugsweekly.php
 ./get-crashbugsweekly.php
