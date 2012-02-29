@@ -85,6 +85,7 @@ $ignore_unknown_notes = array(
   "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Imagination Technologies'.",
   "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'NVIDIA'.",
   "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Android'. | WebGL? GL Context? GL Context+ | WebGL+",
+  "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Android'. | xpcom_runtime_abort(###",
   "WebGL? EGL? EGL+ | GL Context? GL Context+ | WebGL+",
   "WebGL? EGL? EGL+ | GL Context? GL Context+ | WebGL+ | xpcom_runtime_abort(###",
   "xpcom_runtime_abort(###",
