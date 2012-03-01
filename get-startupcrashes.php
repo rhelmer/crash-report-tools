@@ -25,6 +25,8 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+include_once('datautils.php');
+
 // *** script settings ***
 
 // turn on error reporting in the script output
@@ -405,9 +407,5 @@ foreach ($reports as $rep) {
 }
 
 // *** helper functions ***
-// Function to safely escape variables handed to awk
-function awk_quote($string) {
-  return strtr(preg_replace("/([\]\[^$.*?+{}\\\\()|])/", '\\\\$1', $string),
-               array('`'=>'\140',"'"=>'\047'));
-}
+
 ?>

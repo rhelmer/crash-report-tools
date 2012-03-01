@@ -15,6 +15,8 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+include_once('datautils.php');
+
 // *** script settings ***
 
 // turn on error reporting in the script output

@@ -15,6 +15,8 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+include_once('datautils.php');
+
 // *** script settings ***
 
 // turn on error reporting in the script output
@@ -429,7 +431,6 @@ function getPeriodBugURL($scheme, $date_start, $date_end = null) {
 }
 
 function getBugCount($listurl) {
-  if ($GLOBALS['fake_counts']) { return mt_rand(0, 30); } // for testing where https crashes
   if (preg_match('/buglist\.cgi(\?.*)$/', $listurl, $regs)) {
     $list_json = file_get_contents('https://api-dev.bugzilla.mozilla.org/latest/count'.$regs[1]);
     if ($list_json) {
@@ -439,6 +440,5 @@ function getBugCount($listurl) {
   }
   return false;
 }
-
 
 ?>

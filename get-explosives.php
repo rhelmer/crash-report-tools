@@ -15,6 +15,8 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+include_once('datautils.php');
+
 // *** script settings ***
 
 // turn on error reporting in the script output
@@ -559,31 +561,10 @@ function get_explosiveness($dataset, $aduset, $exp_vars) {
   return $exp_out;
 }
 
-// Function to calculate square of value - mean
-function arr_mean($array) { return array_sum($array) / count($array); }
-
-// Function to calculate square of value - mean
-function dist_square($x, $mean) { return pow($x - $mean, 2); }
-
-// Function to calculate standard deviation (uses sist_square)
-function arr_stddev($array, $mean = null) {
-  // square root of sum of squares devided by N-1
-  if (is_null($mean)) { $mean = arr_mean($array); }
-  return sqrt(array_sum(array_map("dist_square", $array,
-                                  array_fill(0, count($array), $mean))) /
-              (count($array) - 1));
-}
-
 // Comparison function using ex_max member (reverse sort!)
 function expmax_compare($a, $b) {
   if ($a['exp_max'] == $b['exp_max']) { return 0; }
   return ($a['exp_max'] > $b['exp_max']) ? -1 : 1;
-}
-
-// Function to safely escape variables handed to awk
-function awk_quote($string) {
-  return strtr(preg_replace("/([\]\[^$.*?+{}\\\\()|])/", '\\\\$1', $string),
-               array('`'=>'\140',"'"=>'\047'));
 }
 
 ?>
