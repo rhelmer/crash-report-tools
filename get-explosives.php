@@ -240,6 +240,7 @@ foreach ($reports as $rep) {
 
     $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
     $fsigs = $prdvershort.'-sigs.csv';
+    $fsigcnt = $prdvershort.'-sigcount.csv';
     $ftotal = $prdvershort.'-total.csv';
     $fcrcnt = $prdvershort.'-crashcount.csv';
     $fadu = $prdvershort.'-adu.csv';
@@ -291,6 +292,13 @@ foreach ($reports as $rep) {
       shell_exec('cat '.$anafsigs.' | wc -l > '.$anaftotal);
     }
     $total[$anadir] = intval(file_get_contents($anaftotal));
+
+    // get signature count *note: not actually used in here, but needed elsewhere*
+    $anafsigcnt = $anadir.'/'.$fsigcnt;
+    if (!file_exists($anafsigcnt)) {
+      print('Getting signature count'."\n");
+      shell_exec('cat '.$anafsigs.' | sort | uniq | wc -l > '.$anafsigcnt);
+    }
 
     // get topcrasher list with counts per signature
     $anafcrcnt = $anadir.'/'.$fcrcnt;
