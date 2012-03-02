@@ -189,7 +189,6 @@ $url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
 $url_algolink = 'https://wiki.mozilla.org/CrashKill/Plan/Explosive';
 $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
 $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
-$path_outputbase = $on_moz_server?'':'/home/robert/git-kairo/testbed/socorro/';
 
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
 else { chdir('/mnt/mozilla/projects/socorro/'); }
@@ -534,7 +533,6 @@ foreach ($reports as $rep) {
         }
 
         $doc->saveHTMLFile($anafweb);
-        if (strlen($path_outputbase)) { copy($anafweb, $path_outputbase.$fweb); }
       }
     }
     print("\n");

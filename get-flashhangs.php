@@ -67,7 +67,6 @@ $backlog_days = 7;
 $on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
 $url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
                              :'http://people.mozilla.com/crash_analysis/';
-$path_outputbase = $on_moz_server?'':'/home/robert/git-kairo/testbed/socorro/';
 
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
 else { chdir('/mnt/mozilla/projects/socorro/'); }
@@ -296,7 +295,6 @@ foreach ($reports as $rep) {
       }
 
       $doc->saveHTMLFile($anafweb);
-      if (strlen($path_outputbase)) { copy($anafweb, $path_outputbase.$fweb); }
     }
 
     print("\n");
@@ -383,7 +381,6 @@ foreach ($reports as $rep) {
     }
 
     $doc->saveHTMLFile($fwebsum);
-    if (strlen($path_outputbase)) { copy($fwebsum, $path_outputbase.$fwebsum); }
   }
 }
 
