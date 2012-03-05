@@ -35,10 +35,12 @@ date_default_timezone_set('America/Los_Angeles');
 //   product as key, array of versions as value
 
 $daily = array(
-    'Firefox' => array('10.0', '10.0.1', '10.0.2',
+    'Firefox' => array('10.0.1esr', '10.0.2esr', '10.0.3esr',
+                       '10.0', '10.0.1', '10.0.2',
                        '11.0b1', '11.0b2', '11.0b3', '11.0b4', '11.0b5',
                        '12.0a2', '13.0a1'),
-    'Fennec' => array('10.0', '10.0.1', '10.0.2',
+    'Fennec' => array('10.0.3esr',
+                      '10.0', '10.0.1', '10.0.2',
                       '11.0b1', '11.0b2', '11.0b3', '11.0b4', '11.0b5',
                       '12.0a2', '13.0a1'),
     'FennecAndroid' => array('11.0b1', '11.0b2', '11.0b3', '11.0b4', '11.0b5',
