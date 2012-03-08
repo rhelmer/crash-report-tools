@@ -82,7 +82,14 @@ foreach ($daily as $product=>$versions) {
     $dailycsv = file(sprintf($url_daily_mask, $product, $ver));
     foreach ($dailycsv as $csvline) {
       $fields = explode(',', $csvline);
-      if (preg_match('/^\d+-\d+-\d+$/', $fields[0])) {
+      if ($fields[0] == 'Date') {
+        // This is the first line, check if this is the right data
+        if ($fields[1] != $product.' '.$ver.' Crashes') {
+          print('--- ERROR: Got '.$fields[1].' instead!'."\n");
+          break;
+        }
+      }
+      elseif (preg_match('/^\d+-\d+-\d+$/', $fields[0])) {
         $day = $fields[0];
         $crashes = intval($fields[1]);
         $adu = intval($fields[2]);
