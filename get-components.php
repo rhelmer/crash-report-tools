@@ -266,6 +266,11 @@ foreach ($reports as $rep) {
           $subfile = '>'.$toplevel.$subfile;
           $toplevel = '.java';
         }
+        // Signatures starting in android. belong into the Java module as well.
+        elseif (preg_match('/^android\./', $sig)) {
+          $subfile = '>'.$toplevel.$subfile;
+          $toplevel = '.java';
+        }
         // Those dirs need to be subcategorized by their direct subdirs.
         $subcat_tls = array('db', 'extensions', 'media', 'modules');
         if (in_array($toplevel, $subcat_tls) && preg_match('/^\/([^\/]+)(\/.*)$/', $subfile, $regs)) {
