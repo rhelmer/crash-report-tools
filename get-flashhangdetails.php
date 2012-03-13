@@ -37,7 +37,7 @@ date_default_timezone_set('America/Los_Angeles');
 
 $reports = array(array('product'=>'Firefox',
                        'version'=>'4plus',
-                       'version_regex'=>'([4-9]|\d\d)\..*',
+                       'version_regex'=>'([4-9]|[0-9][0-9])\..*',
                        'version_display'=>'4+',
                       ),
                  array('product'=>'Firefox',
