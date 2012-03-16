@@ -375,8 +375,10 @@ foreach ($reports as $rep) {
                 print($crdata[$sigidx][$dayset[$i]]?'+':'-');
               }
               else { print('.'); }
-              $dataset[] = $t_factor[$dayset[$i]] *
-                           $crdata[$sigidx][$dayset[$i]] / $adu[$dayset[$i]];
+              $dataset[] = $adu[$dayset[$i]] ?
+                           $t_factor[$dayset[$i]] *
+                             $crdata[$sigidx][$dayset[$i]] / $adu[$dayset[$i]] :
+                           0;
               $rawcountset[] = $crdata[$sigidx][$dayset[$i]];
             }
 
