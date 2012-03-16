@@ -341,8 +341,9 @@ foreach ($reports as $rep) {
                           strtotime(date('Y-m-d', $anatime).' -'.$i.' day'));
           $dayset[] = $prevdir;
           $aduset[] = $adu[$prevdir];
-          $totalset[] = $t_factor[$prevdir] *
-                        $total[$prevdir] / $adu[$prevdir];
+          $totalset[] = $adu[$prevdir] ?
+                        $t_factor[$prevdir] * $total[$prevdir] / $adu[$prevdir] :
+                        0;
         }
         $exp_total = get_explosiveness($totalset, $aduset, $exp_vars);
         $exp_total['dataset'] = $totalset;
@@ -545,7 +546,7 @@ foreach ($reports as $rep) {
 function get_explosiveness($dataset, $aduset, $exp_vars) {
   $exp_out = array();
   $baseset_1 = array_slice($dataset, 1, 10);
-  $avgADU_1 = arr_mean(array_slice($aduset, 1, 10));
+  $avgADU_1 = max(arr_mean(array_slice($aduset, 1, 10)), 1);
   $base_1 = arr_mean($baseset_1);
   // maximum of the clamp/ADU and the distance of the max value to the mean
   $dist_1 = max($exp_vars['clamp_1'] / $avgADU_1, max($baseset_1) - $base_1);
@@ -554,7 +555,7 @@ function get_explosiveness($dataset, $aduset, $exp_vars) {
   $exp_out['warn_1'] = ($exp_out['explosiveness_1'] > $exp_vars['limit_1']);
 
   $baseset_3 = array_slice($dataset, 3, 10);
-  $avgADU_3 = arr_mean(array_slice($aduset, 3, 10));
+  $avgADU_3 = max(arr_mean(array_slice($aduset, 3, 10)), 1);
   $base_3 = arr_mean($baseset_3);
   // maximum of the clamp/ADU and the standard deviation of the mean
   $dist_3 = max($exp_vars['clamp_3'] / $avgADU_3, arr_stddev($baseset_3, $base_3));

@@ -287,7 +287,8 @@ foreach ($reports as $rep) {
           }
         }
         foreach ($fd[$fvertype]['crash'] as $fver=>$cnum) {
-          $crash_rate = $cnum / $fd['total_flash']['crash'];
+          $crash_rate = $fd['total_flash']['crash']?
+                        $cnum / $fd['total_flash']['crash']:0;
           if (!intval(@$fd[$fvertype]['hang'][$fver]) && $crash_rate > 0.0005) {
             $tr = $table->appendChild($doc->createElement('tr'));
             $td = $tr->appendChild($doc->createElement('td', $fver));
