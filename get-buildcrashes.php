@@ -322,10 +322,10 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           foreach ($listbuilds as $idx=>$builddata) {
             if (preg_match('/^'.preg_quote($product).'-/', $idx)) {
               $tr = $table->appendChild($doc->createElement('tr'));
-              $td = $tr->appendChild($doc->createElement('td', $builddata['product']));
-              $td = $tr->appendChild($doc->createElement('td', $builddata['version']));
-              $td = $tr->appendChild($doc->createElement('td', $builddata['buildid']));
-              $td = $tr->appendChild($doc->createElement('td', @$notes[$idx]));
+              $td = $tr->appendChild($doc->createElement('td', htmlentities($builddata['product'])));
+              $td = $tr->appendChild($doc->createElement('td', htmlentities($builddata['version'])));
+              $td = $tr->appendChild($doc->createElement('td', htmlentities($builddata['buildid'])));
+              $td = $tr->appendChild($doc->createElement('td', htmlentities(@$notes[$idx])));
               if (@$buildadu[$idx]) {
                 if (@$notes[$idx]) { $td->appendChild($doc->createElement('br')); }
                 if ($buildadu[$idx] > 10000000) { // 10M
