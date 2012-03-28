@@ -22,6 +22,9 @@ include_once('datautils.php');
 // turn on error reporting in the script output
 ini_set('display_errors', 1);
 
+// set higher memory limit so we can combine a lot of plugin and browser data
+ini_set('memory_limit', '256M');
+
 // make sure new files are set to -rw-r--r-- permissions
 umask(022);
 
