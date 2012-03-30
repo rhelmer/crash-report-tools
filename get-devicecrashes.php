@@ -344,11 +344,12 @@ foreach ($reports as $rep) {
         $style->appendChild($doc->createCDATASection(
             '.sig {'."\n"
             .'  font-size: small;'."\n"
+            .'  text-align: left;'."\n"
             .'}'."\n"
             .'.num, .pct {'."\n"
             .'  text-align: right;'."\n"
             .'}'."\n"
-            .'tr.devheader {'."\n"
+            .'tr.devheader, tr.sigheader {'."\n"
             .'  background: #EEEEAA;'."\n"
             .'}'."\n"
             .'tr.devheader:target {'."\n"
@@ -375,10 +376,23 @@ foreach ($reports as $rep) {
             'Total crashes analyzed in this report: '.$curdd['total_crashes']
             .($type == 'week'?' - covering 7 days up to and including '.$anadir.'.':'')));
 
-        $header = $body->appendChild($doc->createElement('h2', 'Overview'));
-        $header->setAttribute('id', 'files');
+        $list = $body->appendChild($doc->createElement('ul'));
+        foreach (array('overview' => 'Device Overview',
+                       'devices' => 'Top Signatures Per Device',
+                       'sigs' => 'Devices Per Signature')
+                 as $name=>$title) {
+          $item = $list->appendChild($doc->createElement('li'));
+          $link = $item->appendChild($doc->createElement('a', $title));
+          $link->setAttribute('href', '#'.$name);
+        }
 
-        $table = $body->appendChild($doc->createElement('table'));
+        $section = $body->appendChild($doc->createElement('section'));
+        $section->setAttribute('id', 'bydevice');
+
+        $header = $section->appendChild($doc->createElement('h2', 'Device Overview'));
+        $header->setAttribute('id', 'overview');
+
+        $table = $section->appendChild($doc->createElement('table'));
         $table->setAttribute('border', '1');
 
         // table head
@@ -387,12 +401,15 @@ foreach ($reports as $rep) {
         $th = $tr->appendChild($doc->createElement('th', 'Crashes'));
         $th = $tr->appendChild($doc->createElement('th', '%'));
 
-        // create a list of all device to be sorted by crash totals
+        // create a list of all devices to be sorted by crash totals
         $devtotals = array();
         foreach ($curdd['devices'] as $devname=>$devdata) {
           $devtotals[$devname] = $devdata['crashes'];
         }
         arsort($devtotals);
+
+        // variable for by-signature device stats
+        $ddbysig = array();
 
         foreach ($devtotals as $devname=>$count) {
           $idstring = 'dev-'.strtolower(str_replace(array(' ', '.'), '_', $devname));
@@ -407,11 +424,11 @@ foreach ($reports as $rep) {
           $td->setAttribute('class', 'pct');
         }
 
-        $header = $body->appendChild($doc->createElement('h2',
+        $header = $section->appendChild($doc->createElement('h2',
             'Top Signatures Per Device'));
-        $header->setAttribute('id', 'sigs');
+        $header->setAttribute('id', 'devices');
 
-        $table = $body->appendChild($doc->createElement('table'));
+        $table = $section->appendChild($doc->createElement('table'));
         $table->setAttribute('border', '1');
 
         foreach ($curdd['devices'] as $devname=>$devdata) {
@@ -431,6 +448,13 @@ foreach ($reports as $rep) {
 
           // signatures rows
           foreach ($devdata['signatures'] as $sig=>$count) {
+            // add element to by-signature array
+            if (!array_key_exists($sig, $ddbysig)) {
+              $ddbysig[$sig] = array('devices' => array(), '.count' => 0);
+            }
+            $ddbysig[$sig]['devices'][$devname] = $count;
+            $ddbysig[$sig]['.count'] += $count;
+
             $tr = $table->appendChild($doc->createElement('tr'));
             $td = $tr->appendChild($doc->createElement('td'));
             if (!strlen($sig)) {
@@ -451,6 +475,52 @@ foreach ($reports as $rep) {
           }
         }
 
+        $section = $body->appendChild($doc->createElement('section'));
+        $section->setAttribute('id', 'bysig');
+
+        // sort signatures and devices by count
+        uasort($ddbysig, 'count_compare'); // sort by count, highest-first
+        foreach ($ddbysig as $sig=>$sigdata) {
+          arsort($ddbysig[$sig]['devices']);
+        }
+
+        $header = $section->appendChild($doc->createElement('h2',
+            'Devices Per Signature'));
+        $header->setAttribute('id', 'sigs');
+
+        $table = $section->appendChild($doc->createElement('table'));
+        $table->setAttribute('border', '1');
+
+        foreach ($ddbysig as $sig=>$sigdata) {
+          $tr = $table->appendChild($doc->createElement('tr'));
+          $tr->setAttribute('class', 'sigheader');
+          $th = $tr->appendChild($doc->createElement('th'));
+          $th->setAttribute('class', 'sig');
+          if (!strlen($sig)) {
+            $link = $th->appendChild($doc->createElement('a', '(empty signature)'));
+            $link->setAttribute('href', $url_nullsiglink);
+          }
+          elseif ($sig == '\N') {
+            $th->appendChild($doc->createTextNode('(processing failure - "'.$sig.'")'));
+          }
+          else {
+            // common case, useful signature
+            $link = $th->appendChild($doc->createElement('a', htmlentities($sig)));
+            $link->setAttribute('href', $url_siglinkbase.rawurlencode($sig));
+          }
+          $th = $tr->appendChild($doc->createElement('th', $sigdata['.count']));
+          $th->setAttribute('class', 'num');
+
+          // signatures rows
+          foreach ($sigdata['devices'] as $devname=>$count) {
+            $tr = $table->appendChild($doc->createElement('tr'));
+            $td = $tr->appendChild($doc->createElement('td', htmlentities($devname)));
+            $td->setAttribute('class', 'devname');
+            $td = $tr->appendChild($doc->createElement('td', $count));
+            $td->setAttribute('class', 'num');
+          }
+        }
+
         $doc->saveHTMLFile($anafweb);
       }
     }
@@ -460,5 +530,12 @@ foreach ($reports as $rep) {
 }
 
 // *** helper functions ***
+
+// Comparison function using .count member (reverse sort!)
+function count_compare($a, $b) {
+  if ($a['.count'] == $b['.count']) { return 0; }
+  return ($a['.count'] > $b['.count']) ? -1 : 1;
+}
+
 
 ?>
