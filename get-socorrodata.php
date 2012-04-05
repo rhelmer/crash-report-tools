@@ -63,14 +63,30 @@ $on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
 $url_daily_mask = 'https://crash-stats.mozilla.com/daily?p=%s&v[]=%s&csv=1';
 //https://crash-stats.mozilla.com/daily?p=Firefox&v[]=10.0.1&os[]=Windows&os[]=Mac&os[]=Linux&date_start=2012-02-02&date_end=2012-02-16&form_selection=by_version&csv=1&hang_type=any
 
+// File storing the DB access data - including password!
+$fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
+
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
 else { chdir('/mnt/mozilla/projects/socorro/'); }
 
 
 // *** code start ***
 
-// get current day
+// Get current day.
 $curtime = time();
+
+if (file_exists($fdbsecret)) {
+  $dbsecret = json_decode(file_get_contents($fdbsecret), true);
+  // For info on what data can be accessed, see also
+  // http://socorro.readthedocs.org/en/latest/databasetabledesc.html
+}
+else {
+  // Won't work! (Set just for documenting what fields are in the file.)
+  $dbsecret = array("host" => "host.m.c", "port" => "6432",
+                    "user" => "analyst", "password" => "foo");
+  print('ERROR: No DB secrests found, aborting!'."\n");
+  exit(1);
+}
 
 foreach ($daily as $product=>$versions) {
   $fproddata = $product.'-daily.json';
