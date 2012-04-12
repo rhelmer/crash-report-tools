@@ -12,6 +12,24 @@ function awk_quote($string) {
                array('`'=>'\140',"'"=>'\047'));
 }
 
+// Function to saanitize names to be used in IDs, etc.
+function sanitize_name($string) {
+  $conv_name = strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $string));
+  $newname = ''; $i = 0;
+  while (($i < strlen($conv_name)) && (strlen($newname) < $maxlength)) {
+    if (((ord($conv_name{$i}) >= 48) && (ord($conv_name{$i}) <= 57)) ||
+        ((ord($conv_name{$i}) >= 97) && (ord($conv_name{$i}) <= 122))) {
+      $newname .= $conv_name{$i};
+    }
+    elseif ($newname{strlen($newname)-1} != '_') {
+      $newname .= '_';
+    }
+    $i++;
+  }
+  $newname = trim($newname, '_');
+  return $newname;
+}
+
 // Function to calculate square of value - mean
 function arr_mean($array) { return array_sum($array) / count($array); }
 

@@ -401,7 +401,7 @@ foreach ($reports as $rep) {
         $ddbysig = array();
 
         foreach ($devtotals as $devname=>$count) {
-          $idstring = 'dev-'.strtolower(str_replace(array(' ', '.'), '_', iconv('UTF-8', 'ASCII//TRANSLIT', $devname)));
+          $idstring = 'dev-'.sanitize_name($devname);
           $tr = $table->appendChild($doc->createElement('tr'));
           $td = $tr->appendChild($doc->createElement('td'));
           $link = $td->appendChild($doc->createElement('a', htmlentities($devname)));
