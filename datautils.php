@@ -12,11 +12,11 @@ function awk_quote($string) {
                array('`'=>'\140',"'"=>'\047'));
 }
 
-// Function to saanitize names to be used in IDs, etc.
-function sanitize_name($string) {
+// Function to sanitize names to be used in IDs, etc.
+function sanitize_name($string, $maxlength = 0) {
   $conv_name = strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $string));
   $newname = ''; $i = 0;
-  while (($i < strlen($conv_name)) && (strlen($newname) < $maxlength)) {
+  while (($i < strlen($conv_name)) && (!$maxlength || (strlen($newname) < $maxlength))) {
     if (((ord($conv_name{$i}) >= 48) && (ord($conv_name{$i}) <= 57)) ||
         ((ord($conv_name{$i}) >= 97) && (ord($conv_name{$i}) <= 122))) {
       $newname .= $conv_name{$i};
