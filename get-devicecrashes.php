@@ -404,7 +404,7 @@ foreach ($reports as $rep) {
           $idstring = 'dev-'.sanitize_name($devname);
           $tr = $table->appendChild($doc->createElement('tr'));
           $td = $tr->appendChild($doc->createElement('td'));
-          $link = $td->appendChild($doc->createElement('a', htmlentities($devname)));
+          $link = $td->appendChild($doc->createElement('a', htmlentities($devname, ENT_COMPAT, 'UTF-8')));
           $link->setAttribute('href', '#'.$idstring);
           $td = $tr->appendChild($doc->createElement('td', $count));
           $td->setAttribute('class', 'num');
@@ -426,7 +426,7 @@ foreach ($reports as $rep) {
           $tr = $table->appendChild($doc->createElement('tr'));
           $tr->setAttribute('id', $idstring);
           $tr->setAttribute('class', 'devheader');
-          $th = $tr->appendChild($doc->createElement('th', htmlentities($devname)));
+          $th = $tr->appendChild($doc->createElement('th', htmlentities($devname, ENT_COMPAT, 'UTF-8')));
           $th->setAttribute('colspan', 2);
 
           $tr = $table->appendChild($doc->createElement('tr'));
@@ -503,7 +503,7 @@ foreach ($reports as $rep) {
           // signatures rows
           foreach ($sigdata['devices'] as $devname=>$count) {
             $tr = $table->appendChild($doc->createElement('tr'));
-            $td = $tr->appendChild($doc->createElement('td', htmlentities($devname)));
+            $td = $tr->appendChild($doc->createElement('td', htmlentities($devname, ENT_COMPAT, 'UTF-8')));
             $td->setAttribute('class', 'devname');
             $td = $tr->appendChild($doc->createElement('td', $count));
             $td->setAttribute('class', 'num');
