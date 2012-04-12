@@ -421,7 +421,7 @@ foreach ($reports as $rep) {
         $table->setAttribute('border', '1');
 
         foreach ($curdd['devices'] as $devname=>$devdata) {
-          $idstring = 'dev-'.strtolower(str_replace(array(' ', '.'), '_', $devname));
+          $idstring = 'dev-'.sanitize_name($devname);
 
           $tr = $table->appendChild($doc->createElement('tr'));
           $tr->setAttribute('id', $idstring);
