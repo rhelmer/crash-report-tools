@@ -21,7 +21,7 @@ function sanitize_name($string, $maxlength = 0) {
         ((ord($conv_name{$i}) >= 97) && (ord($conv_name{$i}) <= 122))) {
       $newname .= $conv_name{$i};
     }
-    elseif ($newname{strlen($newname)-1} != '_') {
+    elseif (strlen($newname) && ($newname{strlen($newname)-1} != '_')) {
       $newname .= '_';
     }
     $i++;
