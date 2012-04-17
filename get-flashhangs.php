@@ -105,7 +105,7 @@ foreach ($reports as $rep) {
     $fhangdata = $prdshort.$dashver.'-flashhangs.csv';
     $fweb = $anadir.'.'.$prd.$dotver.'.flashhangs.html';
 
-    if (!array_key_exists($anadir, $flashdata)) {
+    if (!array_key_exists($anadir, $flashdata) || !file_exists($anadir.'/'.$fhangdata)) {
       // make sure we have the crashdata csv
       if ($on_moz_server) {
         $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
