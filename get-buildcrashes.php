@@ -320,16 +320,21 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             }
           }
           $th = $tr->appendChild($doc->createElement('th', 'normalized'));
-          $th->setAttribute('title', 'total minus half of all hangs (as hangs always come in pairs)');
+          $th->setAttribute('title',
+              'total minus half of all hangs (as hangs always come in pairs)');
 
           // signatures rows
           foreach ($listbuilds as $idx=>$builddata) {
             if (preg_match('/^'.preg_quote($product).'-/', $idx)) {
               $tr = $table->appendChild($doc->createElement('tr'));
-              $td = $tr->appendChild($doc->createElement('td', htmlentities($builddata['product'])));
-              $td = $tr->appendChild($doc->createElement('td', htmlentities($builddata['version'])));
-              $td = $tr->appendChild($doc->createElement('td', htmlentities($builddata['buildid'])));
-              $td = $tr->appendChild($doc->createElement('td', htmlentities(@$notes[$idx])));
+              $td = $tr->appendChild($doc->createElement('td',
+                  htmlentities($builddata['product'], ENT_COMPAT, 'UTF-8')));
+              $td = $tr->appendChild($doc->createElement('td',
+                  htmlentities($builddata['version'], ENT_COMPAT, 'UTF-8')));
+              $td = $tr->appendChild($doc->createElement('td',
+                  htmlentities($builddata['buildid'], ENT_COMPAT, 'UTF-8')));
+              $td = $tr->appendChild($doc->createElement('td',
+                  htmlentities(@$notes[$idx], ENT_COMPAT, 'UTF-8')));
               if (@$buildadu[$idx]) {
                 if (@$notes[$idx]) { $td->appendChild($doc->createElement('br')); }
                 if ($buildadu[$idx] > 10000000) { // 10M
