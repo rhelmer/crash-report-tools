@@ -32,8 +32,8 @@ date_default_timezone_set('America/Los_Angeles');
 // *** data gathering variables ***
 
 // channels
-$channels = array('beta' => '12\.0',
-                  'release' => '11\.0(\.\d)?',
+$channels = array('beta' => '1[23]\.0',
+                  'release' => '1[12]\.0(\.\d)?',
                   'aurora' => '13\.0a2',
                   'nightly' => '14\.0a1');
 
