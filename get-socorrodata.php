@@ -80,6 +80,10 @@ $day_end = date('Y-m-d', strtotime('yesterday'));
 
 if (file_exists($fdbsecret)) {
   $dbsecret = json_decode(file_get_contents($fdbsecret), true);
+  if (!is_array($dbsecret) || !count($dbsecret)) {
+    print('ERROR: No DB secrets found, aborting!'."\n");
+    exit(1);
+  }
   // For info on what data can be accessed, see also
   // http://socorro.readthedocs.org/en/latest/databasetabledesc.html
 }
@@ -87,7 +91,7 @@ else {
   // Won't work! (Set just for documenting what fields are in the file.)
   $dbsecret = array('host' => 'host.m.c', 'port' => '6432',
                     'user' => 'analyst', 'password' => 'foo');
-  print('ERROR: No DB secrests found, aborting!'."\n");
+  print('ERROR: No DB secrets found, aborting!'."\n");
   exit(1);
 }
 
@@ -135,15 +139,13 @@ foreach ($daily as $product=>$versions) {
               ."AND version_string IN ('".implode("','", $versions)."') "
               ."AND adu_date BETWEEN '".$day_start."' AND '".$day_end."' "
               .'ORDER BY adu_date DESC, version DESC;';
-    print($db_query."\n");
 
   $result = pg_query($db_conn, $db_query);
   if (!$result) {
     print('--- ERROR: query failed!'."\n");
   }
 
-  while ($row = pg_fetch_row($result)) {
-    print($row['adu_date'].' '.$row['version'].' '.$row['crashes'].' '.$row['adu']."\n");
+  while ($row = pg_fetch_array($result)) {
     $ver = $row['version'];
     $day = $row['adu_date'];
     $crashes = intval($row['crashes']);
@@ -155,5 +157,4 @@ foreach ($daily as $product=>$versions) {
   }
   file_put_contents($fproddata, json_encode($proddata));
 }
-
 ?>
