@@ -97,11 +97,11 @@ foreach ($daily as $product=>$versions) {
   if (file_exists($fproddata)) {
     print('Read stored '.$product.' daily data'."\n");
     $proddata = json_decode(file_get_contents($fproddata), true);
-    $db_conn = pg_pconnect('host='.$dbsecrect['host']
-                           .' port='.$dbsecrect['port']
+    $db_conn = pg_pconnect('host='.$dbsecret['host']
+                           .' port='.$dbsecret['port']
                            .' dbname=breakpad'
-                           .' user='.$dbsecrect['user']
-                           .' password='.$dbsecrect['password']);
+                           .' user='.$dbsecret['user']
+                           .' password='.$dbsecret['password']);
     if (!$db_conn) {
       print('ERROR: DB connection failed, aborting!'."\n");
       exit(1);
