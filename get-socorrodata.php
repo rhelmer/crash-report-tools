@@ -74,8 +74,9 @@ else { chdir('/mnt/mozilla/projects/socorro/'); }
 
 // *** code start ***
 
-// Get current day.
-$curtime = time();
+// Get start and end dates
+$day_start = date('Y-m-d', strtotime('15 days ago'));
+$day_end = date('Y-m-d', strtotime('yesterday'));
 
 if (file_exists($fdbsecret)) {
   $dbsecret = json_decode(file_get_contents($fdbsecret), true);
@@ -84,8 +85,8 @@ if (file_exists($fdbsecret)) {
 }
 else {
   // Won't work! (Set just for documenting what fields are in the file.)
-  $dbsecret = array("host" => "host.m.c", "port" => "6432",
-                    "user" => "analyst", "password" => "foo");
+  $dbsecret = array('host' => 'host.m.c', 'port' => '6432',
+                    'user' => 'analyst', 'password' => 'foo');
   print('ERROR: No DB secrests found, aborting!'."\n");
   exit(1);
 }
@@ -96,32 +97,60 @@ foreach ($daily as $product=>$versions) {
   if (file_exists($fproddata)) {
     print('Read stored '.$product.' daily data'."\n");
     $proddata = json_decode(file_get_contents($fproddata), true);
+    $db_conn = pg_pconnect('host='.$dbsecrect['host']
+                           .' port='.$dbsecrect['port']
+                           .' dbname=breakpad'
+                           .' user='.$dbsecrect['user']
+                           .' password='.$dbsecrect['password']);
+    if (!$db_conn) {
+      print('ERROR: DB connection failed, aborting!'."\n");
+      exit(1);
+    }
   }
   else {
     $proddata = array();
+    $db_conn = null;
   }
 
-  foreach ($versions as $ver) {
-    print('Fetch daily data for '.$product.' '.$ver."\n");
-    $dailycsv = file(sprintf($url_daily_mask, $product, $ver));
-    foreach ($dailycsv as $csvline) {
-      $fields = explode(',', $csvline);
-      if ($fields[0] == 'Date') {
-        // This is the first line, check if this is the right data
-        if ($fields[1] != $product.' '.$ver.' Crashes') {
-          print('--- ERROR: Got '.$fields[1].' instead!'."\n");
-          break;
-        }
-      }
-      elseif (preg_match('/^\d+-\d+-\d+$/', $fields[0])) {
-        $day = $fields[0];
-        $crashes = intval($fields[1]);
-        $adu = intval($fields[2]);
-        if ($crashes && $adu) {
-          $proddata[$ver][$day] = array('crashes' => $crashes,
-                                        'adu' => $adu);
-        }
-      }
+    print('Fetch daily data for '.$product.' '.implode(', ', $versions)."\n");
+  // See https://bugzilla.mozilla.org/show_bug.cgi?id=733489#c1
+  // for example queries to get /daily numbers.
+
+  /* Query for numbers that exactly match /daily (only matching major OSes):
+    SELECT adu_date, product_name as Product, version_string as Version,
+          SUM(adjusted_crashes) as Crashes, SUM(adu_count) as ADU
+    FROM product_os_crash_ratio
+    WHERE product_name = 'Firefox'
+          and version_string = '11.0'
+          and adu_date between '2012-04-20' and '2012-04-26'
+          and os_name in ('Windows', 'Mac OS X', 'Linux')
+    GROUP BY adu_date, Product, Version
+    ORDER BY adu_date desc;
+  */
+
+  $db_query = 'SELECT adu_date, version_string as version, '
+              .'adjusted_crashes as crashes, adu_count as adu '
+              .'FROM product_crash_ratio '
+              ."WHERE product_name = '".$product."' "
+              ."AND version_string IN ('".implode("','", $versions)."') "
+              ."AND adu_date BETWEEN '".$day_start."' AND '".$day_end."' "
+              .'ORDER BY adu_date DESC, version DESC;';
+    print($db_query."\n");
+
+  $result = pg_query($db_conn, $db_query);
+  if (!$result) {
+    print('--- ERROR: query failed!'."\n");
+  }
+
+  while ($row = pg_fetch_row($result)) {
+    print($row['adu_date'].' '.$row['version'].' '.$row['crashes'].' '.$row['adu']."\n");
+    $ver = $row['version'];
+    $day = $row['adu_date'];
+    $crashes = intval($row['crashes']);
+    $adu = intval($row['adu']);
+    if ($crashes && $adu) {
+      $proddata[$ver][$day] = array('crashes' => $crashes,
+                                    'adu' => $adu);
     }
   }
   file_put_contents($fproddata, json_encode($proddata));
