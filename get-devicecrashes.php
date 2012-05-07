@@ -213,7 +213,9 @@ foreach ($reports as $rep) {
         $devname = str_replace('Samsung SAMSUNG-', 'Samsung ', $devname);
         $devname = str_replace('SAMSUNG SAMSUNG-', 'Samsung ', $devname);
         $devname = str_replace('Acer Acer', 'Acer ', $devname);
+        $devname = str_replace('Asus ASUS', 'ASUS ', $devname);
         $devname = str_replace('Sony Sony', 'Sony', $devname);
+        $devname = str_replace('HUAWEI HUAWEI', 'HUAWEI', $devname);
         $devname = str_replace('Hp HP', 'HP', $devname);
         $devname = str_replace('Dell Inc. Dell', 'Dell', $devname);
         $devname = str_replace('MID MID', 'MID', $devname);
