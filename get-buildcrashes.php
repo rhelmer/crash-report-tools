@@ -33,7 +33,7 @@ date_default_timezone_set('America/Los_Angeles');
 
 // channels
 $channels = array('beta' => '13\.0',
-                  'release' => '11\.0(\.\d)?',
+                  'release' => '12\.0(\.\d)?',
                   'aurora' => '14\.0a2',
                   'nightly' => '15\.0a1');
 
