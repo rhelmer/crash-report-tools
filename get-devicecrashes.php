@@ -43,11 +43,6 @@ $reports = array(array('product'=>'Fennec',
                       ),
                  array('product'=>'Fennec',
                        'channel'=>'beta',
-                       'version'=>'12.0',
-                       'weekly'=>true,
-                      ),
-                 array('product'=>'Fennec',
-                       'channel'=>'beta',
                        'version'=>'13.0',
                        'weekly'=>true,
                       ),
@@ -218,6 +213,7 @@ foreach ($reports as $rep) {
         $devname = str_replace('HUAWEI HUAWEI', 'HUAWEI', $devname);
         $devname = str_replace('Hp HP', 'HP', $devname);
         $devname = str_replace('Dell Inc. Dell', 'Dell', $devname);
+        $devname = str_replace('Archos ARCHOS', 'Archos', $devname);
         $devname = str_replace('MID MID', 'MID', $devname);
         $devname = str_replace('Amazon Amazon ', 'Amazon ', $devname);
         $devname = str_replace('Unknown Amazon ', 'Amazon ', $devname);
