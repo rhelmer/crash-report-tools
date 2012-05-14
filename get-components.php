@@ -208,6 +208,11 @@ foreach ($reports as $rep) {
           $toplevel = '.flash';
           $subfile = null;
         }
+        elseif (preg_match('/^e:\\\\fp_win_nf\\\\/', $rawline, $regs)) {
+          $sig = $regs[1]; // signature
+          $toplevel = '.flash';
+          $subfile = $path;
+        }
         elseif (preg_match('/^(.*);(.*)$/', $rawline, $regs)) { // always matches
           $sig = $regs[1]; // signature
           $path = $regs[2]; // should be a file path of some kind
