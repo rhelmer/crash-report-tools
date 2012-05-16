@@ -66,6 +66,9 @@ $on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
 $url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
                              :'http://people.mozilla.com/crash_analysis/';
 
+// File storing the DB access data - including password!
+$fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
+
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
 else { chdir('/mnt/mozilla/projects/socorro/'); }
 
@@ -74,17 +77,50 @@ else { chdir('/mnt/mozilla/projects/socorro/'); }
 // get current day
 $curtime = time();
 
+if (file_exists($fdbsecret)) {
+  $dbsecret = json_decode(file_get_contents($fdbsecret), true);
+  if (!is_array($dbsecret) || !count($dbsecret)) {
+    print('ERROR: No DB secrets found, aborting!'."\n");
+    exit(1);
+  }
+  $db_conn = pg_pconnect('host='.$dbsecret['host']
+                         .' port='.$dbsecret['port']
+                         .' dbname=breakpad'
+                         .' user='.$dbsecret['user']
+                         .' password='.$dbsecret['password']);
+  if (!$db_conn) {
+    print('ERROR: DB connection failed, aborting!'."\n");
+    exit(1);
+  }
+  // For info on what data can be accessed, see also
+  // http://socorro.readthedocs.org/en/latest/databasetabledesc.html
+  // For the DB schema, see
+  // https://github.com/mozilla/socorro/blob/master/sql/schema.sql
+}
+else {
+  // Won't work! (Set just for documenting what fields are in the file.)
+  $dbsecret = array('host' => 'host.m.c', 'port' => '6432',
+                    'user' => 'analyst', 'password' => 'foo');
+  print('ERROR: No DB secrets found, aborting!'."\n");
+  exit(1);
+}
+
 foreach ($reports as $rep) {
-  $ver = $rep['version'];
-  $dashver = strlen($ver)?'-'.$ver:$ver;
-  $dotver = strlen($ver)?'.'.$ver:$ver;
-  $spcver = strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):$ver;
-
+  $channel = array_key_exists('channel', $rep)?$rep['channel']:'';
+  $ver = array_key_exists('version', $rep)?$rep['version']:'';
   $prd = strtolower($rep['product']);
-  $prdshort = ($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':$prd);
+  $prdvershort = (($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':(($prd == 'fennecandroid')?'fna':$prd)))
+                 .(strlen($channel)?'-'.$channel:'')
+                 .(strlen($ver)?'-'.$ver:'');
+  $prdverfile = $prd
+                .(strlen($channel)?'.'.$channel:'')
+                .(strlen($ver)?'.'.$ver:'');
+  $prdverdisplay = $rep['product']
+                   .(strlen($channel)?' '.ucfirst($channel):'')
+                   .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
-  $fdfile = $prdshort.$dashver.'.flashhang.json';
-  $fwebsum = $prd.$dotver.'.flashsummary.html';
+  $fdfile = $prdvershort.'.flashhang.json';
+  $fwebsum = $prdverfile.'.flashsummary.html';
 
   if (file_exists($fdfile)) {
     print('Read stored data'."\n");
@@ -100,85 +136,78 @@ foreach ($reports as $rep) {
     print('Looking at data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
-    $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
-    $frawdata = $prdshort.$dashver.'-flashhangs-raw.csv';
-    $fhangdata = $prdshort.$dashver.'-flashhangs.csv';
-    $fweb = $anadir.'.'.$prd.$dotver.'.flashhangs.html';
+    $fweb = $anadir.'.'.$prdverfile.'.flashhangs.html';
 
     if (!array_key_exists($anadir, $flashdata) || !file_exists($anadir.'/'.$fhangdata)) {
-      // make sure we have the crashdata csv
-      if ($on_moz_server) {
-        $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-        if (!file_exists($anafcsvgz)) { break; }
+      print('Fetch Flash/hang data for '.$prdverdisplay."\n");
+
+      // product_version_id, product_name, major_version, release_version,
+      // version_string, beta_number, version_sort, build_date, sunset_date,
+      // featured_version, build_type
+      // SELECT * FROM product_versions WHERE product_name = 'Firefox'
+      // AND release_version = '13.0' AND build_type = #ucfirst($rep['channel'])#;
+
+      $pv_ids = array();
+      $pv_query =
+        'SELECT product_version_id '
+        .'FROM product_versions '
+        ."WHERE product_name = '".$rep['product']."'"
+        .(strlen($ver)
+          ?' AND release_version '.(isset($rep['version_regex'])
+                                    ?"~ '^".$rep['version_regex']."$'"
+                                    :"= '".$ver."'")
+          :'')
+        .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
+        .';';
+      $pv_result = pg_query($db_conn, $pv_query);
+      if (!$pv_result) {
+        print('--- ERROR: query failed!'."\n");
       }
-      else {
-        $anafcsv = $anadir.'/'.$fcsv;
-        if (!file_exists($anafcsv)) {
-          print('Fetching '.$anafcsv.' from the web'."\n");
-          $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-          if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
-        }
-        if (!file_exists($anafcsv)) { break; }
+      while ($pv_row = pg_fetch_array($pv_result)) {
+        $pv_ids[] = $pv_row['product_version_id'];
       }
 
-      // get flash hang data for the product
-      $anafrawdata = $anadir.'/'.$frawdata;
-      if (!file_exists($anafrawdata)) {
-        print('Getting raw '.$rep['product'].$spcver.' Flash/hang data'."\n");
-        // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
-        // some parts from that split into total and crashcount blocks, though
-        // $7 is product, $8 is version, $22 is flash version, $23 is hang id
-        $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-               .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
-               .' {printf "\t%s;%s\n",($23!="\\\\N"),$22}\'';
-        if ($on_moz_server) {
-          shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' > '.$anafrawdata);
-        }
-        else {
-          shell_exec($cmd.' '.$anafcsv.' > '.$anafrawdata);
-        }
+      $rep_query =
+        'SELECT COUNT(*) as cnt, flash_version, LENGTH(hang_id)>0 as is_hang '
+        .'FROM reports_clean LEFT JOIN flash_versions'
+        .' ON (reports_clean.flash_version_id=flash_versions.flash_version_id) '
+        .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+        ." AND utc_day_is(date_processed, '".$anadir."')"
+        .'GROUP BY flash_version, is_hang '
+        .'ORDER BY cnt DESC;';
+
+      $rep_result = pg_query($db_conn, $rep_query);
+      if (!$rep_result) {
+        print('--- ERROR: query failed!'."\n");
       }
 
-      // get summarized list with counts per flash version and hang/crash
-      $anafhangdata = $anadir.'/'.$fhangdata;
-      if (!file_exists($anafhangdata)) {
-        print('Getting a summary data list'."\n");
-        $cmd = 'cat '.$anafrawdata.' | sort | uniq -c | sort -nr > '.$anafhangdata;
-        shell_exec($cmd);
-      }
-
-      // fill data array with summarized data
-      print('Generating sums and structuring data'."\n");
-      $anaflashdata = explode("\n", file_get_contents($anafhangdata));
       $fd = array('total' => array('hang' => 0, 'crash' => 0),
                   'total_flash' => array('hang' => 0, 'crash' => 0),
                   'full' => array('hang' => array(), 'crash' => array()),
                   'main' => array('hang' => array(), 'crash' => array()));
-      foreach ($anaflashdata as $flashline) {
-        if (preg_match('/^\s*(\d+)\s+(.*);(.*)$/', $flashline, $regs)) {
-          $htype = $regs[2]?'hang':'crash';
-          $fver = intval($regs[3])?$regs[3]:'';
-          if (preg_match('/^(\d+\.\d+)/', $fver, $fvregs)) {
-            $fvshort = $fvregs[1];
-          }
-          else {
-            $fvshort = $fver;
-          }
-          if (array_key_exists($fver, $fd['full'][$htype])) {
-            $fd['full'][$htype][$fver] += $regs[1];
-          }
-          else {
-            $fd['full'][$htype][$fver] = $regs[1];
-          }
-          if (array_key_exists($fvshort, $fd['main'][$htype])) {
-            $fd['main'][$htype][$fvshort] += $regs[1];
-          }
-          else {
-            $fd['main'][$htype][$fvshort] = $regs[1];
-          }
-          $fd['total'][$htype] += $regs[1];
-          if (strlen($fver)) { $fd['total_flash'][$htype] += $regs[1]; }
+      while ($rep_row = pg_fetch_array($rep_result)) {
+        $htype = $rep_row['is_hang']?'hang':'crash';
+        $fver = preg_match('/^\d/', $rep_row['flash_version'])?$rep_row['flash_version']:'';
+        if (preg_match('/^(\d+\.\d+)/', $fver, $fvregs)) {
+          $fvshort = $fvregs[1];
         }
+        else {
+          $fvshort = $fver;
+        }
+        if (array_key_exists($fver, $fd['full'][$htype])) {
+          $fd['full'][$htype][$fver] += $rep_row['cnt'];
+        }
+        else {
+          $fd['full'][$htype][$fver] = $rep_row['cnt'];
+        }
+        if (array_key_exists($fvshort, $fd['main'][$htype])) {
+          $fd['main'][$htype][$fvshort] += $rep_row['cnt'];
+        }
+        else {
+          $fd['main'][$htype][$fvshort] = $rep_row['cnt'];
+        }
+        $fd['total'][$htype] += $rep_row['cnt'];
+        if (strlen($fver)) { $fd['total_flash'][$htype] += $rep_row['cnt']; }
       }
       $flashdata[$anadir] = $fd;
 
@@ -197,18 +226,18 @@ foreach ($reports as $rep) {
       $root = $doc->appendChild($doc->createElement('html'));
       $head = $root->appendChild($doc->createElement('head'));
       $title = $head->appendChild($doc->createElement('title',
-          $anadir.' '.$rep['product'].$spcver.' Flash Hang Report'));
+          $anadir.' '.$prdverdisplay.' Flash Hang Report'));
 
       $body = $root->appendChild($doc->createElement('body'));
       $h1 = $body->appendChild($doc->createElement('h1',
-          $anadir.' '.$rep['product'].$spcver.' Flash Hang Report'));
+          $anadir.' '.$prdverdisplay.' Flash Hang Report'));
 
       $fd = $flashdata[$anadir];
 
       // description
       $para = $body->appendChild($doc->createElement('p',
           'All Flash versions reported in hangs '
-          .' on '.$rep['product'].$spcver.','
+          .' on '.$prdverdisplay.','
           .' compared to how often that Flash version appears in crashes.'));
 
       $para = $body->appendChild($doc->createElement('p',
@@ -311,15 +340,15 @@ foreach ($reports as $rep) {
     $root = $doc->appendChild($doc->createElement('html'));
     $head = $root->appendChild($doc->createElement('head'));
     $title = $head->appendChild($doc->createElement('title',
-        $rep['product'].$spcver.' Flash Summary Report'));
+        $prdverdisplay.' Flash Summary Report'));
 
     $body = $root->appendChild($doc->createElement('body'));
     $h1 = $body->appendChild($doc->createElement('h1',
-        $rep['product'].$spcver.' Flash Summary Report'));
+        $prdverdisplay.' Flash Summary Report'));
 
     // description
     $para = $body->appendChild($doc->createElement('p',
-        'Daily sums of crash and hang reports on '.$rep['product'].$spcver.','
+        'Daily sums of crash and hang reports on '.$prdverdisplay.','
         .' that contain a Flash version, compared to daily total reports.'));
 
     $para = $body->appendChild($doc->createElement('p',
