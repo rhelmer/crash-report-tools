@@ -84,6 +84,15 @@ if (file_exists($fdbsecret)) {
     print('ERROR: No DB secrets found, aborting!'."\n");
     exit(1);
   }
+  $db_conn = pg_pconnect('host='.$dbsecret['host']
+                          .' port='.$dbsecret['port']
+                          .' dbname=breakpad'
+                          .' user='.$dbsecret['user']
+                          .' password='.$dbsecret['password']);
+  if (!$db_conn) {
+    print('ERROR: DB connection failed, aborting!'."\n");
+    exit(1);
+  }
   // For info on what data can be accessed, see also
   // http://socorro.readthedocs.org/en/latest/databasetabledesc.html
   // For the DB schema, see
@@ -103,22 +112,12 @@ foreach ($daily as $product=>$versions) {
   if (file_exists($fproddata)) {
     print('Read stored '.$product.' daily data'."\n");
     $proddata = json_decode(file_get_contents($fproddata), true);
-    $db_conn = pg_pconnect('host='.$dbsecret['host']
-                           .' port='.$dbsecret['port']
-                           .' dbname=breakpad'
-                           .' user='.$dbsecret['user']
-                           .' password='.$dbsecret['password']);
-    if (!$db_conn) {
-      print('ERROR: DB connection failed, aborting!'."\n");
-      exit(1);
-    }
   }
   else {
     $proddata = array();
-    $db_conn = null;
   }
 
-    print('Fetch daily data for '.$product.' '.implode(', ', $versions)."\n");
+  print('Fetch daily data for '.$product.' '.implode(', ', $versions)."\n");
   // See https://bugzilla.mozilla.org/show_bug.cgi?id=733489#c1
   // for example queries to get /daily numbers.
 
