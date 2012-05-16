@@ -47,7 +47,7 @@ $daily = array(
                       '11.0b1', '11.0b2', '11.0b3', '11.0b4', '11.0b5', '11.0b6',
                       '12.0a2', '12.0b1', '12.0b2', '12.0b3', '12.0b4', '12.0b5', '12.0b6',
                       '13.0a1', '13.0a2', '13.0b1', '13.0b2', '13.0b3',
-                      '14.0a1', '14.0a2', '14.0b1',
+                      '14.0a1', '14.0a2', '14.0b1', '14.0b2',
                       '15.0a1'),
     'FennecAndroid' => array('11.0b1', '11.0b2', '12.0a2',
                              '13.0a1', '13.0a2',
@@ -86,6 +86,8 @@ if (file_exists($fdbsecret)) {
   }
   // For info on what data can be accessed, see also
   // http://socorro.readthedocs.org/en/latest/databasetabledesc.html
+  // For the DB schema, see
+  // https://github.com/mozilla/socorro/blob/master/sql/schema.sql
 }
 else {
   // Won't work! (Set just for documenting what fields are in the file.)
