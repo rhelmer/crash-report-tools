@@ -71,6 +71,9 @@ $url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
 $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
 $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
 
+// File storing the DB access data - including password!
+$fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
+
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
 else { chdir('/mnt/mozilla/projects/socorro/'); }
 
@@ -79,16 +82,49 @@ else { chdir('/mnt/mozilla/projects/socorro/'); }
 // get current day
 $curtime = time();
 
+if (file_exists($fdbsecret)) {
+  $dbsecret = json_decode(file_get_contents($fdbsecret), true);
+  if (!is_array($dbsecret) || !count($dbsecret)) {
+    print('ERROR: No DB secrets found, aborting!'."\n");
+    exit(1);
+  }
+  $db_conn = pg_pconnect('host='.$dbsecret['host']
+                         .' port='.$dbsecret['port']
+                         .' dbname=breakpad'
+                         .' user='.$dbsecret['user']
+                         .' password='.$dbsecret['password']);
+  if (!$db_conn) {
+    print('ERROR: DB connection failed, aborting!'."\n");
+    exit(1);
+  }
+  // For info on what data can be accessed, see also
+  // http://socorro.readthedocs.org/en/latest/databasetabledesc.html
+  // For the DB schema, see
+  // https://github.com/mozilla/socorro/blob/master/sql/schema.sql
+}
+else {
+  // Won't work! (Set just for documenting what fields are in the file.)
+  $dbsecret = array('host' => 'host.m.c', 'port' => '6432',
+                    'user' => 'analyst', 'password' => 'foo');
+  print('ERROR: No DB secrets found, aborting!'."\n");
+  exit(1);
+}
+
 foreach ($reports as $rep) {
-  $ver = $rep['version'];
-  $dashver = strlen($ver)?'-'.$ver:$ver;
-  $dotver = strlen($ver)?'.'.$ver:$ver;
-  $spcver = strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):$ver;
-
+  $channel = array_key_exists('channel', $rep)?$rep['channel']:'';
+  $ver = array_key_exists('version', $rep)?$rep['version']:'';
   $prd = strtolower($rep['product']);
-  $prdshort = ($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':$prd);
+  $prdvershort = (($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':(($prd == 'fennecandroid')?'fna':$prd)))
+                 .(strlen($channel)?'-'.$channel:'')
+                 .(strlen($ver)?'-'.$ver:'');
+  $prdverfile = $prd
+                .(strlen($channel)?'.'.$channel:'')
+                .(strlen($ver)?'.'.$ver:'');
+  $prdverdisplay = $rep['product']
+                   .(strlen($channel)?' '.ucfirst($channel):'')
+                   .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
-  $fdfile = $prdshort.$dashver.'.flashhang.json';
+  $fdfile = $prdvershort.'.flashhang.json';
   if (file_exists($fdfile)) {
     print('Read stored data'."\n");
     $flashdata = json_decode(file_get_contents($fdfile), true);
@@ -97,100 +133,77 @@ foreach ($reports as $rep) {
     $flashdata = array();
   }
 
+  $pv_ids = array();
+  $pv_query =
+    'SELECT product_version_id '
+    .'FROM product_versions '
+    ."WHERE product_name = '".$rep['product']."'"
+    .(strlen($ver)
+      ?' AND release_version '.(isset($rep['version_regex'])
+                                ?"~ '^".$rep['version_regex']."$'"
+                                :"= '".$ver."'")
+      :'')
+    .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
+    .';';
+  $pv_result = pg_query($db_conn, $pv_query);
+  if (!$pv_result) {
+    print('--- ERROR: product version query failed!'."\n");
+  }
+  while ($pv_row = pg_fetch_array($pv_result)) {
+    $pv_ids[] = $pv_row['product_version_id'];
+  }
+
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
     print('Looking at data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
-    $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
-    $fhdplugin = $prdshort.$dashver.'-flashhangdetails-plugin.csv';
-    $fhdbrowser = $prdshort.$dashver.'-flashhangdetails-browser.csv';
-    $fhdrawdata = $prdshort.$dashver.'-flashhangdetails-raw.json';
-    $fhddata = $prdshort.$dashver.'-flashhangdetails.json';
-    $fweb = $anadir.'.'.$prd.$dotver.'.flashhangdetails.html';
+    $fhdrawdata = $prdvershort.'-fflashhangdetails-raw.json';
+    $fhddata = $prdvershort.'-fflashhangdetails.json';
+    $fweb = $anadir.'.'.$prdverfile.'.fflashhangdetails.html';
 
     // Make sure we have flashdata.
     if (!array_key_exists($anadir, $flashdata)) { break; }
 
-    // make sure we have the crashdata csv
-    if ($on_moz_server) {
-      $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-      if (!file_exists($anafcsvgz)) { break; }
-    }
-    else {
-      $anafcsv = $anadir.'/'.$fcsv;
-      if (!file_exists($anafcsv)) {
-        print('Fetching '.$anafcsv.' from the web'."\n");
-        $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-        if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
-      }
-      if (!file_exists($anafcsv)) { break; }
-    }
-
-    // Get plugin sides of flash hangs for the product.
-    $anafhdplugin = $anadir.'/'.$fhdplugin;
-    if (!file_exists($anafhdplugin)) {
-      print('Getting '.$rep['product'].$spcver.' plugin Flash hang data'."\n");
-      // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
-      // some parts from that split into total and crashcount blocks, though
-      // $1 is signature, $7 is product, $8 is version, $22 is flash version, $23 is hang id, $25 is process type
-      $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-              .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
-              .' && $22 ~ /^1/ && $23 !~ /^\\\\N$/ && $25 ~ /^plugin$/'
-              .' {printf "%s;%s;%s\n",$1,$23,$22}\'';
-      if ($on_moz_server) {
-        shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' > '.$anafhdplugin);
-      }
-      else {
-        shell_exec($cmd.' '.$anafcsv.' > '.$anafhdplugin);
-      }
-    }
-
-    // Get browser sides of flash hangs for the product.
-    $anafhdbrowser = $anadir.'/'.$fhdbrowser;
-    if (!file_exists($anafhdbrowser)) {
-      print('Getting '.$rep['product'].$spcver.' browser Flash hang data'."\n");
-      // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
-      // some parts from that split into total and crashcount blocks, though
-      // $1 is signature, $7 is product, $8 is version, $22 is flash version, $23 is hang id, $25 is process type
-      $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-              .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
-              .' && $25 !~ /^plugin$/'
-              .' {printf "%s;%s\n",$1,$23}\'';
-      if ($on_moz_server) {
-        shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' > '.$anafhdbrowser);
-      }
-      else {
-        shell_exec($cmd.' '.$anafcsv.' > '.$anafhdbrowser);
-      }
-    }
-
     // Get summarized list with counts per flash version and hang/crash.
     $anafhdrawdata = $anadir.'/'.$fhdrawdata;
     if (!file_exists($anafhdrawdata)) {
-      print('Combine plugin and browser data'."\n");
-      // Read browser data into an array.
-      $bsigs = array();
-      $anabrowser = explode("\n", file_get_contents($anafhdbrowser));
-      foreach ($anabrowser as $bline) {
-        if (preg_match('/^(.*);(.*)$/', $bline, $regs)) {
-          $bsigs[$regs[2]] = $regs[1];
-        }
+      print('Getting combined '.$prdverdisplay.' plugin and browser data'."\n");
+      $rep_query =
+        'SELECT plug.hang_id as hang_id, flash_version,'
+        .' plug.signature as plugin_sig, brwsr.signature as browser_sig '
+        .'FROM'
+        .' (SELECT signature, hang_id, flash_version_id'
+        .' FROM reports_clean LEFT JOIN signatures'
+        .' ON (reports_clean.signature_id=signatures.signature_id)'
+        .' WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+        ." AND utc_day_is(date_processed, '".$anadir."')"
+        ." AND LENGTH(hang_id)>0 AND process_type = 'plugin') as plug "
+        .'LEFT JOIN'
+        .' (SELECT signature, hang_id'
+        .' FROM reports_clean LEFT JOIN signatures'
+        .' ON (reports_clean.signature_id=signatures.signature_id)'
+        .' WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+        ." AND utc_day_is(date_processed, '".$anadir."')"
+        ." AND LENGTH(hang_id)>0 AND process_type = 'Browser') as brwsr "
+        .'ON (plug.hang_id=brwsr.hang_id) '
+        .'LEFT JOIN flash_versions'
+        .' ON (plug.flash_version_id=flash_versions.flash_version_id);';
+
+      $rep_result = pg_query($db_conn, $rep_query);
+      if (!$rep_result) {
+        print('--- ERROR: Flash version query failed!'."\n");
       }
 
-      $anaplugin = explode("\n", file_get_contents($anafhdplugin));
       $rawhangdata = array();
-      foreach ($anaplugin as $pluginline) {
-        if (preg_match('/^(.*);(.*);(.*)$/', $pluginline, $regs)) {
-          $plugin_sig = $regs[1];
-          $hangid = $regs[2];
-          $flash_ver = $regs[3];
-          $browser_sig = array_key_exists($hangid, $bsigs)?$bsigs[$hangid]:null;
-
-          $rawhangdata[$hangid] = array('plugin' => $plugin_sig,
-                                        'browser' => $browser_sig,
-                                        'flash-ver' => $flash_ver);
+      while ($rep_row = pg_fetch_array($rep_result)) {
+        // filter out the odd [blank] versions that seem to appear
+        if (preg_match('/^\d/', $rep_row['flash_version'])) {
+          $rawhangdata[$rep_row['hang_id']] =
+            array('plugin' => $rep_row['plugin_sig'],
+                  'browser' => $rep_row['browser_sig'],
+                  'flash-ver' => $rep_row['flash_version']);
         }
       }
       file_put_contents($anafhdrawdata, json_encode($rawhangdata));
@@ -244,18 +257,18 @@ foreach ($reports as $rep) {
       $root = $doc->appendChild($doc->createElement('html'));
       $head = $root->appendChild($doc->createElement('head'));
       $title = $head->appendChild($doc->createElement('title',
-          $anadir.' '.$rep['product'].$spcver.' Flash Hang Details Report'));
+          $anadir.' '.$prdverdisplay.' Flash Hang Details Report'));
 
       $body = $root->appendChild($doc->createElement('body'));
       $h1 = $body->appendChild($doc->createElement('h1',
-          $anadir.' '.$rep['product'].$spcver.' Flash Hang Details Report'));
+          $anadir.' '.$prdverdisplay.' Flash Hang Details Report'));
 
       $fd = $flashdata[$anadir];
 
       // description
       $para = $body->appendChild($doc->createElement('p',
           'Flash hangs by plugin + browser signatures '
-          .' on '.$rep['product'].$spcver.','
+          .' on '.$prdverdisplay.','
           .' with data on affected Flash versions.'));
 
       $para = $body->appendChild($doc->createElement('p',
