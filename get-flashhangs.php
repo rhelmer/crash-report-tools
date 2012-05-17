@@ -158,7 +158,7 @@ foreach ($reports as $rep) {
 
     $fweb = $anadir.'.'.$prdverfile.'.flashhangs.html';
 
-    if (!array_key_exists($anadir, $flashdata) || !file_exists($anadir.'/'.$fhangdata)) {
+    if (!array_key_exists($anadir, $flashdata)) {
       print('Fetch Flash/hang data for '.$prdverdisplay."\n");
 
       $rep_query =
