@@ -130,6 +130,26 @@ foreach ($reports as $rep) {
     $flashdata = array();
   }
 
+  $pv_ids = array();
+  $pv_query =
+    'SELECT product_version_id '
+    .'FROM product_versions '
+    ."WHERE product_name = '".$rep['product']."'"
+    .(strlen($ver)
+      ?' AND release_version '.(isset($rep['version_regex'])
+                                ?"~ '^".$rep['version_regex']."$'"
+                                :"= '".$ver."'")
+      :'')
+    .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
+    .';';
+  $pv_result = pg_query($db_conn, $pv_query);
+  if (!$pv_result) {
+    print('--- ERROR: product version query failed!'."\n");
+  }
+  while ($pv_row = pg_fetch_array($pv_result)) {
+    $pv_ids[] = $pv_row['product_version_id'];
+  }
+
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
@@ -140,32 +160,6 @@ foreach ($reports as $rep) {
 
     if (!array_key_exists($anadir, $flashdata) || !file_exists($anadir.'/'.$fhangdata)) {
       print('Fetch Flash/hang data for '.$prdverdisplay."\n");
-
-      // product_version_id, product_name, major_version, release_version,
-      // version_string, beta_number, version_sort, build_date, sunset_date,
-      // featured_version, build_type
-      // SELECT * FROM product_versions WHERE product_name = 'Firefox'
-      // AND release_version = '13.0' AND build_type = #ucfirst($rep['channel'])#;
-
-      $pv_ids = array();
-      $pv_query =
-        'SELECT product_version_id '
-        .'FROM product_versions '
-        ."WHERE product_name = '".$rep['product']."'"
-        .(strlen($ver)
-          ?' AND release_version '.(isset($rep['version_regex'])
-                                    ?"~ '^".$rep['version_regex']."$'"
-                                    :"= '".$ver."'")
-          :'')
-        .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
-        .';';
-      $pv_result = pg_query($db_conn, $pv_query);
-      if (!$pv_result) {
-        print('--- ERROR: query failed!'."\n");
-      }
-      while ($pv_row = pg_fetch_array($pv_result)) {
-        $pv_ids[] = $pv_row['product_version_id'];
-      }
 
       $rep_query =
         'SELECT COUNT(*) as cnt, flash_version, LENGTH(hang_id)>0 as is_hang '
@@ -178,7 +172,7 @@ foreach ($reports as $rep) {
 
       $rep_result = pg_query($db_conn, $rep_query);
       if (!$rep_result) {
-        print('--- ERROR: query failed!'."\n");
+        print('--- ERROR: Flash version query failed!'."\n");
       }
 
       $fd = array('total' => array('hang' => 0, 'crash' => 0),
