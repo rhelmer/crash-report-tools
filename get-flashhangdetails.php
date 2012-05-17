@@ -154,9 +154,9 @@ foreach ($reports as $rep) {
     print('Looking at data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
-    $fhdrawdata = $prdvershort.'-fflashhangdetails-raw.json';
-    $fhddata = $prdvershort.'-fflashhangdetails.json';
-    $fweb = $anadir.'.'.$prdverfile.'.fflashhangdetails.html';
+    $fhdrawdata = $prdvershort.'-flashhangdetails-raw.json';
+    $fhddata = $prdvershort.'-flashhangdetails.json';
+    $fweb = $anadir.'.'.$prdverfile.'.flashhangdetails.html';
 
     // Make sure we have flashdata.
     if (!array_key_exists($anadir, $flashdata)) { break; }
