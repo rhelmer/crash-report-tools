@@ -74,7 +74,7 @@ $reports = array(array('product'=>'Firefox',
                        'version_regex'=>'11\..*',
                        'throttlestart'=>strtotime('2012-03-19'), // >20%
                        'fake_adu'=>false,
-                       'mincount'=>100,
+                       'mincount'=>50,
                       ),
                  array('product'=>'Firefox',
                        'version'=>'10',
