@@ -28,6 +28,9 @@ umask(022);
 // set default time zone - right now, always the one the server is in!
 date_default_timezone_set('America/Los_Angeles');
 
+// set higher memory limit so we can process large SQL results
+ini_set('memory_limit', '512M');
+
 
 // *** data gathering variables ***
 
@@ -39,12 +42,6 @@ date_default_timezone_set('America/Los_Angeles');
 //   mincount - minimum count of crashes per day to analyze
 
 $reports = array(array('product'=>'Firefox',
-                       'version'=>'',
-                       'throttlestart'=>null,
-                       'fake_adu'=>false,
-                       'mincount'=>100,
-                      ),
-                 array('product'=>'Firefox',
                        'version'=>'15',
                        'version_regex'=>'15\..*',
                        'throttlestart'=>null,
@@ -162,12 +159,14 @@ $exp_vars = array(
 // *** URLs and paths ***
 
 $on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
-$url_adu['firefox'] = 'https://metrics.mozilla.com/stats/firefox_updates.csv';
 $url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
                              :'http://people.mozilla.com/crash_analysis/';
 $url_algolink = 'https://wiki.mozilla.org/CrashKill/Plan/Explosive';
 $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
 $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
+
+// File storing the DB access data - including password!
+$fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
 
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
 else { chdir('/mnt/mozilla/projects/socorro/'); }
@@ -177,6 +176,34 @@ else { chdir('/mnt/mozilla/projects/socorro/'); }
 
 // get current day
 $curtime = time();
+
+if (file_exists($fdbsecret)) {
+  $dbsecret = json_decode(file_get_contents($fdbsecret), true);
+  if (!is_array($dbsecret) || !count($dbsecret)) {
+    print('ERROR: No DB secrets found, aborting!'."\n");
+    exit(1);
+  }
+  $db_conn = pg_pconnect('host='.$dbsecret['host']
+                         .' port='.$dbsecret['port']
+                         .' dbname=breakpad'
+                         .' user='.$dbsecret['user']
+                         .' password='.$dbsecret['password']);
+  if (!$db_conn) {
+    print('ERROR: DB connection failed, aborting!'."\n");
+    exit(1);
+  }
+  // For info on what data can be accessed, see also
+  // http://socorro.readthedocs.org/en/latest/databasetabledesc.html
+  // For the DB schema, see
+  // https://github.com/mozilla/socorro/blob/master/sql/schema.sql
+}
+else {
+  // Won't work! (Set just for documenting what fields are in the file.)
+  $dbsecret = array('host' => 'host.m.c', 'port' => '6432',
+                    'user' => 'analyst', 'password' => 'foo');
+  print('ERROR: No DB secrets found, aborting!'."\n");
+  exit(1);
+}
 
 foreach ($reports as $rep) {
   $channel = array_key_exists('channel', $rep)?$rep['channel']:'';
@@ -195,113 +222,109 @@ foreach ($reports as $rep) {
   $crdata = array();
   $adu = array();
   $total = array();
+  $sigcnt = array();
   $t_factor = array();
 
-  $adufile = $prd.'-adu.'.date('Y-m-d', $curtime).'.csv';
+  $pv_ids = array();
+  $pv_query =
+    'SELECT product_version_id '
+    .'FROM product_versions '
+    ."WHERE product_name = '".$rep['product']."'"
+    .(strlen($ver)
+      ?' AND release_version '.(isset($rep['version_regex'])
+                                ?"~ '^".$rep['version_regex']."$'"
+                                :"= '".$ver."'")
+      :'')
+    .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
+    .';';
+  $pv_result = pg_query($db_conn, $pv_query);
+  if (!$pv_result) {
+    print('--- ERROR: product version query failed!'."\n");
+  }
+  while ($pv_row = pg_fetch_array($pv_result)) {
+    $pv_ids[] = $pv_row['product_version_id'];
+  }
+
   if (!$rep['fake_adu']) {
-    if (isset($url_adu[$prd]) && !file_exists($adufile)) {
-      print('Fetching today\'s '.$rep['product'].' ADU data from the web'."\n");
-      foreach (glob($prd.'-adu.*.csv') as $filename) { unlink($filename); }
-      // fails due to a PHP error
-      //copy($url_ff_adu, $adufile);
-      // workaround:
-      shell_exec('wget '.$url_adu[$prd].' -O '.$adufile);
+    $first_day = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -'.($backlog_days + 1).' day'));
+    $adu_query =
+      'SELECT SUM(adu_count) as adu, adu_date '
+      .'FROM product_adu '
+      .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+      ." AND adu_date >= '".$first_day."' "
+      .'GROUP BY adu_date '
+      .'ORDER BY adu_date ASC;';
+
+    $adu_result = pg_query($db_conn, $adu_query);
+    if (!$adu_result) {
+      print('--- ERROR: ADU query failed!'."\n");
     }
-    if (!file_exists($adufile)) { break; }
+
+    while ($adu_row = pg_fetch_array($adu_result)) {
+      $adu[$adu_row['adu_date']] = $adu_row['adu'];
+    }
   }
 
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
-    print('Looking at data for '.$anadir."\n");
+    print('Looking at '.$prdverdisplay.' data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
-    $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
-    $fsigs = $prdvershort.'-sigs.csv';
-    $fsigcnt = $prdvershort.'-sigcount.csv';
-    $ftotal = $prdvershort.'-total.csv';
-    $fcrcnt = $prdvershort.'-crashcount.csv';
-    $fadu = $prdvershort.'-adu.csv';
-    $fexpdata = $prdvershort.'-expdata.json';
-    $fweb = $anadir.'.'.$prdverfile.'.explosiveness.html';
+    $fsigcnt = ':x.'.$prdvershort.'-sigcount.csv';
+    $ftotal = ':x.'.$prdvershort.'-total.csv';
+    $fadu = ':x.'.$prdvershort.'-adu.csv';
+    $fexpdata = ':x.'.$prdvershort.'-expdata.json';
+    $fweb = ':x.'.$anadir.'.'.$prdverfile.'.explosiveness.html';
 
     $t_factor[$anadir] = (!is_null($rep['throttlestart']) &&
                           ($rep['throttlestart'] <= $anatime)) ? 10 : 1;
 
-    // make sure we have the crashdata csv
-    if ($on_moz_server) {
-      $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-      if (!file_exists($anafcsvgz)) { break; }
-    }
-    else {
-      $anafcsv = $anadir.'/'.$fcsv;
-      if (!file_exists($anafcsv)) {
-        print('Fetching '.$anafcsv.' from the web'."\n");
-        $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-        if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
-      }
-      if (!file_exists($anafcsv)) { break; }
+    if (!array_key_exists($anadir, $adu) && $rep['fake_adu']) {
+      $adu[$anadir] = 1000000;
     }
 
-    // get signature list for the product
-    $anafsigs = $anadir.'/'.$fsigs;
-    if (!file_exists($anafsigs)) {
-      print('Getting all '.$prdverdisplay.' signatures'."\n");
-      // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
-      // some parts from that split into total and crashcount blocks, though
-      // $7 is product, $8 is version, $28 is duplicate_of, $29 is release_channel
-      $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-             .(strlen($channel)?' && $29 ~ /^'.awk_quote($channel, '/').'$/':'')
-             .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
-//             .' && $28 != "\\\\N"'
-             .' {printf "\t%s\n",$1}\'';
-      if ($on_moz_server) {
-        shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' > '.$anafsigs);
-      }
-      else {
-        shell_exec($cmd.' '.$anafcsv.' > '.$anafsigs);
-      }
+    $rep_query =
+      'SELECT COUNT(*) as cnt, signature '
+      .'FROM reports_clean LEFT JOIN signatures'
+      .' ON (reports_clean.signature_id=signatures.signature_id) '
+      .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+      ." AND utc_day_is(date_processed, '".$anadir."')"
+      .'GROUP BY signature '
+      .'ORDER BY cnt DESC;';
+
+    $rep_result = pg_query($db_conn, $rep_query);
+    if (!$rep_result) {
+      print('--- ERROR: Reports/signatures query failed!'."\n");
     }
 
-    // get total crash count
+    $sigcnt[$anadir] = pg_num_rows($rep_result);
+    $total[$anadir] = 0;
+    $sigs = array();
+    $tcranks = array();
+    $tcrank = 1;
+    while ($rep_row = pg_fetch_array($rep_result)) {
+      $sig = $rep_row['signature'];
+      $sigidx = md5($sig);
+      $sigs[$sigidx] = $sig;
+      $crdata[$sigidx][$anadir] = $rep_row['cnt'];
+      $total[$anadir] += $rep_row['cnt'];
+      $tcranks[$sigidx] = $tcrank++;
+    }
+
+    // Save total crash count (if needed).
     $anaftotal = $anadir.'/'.$ftotal;
     if (!file_exists($anaftotal)) {
-      print('Getting total crash count'."\n");
-      shell_exec('cat '.$anafsigs.' | wc -l > '.$anaftotal);
+      print('Saving total crash count'."\n");
+      file_put_contents($anaftotal, $total[$anadir]);
     }
-    $total[$anadir] = intval(file_get_contents($anaftotal));
 
-    // get signature count *note: not actually used in here, but needed elsewhere*
+    // Save signature count (if needed).
     $anafsigcnt = $anadir.'/'.$fsigcnt;
     if (!file_exists($anafsigcnt)) {
-      print('Getting signature count'."\n");
-      shell_exec('cat '.$anafsigs.' | sort | uniq | wc -l > '.$anafsigcnt);
+      print('Saving signature count'."\n");
+      file_put_contents($anafsigcnt, $sigcnt[$anadir]);
     }
-
-    // get topcrasher list with counts per signature
-    $anafcrcnt = $anadir.'/'.$fcrcnt;
-    if (!file_exists($anafcrcnt)) {
-      print('Getting a list of counted signatures'."\n");
-      $cmd = 'cat '.$anafsigs.' | sort | uniq -c | sort -nr > '.$anafcrcnt;
-      shell_exec($cmd);
-    }
-
-    // fetch ADU
-    $anafadu = $anadir.'/'.$fadu;
-    if (file_exists($adufile) && (!file_exists($anafadu) || !filesize($anafadu)) && !strlen($channel)) {
-      print('Getting ADU for this day'."\n");
-      // fetch total ADU for that day from metrics data
-      $cmd = 'awk \'-F,\' \'$1 ~ /^date$/\' '.$adufile;
-      $csvidx = explode(',', shell_exec($cmd));
-      $fld_num = strlen($ver) ? array_search($ver, $csvidx) + 1 : 2;
-      if ($fld_num > 1) {
-        $cmd = 'awk \'-F,\' \'$1 ~ /^'.$anadir.'$/ {print $'.$fld_num.'}\' '
-                   .$adufile.' > '.$anafadu;
-        shell_exec($cmd);
-      }
-    }
-    $adu[$anadir] = file_exists($anafadu) ? intval(file_get_contents($anafadu)) : 0;
-    if (!$adu[$anadir] && $rep['fake_adu']) { $adu[$anadir] = 1000000; }
 
     // get explosiveness
     if ($adu[$anadir] && $total[$anadir] && ($daysback < $backlog_days - 8)) {
@@ -328,37 +351,19 @@ foreach ($reports as $rep) {
         $exp_total['dataset'] = $totalset;
 
         // loop over signatures over a certain threshold
-        $cmd = 'awk \'-F\t\' \'$1 > '.$rep['mincount'].'\' '.$anafcrcnt;
-        $anacrashes = explode("\n", shell_exec($cmd));
-        $tcrank = 1;
-        foreach ($anacrashes as $anacrash) {
-          if (preg_match('/^\s*(\d+)\s+(.*)$/', $anacrash, $regs)) {
-            $sig = $regs[2];
-            $sigidx = md5($sig);
-            $crdata[$sigidx][$anadir] = $regs[1];
-            print(':');
+        foreach ($sigs as $sigidx=>$sig) {
+          if (intval(@$crdata[$sigidx][$anadir]) > $rep['mincount']) {
             $dataset = array($t_factor[$anadir] *
                              $crdata[$sigidx][$anadir] / $adu[$anadir]);
             $rawcountset = array($crdata[$sigidx][$anadir]);
             // get crash counts for previous days if not yet in the array
             for ($i = 1; $i < 11; $i++) {
-              if (!array_key_exists($dayset[$i], $crdata[$sigidx])) {
-                $cmd = 'awk \'-F\t\' \'$2 ~ /^'.awk_quote($sig, '/')
-                       .'$/ {print $1}\' '.$dayset[$i].'/'.$fcrcnt;
-                $crdata[$sigidx][$dayset[$i]] = intval(shell_exec($cmd));
-                // the block below is DEBUG code only
-                //if ((strpos($sig, 'ProcessDisplayItems') !== false) ||
-                //    (!$crdata[$sigidx][$dayset[$i]] && $i ==1)) {
-                //  print("\n".$cmd."\n");
-                //}
-                print($crdata[$sigidx][$dayset[$i]]?'+':'-');
-              }
-              else { print('.'); }
               $dataset[] = $adu[$dayset[$i]] ?
                            $t_factor[$dayset[$i]] *
-                             $crdata[$sigidx][$dayset[$i]] / $adu[$dayset[$i]] :
+                             intval(@$crdata[$sigidx][$dayset[$i]]) /
+                             $adu[$dayset[$i]] :
                            0;
-              $rawcountset[] = $crdata[$sigidx][$dayset[$i]];
+              $rawcountset[] = intval(@$crdata[$sigidx][$dayset[$i]]);
             }
 
             // Now that we have the data, calculate explosiveness!
@@ -366,7 +371,7 @@ foreach ($reports as $rep) {
             $exp[$sigidx]['sig'] = $sig;
             $exp[$sigidx]['dataset'] = $dataset;
             $exp[$sigidx]['rawcountset'] = $rawcountset;
-            $exp[$sigidx]['tcrank'] = $tcrank++;
+            $exp[$sigidx]['tcrank'] = $tcranks[$sigidx];
             print('.');
           }
         }
