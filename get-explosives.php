@@ -271,11 +271,11 @@ foreach ($reports as $rep) {
     print('Looking at '.$prdverdisplay.' data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
-    $fsigcnt = ':x.'.$prdvershort.'-sigcount.csv';
-    $ftotal = ':x.'.$prdvershort.'-total.csv';
-    $fadu = ':x.'.$prdvershort.'-adu.csv';
-    $fexpdata = ':x.'.$prdvershort.'-expdata.json';
-    $fweb = ':x.'.$anadir.'.'.$prdverfile.'.explosiveness.html';
+    $fsigcnt = $prdvershort.'-sigcount.csv';
+    $ftotal = $prdvershort.'-total.csv';
+    $fadu = $prdvershort.'-adu.csv';
+    $fexpdata = $prdvershort.'-expdata.json';
+    $fweb = $anadir.'.'.$prdverfile.'.explosiveness.html';
 
     $t_factor[$anadir] = (!is_null($rep['throttlestart']) &&
                           ($rep['throttlestart'] <= $anatime)) ? 10 : 1;
