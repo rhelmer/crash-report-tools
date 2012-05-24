@@ -326,6 +326,13 @@ foreach ($reports as $rep) {
       file_put_contents($anafsigcnt, $sigcnt[$anadir]);
     }
 
+    // Save ADUs (if needed).
+    $anafadu = $anadir.'/'.$fadu;
+    if (!$rep['fake_adu'] && (!file_exists($anafadu) || !filesize($anafadu))) {
+      print('Saving ADU count'."\n");
+      file_put_contents($anafadu, $adu[$anadir]);
+    }
+
     // get explosiveness
     if ($adu[$anadir] && $total[$anadir] && ($daysback < $backlog_days - 8)) {
       $anafexpdata = $anadir.'/'.$fexpdata;
