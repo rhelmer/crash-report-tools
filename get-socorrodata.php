@@ -61,9 +61,6 @@ $backlog_days = 20;
 // *** URLs and paths ***
 
 $on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
-// First %s is product, second is version.
-$url_daily_mask = 'https://crash-stats.mozilla.com/daily?p=%s&v[]=%s&csv=1';
-//https://crash-stats.mozilla.com/daily?p=Firefox&v[]=10.0.1&os[]=Windows&os[]=Mac&os[]=Linux&date_start=2012-02-02&date_end=2012-02-16&form_selection=by_version&csv=1&hang_type=any
 
 // File storing the DB access data - including password!
 $fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
@@ -85,10 +82,10 @@ if (file_exists($fdbsecret)) {
     exit(1);
   }
   $db_conn = pg_pconnect('host='.$dbsecret['host']
-                          .' port='.$dbsecret['port']
-                          .' dbname=breakpad'
-                          .' user='.$dbsecret['user']
-                          .' password='.$dbsecret['password']);
+                         .' port='.$dbsecret['port']
+                         .' dbname=breakpad'
+                         .' user='.$dbsecret['user']
+                         .' password='.$dbsecret['password']);
   if (!$db_conn) {
     print('ERROR: DB connection failed, aborting!'."\n");
     exit(1);
