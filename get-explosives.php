@@ -70,13 +70,6 @@ $reports = array(array('product'=>'Firefox',
                        'mincount'=>120,
                       ),
                  array('product'=>'Firefox',
-                       'version'=>'11',
-                       'version_regex'=>'11\..*',
-                       'throttlestart'=>strtotime('2012-03-19'), // >20%
-                       'fake_adu'=>false,
-                       'mincount'=>50,
-                      ),
-                 array('product'=>'Firefox',
                        'version'=>'10',
                        'version_regex'=>'10\..*', // keep around for ESR
                        'throttlestart'=>strtotime('2012-02-04'), // >20%
