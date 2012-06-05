@@ -154,6 +154,11 @@ foreach ($reports as $rep) {
     $pv_ids[] = $pv_row['product_version_id'];
   }
 
+  if (!count($pv_ids)) {
+    print('--- ERROR: no versions found in DB for '.$prdverdisplay.'!'."\n");
+    break;
+  }
+
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);

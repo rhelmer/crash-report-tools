@@ -188,6 +188,7 @@ foreach ($reports as $rep) {
       $cd = array('total' => 0,
                   'tree' => array());
       foreach ($anarawdata as $rawline) {
+        $sig = ''; $toplevel = ''; $subfile = null;
         $cd['total']++;
         if (preg_match('/^(.*);hg:([^:]+):([^:]+):([^:]+)$/', $rawline, $regs)) {
           $sig = $regs[1]; // signature
@@ -226,6 +227,10 @@ foreach ($reports as $rep) {
             $toplevel = '.unknown';
             $subfile = $path;
           }
+        }
+        if (!strlen($sig) || !strlen($toplevel)) {
+          print('--- ERROR: line without signature or toplevel!'."\n");
+          break;
         }
         // Apply some additional filtering for cases where we obviously get it wrong.
         if (($toplevel != '.flash') && (preg_match('/.+@0x[0-9a-f]+$/', $sig))) {

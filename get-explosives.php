@@ -252,6 +252,11 @@ foreach ($reports as $rep) {
     $pv_ids[] = $pv_row['product_version_id'];
   }
 
+  if (!count($pv_ids)) {
+    print('--- ERROR: no versions found in DB for '.$prdverdisplay.'!'."\n");
+    break;
+  }
+
   if (!$rep['fake_adu']) {
     $first_day = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -'.($backlog_days + 1).' day'));
     $adu_query =
