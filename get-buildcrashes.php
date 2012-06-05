@@ -32,10 +32,10 @@ date_default_timezone_set('America/Los_Angeles');
 // *** data gathering variables ***
 
 // channels
-$channels = array('beta' => '13\.0',
-                  'release' => '12\.0(\.\d)?',
-                  'aurora' => '14\.0a2',
-                  'nightly' => '15\.0a1');
+$channels = array('beta' => '14\.0',
+                  'release' => '13\.0(\.\d)?',
+                  'aurora' => '15\.0a2',
+                  'nightly' => '16\.0a1');
 
 // products
 $products = array('Firefox','Fennec','FennecAndroid');
