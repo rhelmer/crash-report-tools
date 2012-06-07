@@ -340,7 +340,8 @@ foreach ($reports as $rep) {
 
     // Save ADUs (if needed).
     $anafadu = $anadir.'/'.$fadu;
-    if (!$rep['fake_adu'] && (!file_exists($anafadu) || !filesize($anafadu))) {
+    if (intval(@$adu[$anadir]) && !$rep['fake_adu'] &&
+        (!file_exists($anafadu) || !filesize($anafadu))) {
       print('Saving ADU count'."\n");
       file_put_contents($anafadu, $adu[$anadir]);
     }
