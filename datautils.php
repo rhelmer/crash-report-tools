@@ -49,8 +49,8 @@ function arr_stddev($array, $mean = null) {
 function formatValue($aValue, $aPrecision, $aUnit) {
   $formatted = '';
   if ($aUnit == 'kMG') {
-    $val = aValue;
-    $prec = aPrecision;
+    $val = $aValue;
+    $prec = $aPrecision;
     $unit = '';
     if ($aValue > 1e10) {
       $prec = ($prec === null) ? 0 : $prec;
