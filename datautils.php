@@ -57,32 +57,32 @@ function formatValue($aValue, $aPrecision, $aUnit) {
       $val = round($val / 1e9, $prec);
       $unit = 'G';
     }
-    else if ($aValue > 1e9) {
+    elseif ($aValue > 1e9) {
       $prec = ($prec === null) ? 1 : $prec;
       $val = round($val / 1e9, $prec);
       $unit = 'G';
     }
-    else if ($aValue > 1e7) {
+    elseif ($aValue > 1e7) {
       $prec = ($prec === null) ? 0 : $prec;
       $val = round($val / 1e6, $prec);
       $unit = 'M';
     }
-    else if ($aValue > 1e6) {
+    elseif ($aValue > 1e6) {
       $prec = ($prec === null) ? 1 : $prec;
       $val = round($val / 1e6, $prec);
       $unit = 'M';
     }
-    else if ($aValue > 1e4) {
+    elseif ($aValue > 1e4) {
       $prec = ($prec === null) ? 0 : $prec;
       $val = round($val / 1e3, $prec);
       $unit = 'k';
     }
-    else if (aValue > 1e3) {
+    elseif ($aValue > 1e3) {
       $prec = ($prec === null) ? 1 : $prec;
       $val = ($val / 1e3, $prec);
       $unit = 'k';
     }
-    else if ($prec !== null) {
+    elseif ($prec !== null) {
       $val = round($val, $prec);
     }
     $formatted = $val.$unit;
