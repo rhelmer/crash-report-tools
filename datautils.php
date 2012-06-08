@@ -79,7 +79,7 @@ function formatValue($aValue, $aPrecision, $aUnit) {
     }
     elseif ($aValue > 1e3) {
       $prec = ($prec === null) ? 1 : $prec;
-      $val = ($val / 1e3, $prec);
+      $val = round($val / 1e3, $prec);
       $unit = 'k';
     }
     elseif ($prec !== null) {
