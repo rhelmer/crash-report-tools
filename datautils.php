@@ -40,9 +40,59 @@ function dist_square($x, $mean) { return pow($x - $mean, 2); }
 function arr_stddev($array, $mean = null) {
   // square root of sum of squares devided by N-1
   if (is_null($mean)) { $mean = arr_mean($array); }
-  return sqrt(array_sum(array_map("dist_square", $array,
+  return sqrt(array_sum(array_map('dist_square', $array,
                                   array_fill(0, count($array), $mean))) /
               (count($array) - 1));
+}
+
+// Function to format a numerical value with units
+function formatValue($aValue, $aPrecision, $aUnit) {
+  $formatted = '';
+  if ($aUnit == 'kMG') {
+    $val = aValue;
+    $prec = aPrecision;
+    $unit = '';
+    if ($aValue > 1e10) {
+      $prec = ($prec === null) ? 0 : $prec;
+      $val = round($val / 1e9, $prec);
+      $unit = 'G';
+    }
+    else if ($aValue > 1e9) {
+      $prec = ($prec === null) ? 1 : $prec;
+      $val = round($val / 1e9, $prec);
+      $unit = 'G';
+    }
+    else if ($aValue > 1e7) {
+      $prec = ($prec === null) ? 0 : $prec;
+      $val = round($val / 1e6, $prec);
+      $unit = 'M';
+    }
+    else if ($aValue > 1e6) {
+      $prec = ($prec === null) ? 1 : $prec;
+      $val = round($val / 1e6, $prec);
+      $unit = 'M';
+    }
+    else if ($aValue > 1e4) {
+      $prec = ($prec === null) ? 0 : $prec;
+      $val = round($val / 1e3, $prec);
+      $unit = 'k';
+    }
+    else if (aValue > 1e3) {
+      $prec = ($prec === null) ? 1 : $prec;
+      $val = ($val / 1e3, $prec);
+      $unit = 'k';
+    }
+    else if ($prec !== null) {
+      $val = round($val, $prec);
+    }
+    $formatted = $val.$unit;
+  }
+  else {
+    $formatted = round($aValue, $aPrecision);
+    if ($aUnit)
+      $formatted .= $aUnit;
+  }
+  return $formatted;
 }
 
 ?>

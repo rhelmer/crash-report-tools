@@ -491,8 +491,8 @@ foreach ($reports as $rep) {
           if (!$rep['fake_adu']) {
             $td->appendChild($doc->createElement('br'));
             $td->appendChild($doc->createElement('small',
-                '('.round($total[$dayset[$i]]/1000).'k/'
-                .round($adu[$dayset[$i]]/pow(10,6)).'M)'));
+                '('.formatValue($total[$dayset[$i]], null, 'kMG').'/'
+                .formatValue($adu[$dayset[$i]], null, 'kMG').')'));
           }
         }
 
