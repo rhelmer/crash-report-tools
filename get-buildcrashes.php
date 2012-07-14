@@ -147,6 +147,58 @@ else { chdir('/mnt/mozilla/projects/socorro/'); }
 
 // *** code start ***
 
+/*
+breakpad=> SELECT * FROM raw_adu where date = '2012-07-11';
+ adu_count |    date    | product_name  | product_os_platform | product_os_version |     product_version     |     build      | build_channel |             product_guid             
+-----------+------------+---------------+---------------------+--------------------+-------------------------+----------------+---------------+--------------------------------------
+        17 | 2012-07-11 | Fennec        | Linux               |                    | 10.0                    | 20120509184246 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         4 | 2012-07-11 | Fennec        | Linux               |                    | 10.0                    | 20120507101157 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0                    | 20120503154655 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0                    | 20120502183721 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         7 | 2012-07-11 | Fennec        | Linux               |                    | 10.0                    | 20120326125648 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+        35 | 2012-07-11 | Fennec        | Linux               |                    | 10.0                    | 20120223105947 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+      4906 | 2012-07-11 | Fennec        | Linux               |                    | 10.0                    | 20120129020652 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+       278 | 2012-07-11 | Fennec        | Linux               |                    | 10.0                    | 20120123232851 | beta          | a23983c0-fd0e-11dc-95ff-0800200c9a66
+       136 | 2012-07-11 | Fennec        | Linux               |                    | 10.0                    | 20120118081111 | beta          | a23983c0-fd0e-11dc-95ff-0800200c9a66
+       272 | 2012-07-11 | Fennec        | Linux               |                    | 10.0                    | 20120111091839 | beta          | a23983c0-fd0e-11dc-95ff-0800200c9a66
+        59 | 2012-07-11 | Fennec        | Linux               |                    | 10.0                    | 20120104111157 | beta          | a23983c0-fd0e-11dc-95ff-0800200c9a66
+        62 | 2012-07-11 | Fennec        | Linux               |                    | 10.0                    | 20111228054821 | beta          | a23983c0-fd0e-11dc-95ff-0800200c9a66
+        84 | 2012-07-11 | Fennec        | Linux               |                    | 10.0                    | 20111221133754 | beta          | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         2 | 2012-07-11 | Fennec        | Windows             |                    | 10.0                    | 20120129020652 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Windows             |                    | 10.0                    | 20120123232851 | beta          | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0.1                  | 20120208222054 | nightly       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+      2635 | 2012-07-11 | Fennec        | Linux               |                    | 10.0.1                  | 20120208061104 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         3 | 2012-07-11 | Fennec        | Windows             |                    | 10.0.1                  | 20120208061104 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         2 | 2012-07-11 | Fennec        | Linux               |                    | 10.0.2                  | 20120316232200 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+       305 | 2012-07-11 | Fennec        | Linux               |                    | 10.0.2                  | 20120223024700 | nightly       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+     11079 | 2012-07-11 | Fennec        | Linux               |                    | 10.0.2                  | 20120215223137 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         2 | 2012-07-11 | Fennec        | Windows             |                    | 10.0.2                  | 20120215223137 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+     23491 | 2012-07-11 | Fennec        | Linux               |                    | 10.0.3                  | 20120302180724 | esr           | a23983c0-fd0e-11dc-95ff-0800200c9a66
+     43693 | 2012-07-11 | Fennec        | Linux               |                    | 10.0.4                  | 20120427165612 | esr           | a23983c0-fd0e-11dc-95ff-0800200c9a66
+      2774 | 2012-07-11 | Fennec        | Linux               |                    | 10.0.4                  | 20120420195003 | esr           | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0.5                  | 20120602120314 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+    165509 | 2012-07-11 | Fennec        | Linux               |                    | 10.0.5                  | 20120531185433 | esr           | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Other               |                    | 10.0.5                  | 20120531185433 | esr           | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         2 | 2012-07-11 | Fennec        | Linux               |                    | 10.0.6esrpre            | 20120702104824 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a1                  | 20111102031056 | nightly       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+        74 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a1                  | 20111027003949 | nightly       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a1                  | 20111021031012 | nightly       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a1                  | 20111020031025 | nightly       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         5 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a1                  | 20111016031010 | nightly       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+        16 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a1                  | 20111013202400 | release       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a1                  | 20111009031012 | nightly       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a1                  | 20111002131728 | nightly       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a2                  | 20111221040139 | nightly       | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a2                  | 20111220042029 | aurora        | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a2                  | 20111219042033 | aurora        | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a2                  | 20111214042031 | aurora        | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a2                  | 20111204042031 | aurora        | a23983c0-fd0e-11dc-95ff-0800200c9a66
+         1 | 2012-07-11 | Fennec        | Linux               |                    | 10.0a2                  | 20111130042015 | aurora        | a23983c0-fd0e-11dc-95ff-0800200c9a66
+
+breakpad=> SELECT * FROM reports where utc_day_is(date_processed, '2012-07-11');
+ERROR:  permission denied for relation reports
+*/
+
 // get current day
 $curtime = time();
 

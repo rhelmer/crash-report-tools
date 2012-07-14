@@ -359,34 +359,69 @@ foreach ($reports as $rep) {
     $th = $tr->appendChild($doc->createElement('th', 'Date'));
     $th->setAttribute('rowspan', '2');
     $th = $tr->appendChild($doc->createElement('th', 'Hangs'));
-    $th->setAttribute('colspan', '2');
+    $th->setAttribute('colspan', '3');
     $th = $tr->appendChild($doc->createElement('th', 'Crashes'));
-    $th->setAttribute('colspan', '2');
+    $th->setAttribute('colspan', '3');
     $th = $tr->appendChild($doc->createElement('th', 'Sum'));
+    $th->setAttribute('colspan', '2');
+    $th = $tr->appendChild($doc->createElement('th', 'Non-Flash'));
     $tr = $table->appendChild($doc->createElement('tr'));
     $th = $tr->appendChild($doc->createElement('th', 'absoute'));
     $th = $tr->appendChild($doc->createElement('th', '% of hangs'));
+    $th = $tr->appendChild($doc->createElement('th', 'rate'));
     $th = $tr->appendChild($doc->createElement('th', 'absolute'));
     $th = $tr->appendChild($doc->createElement('th', '% of crashes'));
+    $th = $tr->appendChild($doc->createElement('th', 'rate'));
     $th = $tr->appendChild($doc->createElement('th', '% of total'));
+    $th = $tr->appendChild($doc->createElement('th', 'rate'));
+    $th = $tr->appendChild($doc->createElement('th', 'rate'));
 
     foreach (array_reverse($flashdata) as $date=>$fd) {
+      $adu_query =
+        'SELECT SUM(adu_count) as adu, adu_date '
+        .'FROM product_adu '
+        .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+        ." AND adu_date = '".$date."' "
+        .'GROUP BY adu_date;';
+      $adu_result = pg_query($db_conn, $adu_query);
+      if (!$adu_result) {
+        print('--- ERROR: ADU query failed!'."\n");
+      }
+      $adu_row = pg_fetch_array($adu_result);
+      $adu = $adu_row['adu'];
+
       $total_hang_pairs = $fd['total']['hang'] / 2;
+      $hang_pct = $fd['total']['hang']
+                  ? $fd['total_flash']['hang'] / $total_hang_pairs
+                  : 0;
       $hang_rate = $fd['total']['hang']
-                   ? $fd['total_flash']['hang'] / $total_hang_pairs
+                   ? 100 * $fd['total_flash']['hang'] / $adu
                    : 0;
-      $crash_rate = $fd['total']['crash']
+      $crash_pct = $fd['total']['crash']
                    ? $fd['total_flash']['crash'] / $fd['total']['crash']
                    : 0;
+      $crash_rate = $fd['total']['crash']
+                   ? 100 * $fd['total_flash']['crash'] / $adu
+                   : 0;
+      $total_pct = $fd['total']['crash'] + $total_hang_pairs
+                   ? ($fd['total_flash']['crash'] + $fd['total_flash']['hang'])
+                   / ($fd['total']['crash'] + $total_hang_pairs)
+                   : 0;
       $total_rate = $fd['total']['crash'] + $total_hang_pairs
-                    ? ($fd['total_flash']['crash'] + $fd['total_flash']['hang'])
-                    / ($fd['total']['crash'] + $total_hang_pairs)
+                    ? 100 * ($fd['total_flash']['crash'] + $fd['total_flash']['hang'])
+                    / $adu
                     : 0;
+      $total_rev_rate = ($fd['total']['crash'] + $total_hang_pairs - $fd['total_flash']['crash'] - $fd['total_flash']['hang'])
+                        ? ($fd['total']['crash'] + $total_hang_pairs) / $adu
+                        : 0;
       if ($total_rate) {
         $tr = $table->appendChild($doc->createElement('tr'));
         $td = $tr->appendChild($doc->createElement('td', $date));
         $td = $tr->appendChild($doc->createElement('td',
                   $fd['total_flash']['hang']));
+        $td->setAttribute('style', 'text-align:right;');
+        $td = $tr->appendChild($doc->createElement('td',
+                  sprintf('%.1f', 100 * $hang_pct).'%'));
         $td->setAttribute('style', 'text-align:right;');
         $td = $tr->appendChild($doc->createElement('td',
                   sprintf('%.1f', 100 * $hang_rate).'%'));
@@ -395,10 +430,19 @@ foreach ($reports as $rep) {
                   $fd['total_flash']['crash']));
         $td->setAttribute('style', 'text-align:right;');
         $td = $tr->appendChild($doc->createElement('td',
+                  sprintf('%.1f', 100 * $crash_pct).'%'));
+        $td->setAttribute('style', 'text-align:right;');
+        $td = $tr->appendChild($doc->createElement('td',
                   sprintf('%.1f', 100 * $crash_rate).'%'));
         $td->setAttribute('style', 'text-align:right;');
         $td = $tr->appendChild($doc->createElement('td',
+                  sprintf('%.1f', 100 * $total_pct).'%'));
+        $td->setAttribute('style', 'text-align:right;');
+        $td = $tr->appendChild($doc->createElement('td',
                   sprintf('%.1f', 100 * $total_rate).'%'));
+        $td->setAttribute('style', 'text-align:right;');
+        $td = $tr->appendChild($doc->createElement('td',
+                  sprintf('%.1f', 100 * $total_rev_rate).'%'));
         $td->setAttribute('style', 'text-align:right;');
       }
     }
