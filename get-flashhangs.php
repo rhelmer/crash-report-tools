@@ -422,7 +422,7 @@ foreach ($reports as $rep) {
                   sprintf('%.1f', 100 * $hang_pct).'%'));
         $td->setAttribute('style', 'text-align:right;');
         $td = $tr->appendChild($doc->createElement('td',
-                  sprintf('%.1f', 100 * $hang_rate).'%'));
+                  sprintf('%.1f', $hang_rate)));
         $td->setAttribute('style', 'text-align:right;');
         $td = $tr->appendChild($doc->createElement('td',
                   $fd['total_flash']['crash']));
@@ -431,16 +431,16 @@ foreach ($reports as $rep) {
                   sprintf('%.1f', 100 * $crash_pct).'%'));
         $td->setAttribute('style', 'text-align:right;');
         $td = $tr->appendChild($doc->createElement('td',
-                  sprintf('%.1f', 100 * $crash_rate).'%'));
+                  sprintf('%.1f', $crash_rate)));
         $td->setAttribute('style', 'text-align:right;');
         $td = $tr->appendChild($doc->createElement('td',
                   sprintf('%.1f', 100 * $total_pct).'%'));
         $td->setAttribute('style', 'text-align:right;');
         $td = $tr->appendChild($doc->createElement('td',
-                  sprintf('%.1f', 100 * $total_rate).'%'));
+                  sprintf('%.1f', $total_rate)));
         $td->setAttribute('style', 'text-align:right;');
         $td = $tr->appendChild($doc->createElement('td',
-                  sprintf('%.1f', 100 * $total_rev_rate).'%'));
+                  sprintf('%.1f', $total_rev_rate)));
         $td->setAttribute('style', 'text-align:right;');
       }
     }
