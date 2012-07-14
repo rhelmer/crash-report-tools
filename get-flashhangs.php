@@ -394,25 +394,23 @@ foreach ($reports as $rep) {
       $hang_pct = $fd['total']['hang']
                   ? $fd['total_flash']['hang'] / $total_hang_pairs
                   : 0;
-      $hang_rate = $fd['total']['hang']
-                   ? 100 * $fd['total_flash']['hang'] / $adu
-                   : 0;
+      $hang_rate = $adu ? $fd['total_flash']['hang'] * 100 / $adu : 0;
       $crash_pct = $fd['total']['crash']
                    ? $fd['total_flash']['crash'] / $fd['total']['crash']
                    : 0;
-      $crash_rate = $fd['total']['crash']
-                   ? 100 * $fd['total_flash']['crash'] / $adu
-                   : 0;
+      $crash_rate = $adu ? $fd['total_flash']['crash'] * 100 / $adu : 0;
       $total_pct = $fd['total']['crash'] + $total_hang_pairs
                    ? ($fd['total_flash']['crash'] + $fd['total_flash']['hang'])
                    / ($fd['total']['crash'] + $total_hang_pairs)
                    : 0;
-      $total_rate = $fd['total']['crash'] + $total_hang_pairs
-                    ? 100 * ($fd['total_flash']['crash'] + $fd['total_flash']['hang'])
-                    / $adu
+      $total_rate = $adu
+                    ?($fd['total_flash']['crash'] + $fd['total_flash']['hang'])
+                    * 100 / $adu
                     : 0;
-      $total_rev_rate = ($fd['total']['crash'] + $total_hang_pairs - $fd['total_flash']['crash'] - $fd['total_flash']['hang'])
-                        ? ($fd['total']['crash'] + $total_hang_pairs) / $adu
+      $total_rev_rate = $adu
+                        ? ($fd['total']['crash'] + $total_hang_pairs -
+                           $fd['total_flash']['crash'] - $fd['total_flash']['hang'])
+                        * 100 / $adu
                         : 0;
       if ($total_rate) {
         $tr = $table->appendChild($doc->createElement('tr'));
