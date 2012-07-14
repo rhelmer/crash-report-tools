@@ -466,6 +466,7 @@ foreach ($reports as $rep) {
         $td = $tr->appendChild($doc->createElement('td',
                   sprintf('%.2f', $total_rev_rate)));
         $td->setAttribute('style', 'text-align:right;');
+        $td->setAttribute('title', $adu.' (adjusted) ADU');
       }
     }
 
