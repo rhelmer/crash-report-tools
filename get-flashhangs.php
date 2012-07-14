@@ -151,6 +151,27 @@ foreach ($reports as $rep) {
     break;
   }
 
+  $throttle_ids = array();
+  if ($rep['product'] == 'Firefox') {
+    $throttle_query =
+      'SELECT product_version_id '
+      .'FROM product_versions '
+      ."WHERE build_type = 'Release' AND product_name = '".$rep['product']."'"
+      .(strlen($ver)
+        ?' AND release_version '.(isset($rep['version_regex'])
+                                  ?"~ '^".$rep['version_regex']."$'"
+                                  :"= '".$ver."'")
+        :'')
+      .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
+      .';';
+    $throttle_result = pg_query($db_conn, $throttle_query);
+    if ($throttle_result) {
+      while ($throttle_row = pg_fetch_array($throttle_result)) {
+        $throttle_ids[] = $throttle_row['product_version_id'];
+      }
+    }
+  }
+
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
@@ -378,7 +399,10 @@ foreach ($reports as $rep) {
 
     foreach (array_reverse($flashdata) as $date=>$fd) {
       $adu_query =
-        'SELECT SUM(adu_count) as adu, adu_date '
+        'SELECT SUM(CASE
+                    WHEN product_version_id IN ('.implode(',', $thottle_ids).')
+                    THEN adu_count / 10 ELSE adu_count END) as adu,
+                adu_date '
         .'FROM product_adu '
         .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
         ." AND adu_date = '".$date."' "
