@@ -399,8 +399,8 @@ foreach ($reports as $rep) {
 
     foreach (array_reverse($flashdata) as $date=>$fd) {
       $adu_query =
-        'SELECT '.(count($thottle_ids)?'SUM(CASE
-                  WHEN product_version_id IN ('.implode(',', $thottle_ids).')
+        'SELECT '.(count($throttle_ids)?'SUM(CASE
+                  WHEN product_version_id IN ('.implode(',', $throttle_ids).')
                   THEN adu_count / 10 ELSE adu_count END)':'adu_count').' as adu,
                 adu_date '
         .'FROM product_adu '
