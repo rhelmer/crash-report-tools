@@ -195,6 +195,10 @@ foreach ($reports as $rep) {
           $devname = ucfirst($regs[2].' '.$regs[1]);
           $andver = null;
         }
+        elseif (preg_match("/ -- Model: (.*), Product: .*, Manufacturer: (.*), Hardware: .*'/", $appnotes, $regs)) {
+          $devname = ucfirst($regs[2].' '.$regs[1]);
+          $andver = null;
+        }
         elseif (preg_match('/([^\|]+ [^\|]+) \| [^:\s]+:(\d\.[^\/\s]+|AOSP)\/[^:\s]+:[^\s]*keys/', $appnotes, $regs)) {
           $devname = ucfirst($regs[1]);
           $andver = $regs[2];
