@@ -115,6 +115,9 @@ $url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
 $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
 $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
 
+// File storing the DB access data - including password!
+$fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
+
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
 else { chdir('/mnt/mozilla/projects/socorro/'); }
 
@@ -122,6 +125,34 @@ else { chdir('/mnt/mozilla/projects/socorro/'); }
 
 // get current day
 $curtime = time();
+
+if (file_exists($fdbsecret)) {
+  $dbsecret = json_decode(file_get_contents($fdbsecret), true);
+  if (!is_array($dbsecret) || !count($dbsecret)) {
+    print('ERROR: No DB secrets found, aborting!'."\n");
+    exit(1);
+  }
+  $db_conn = pg_pconnect('host='.$dbsecret['host']
+                         .' port='.$dbsecret['port']
+                         .' dbname=breakpad'
+                         .' user='.$dbsecret['user']
+                         .' password='.$dbsecret['password']);
+  if (!$db_conn) {
+    print('ERROR: DB connection failed, aborting!'."\n");
+    exit(1);
+  }
+  // For info on what data can be accessed, see also
+  // http://socorro.readthedocs.org/en/latest/databasetabledesc.html
+  // For the DB schema, see
+  // https://github.com/mozilla/socorro/blob/master/sql/schema.sql
+}
+else {
+  // Won't work! (Set just for documenting what fields are in the file.)
+  $dbsecret = array('host' => 'host.m.c', 'port' => '6432',
+                    'user' => 'analyst', 'password' => 'foo');
+  print('ERROR: No DB secrets found, aborting!'."\n");
+  exit(1);
+}
 
 foreach ($reports as $rep) {
   $channel = array_key_exists('channel', $rep)?$rep['channel']:'';
@@ -137,6 +168,31 @@ foreach ($reports as $rep) {
                    .(strlen($channel)?' '.ucfirst($channel):'')
                    .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
+  $pv_ids = array();
+  $pv_query =
+    'SELECT product_version_id '
+    .'FROM product_versions '
+    ."WHERE product_name = '".$rep['product']."'"
+    .(strlen($ver)
+      ?' AND release_version '.(isset($rep['version_regex'])
+                                ?"~ '^".$rep['version_regex']."$'"
+                                :"= '".$ver."'")
+      :'')
+    .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
+    .';';
+  $pv_result = pg_query($db_conn, $pv_query);
+  if (!$pv_result) {
+    print('--- ERROR: product version query failed!'."\n");
+  }
+  while ($pv_row = pg_fetch_array($pv_result)) {
+    $pv_ids[] = $pv_row['product_version_id'];
+  }
+
+  if (!count($pv_ids)) {
+    print('--- ERROR: no versions found in DB for '.$prdverdisplay.'!'."\n");
+    break;
+  }
+
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
@@ -149,6 +205,22 @@ foreach ($reports as $rep) {
     $fwebmask = '%s.'.$prdverfile.'.components.html';
     $fweb = sprintf($fwebmask, $anadir);
     $fwebweek = $anadir.'.'.$prdverfile.'.components.weekly.html';
+
+/*
+    $rep_query =
+      'SELECT COUNT(*) as cnt, signature '
+      .'FROM reports_clean LEFT JOIN signatures'
+      .' ON (reports_clean.signature_id=signatures.signature_id) '
+      .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+      ." AND utc_day_is(date_processed, '".$anadir."')"
+      .'GROUP BY signature '
+      .'ORDER BY cnt DESC;';
+
+    $rep_result = pg_query($db_conn, $rep_query);
+    if (!$rep_result) {
+      print('--- ERROR: Reports/signatures query failed!'."\n");
+    }
+*/
 
     // make sure we have the crashdata csv
     if ($on_moz_server) {
