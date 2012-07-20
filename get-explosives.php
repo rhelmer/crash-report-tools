@@ -361,7 +361,8 @@ foreach ($reports as $rep) {
     }
 
     // get explosiveness
-    if ($adu[$anadir] && $total[$anadir] && ($daysback < $backlog_days - 8)) {
+    if (intval(@$adu[$anadir]) && intval(@$total[$anadir]) &&
+        ($daysback < $backlog_days - 8)) {
       $anafexpdata = $anadir.'/'.$fexpdata;
       if (!file_exists($anafexpdata)) {
         // get topcrasher list with counts per signature
@@ -392,7 +393,7 @@ foreach ($reports as $rep) {
             $rawcountset = array($crdata[$sigidx][$anadir]);
             // get crash counts for previous days if not yet in the array
             for ($i = 1; $i < 11; $i++) {
-              $dataset[] = $adu[$dayset[$i]] ?
+              $dataset[] = array_key_exists($dayset[$i], $adu) ?
                            $t_factor[$dayset[$i]] *
                              intval(@$crdata[$sigidx][$dayset[$i]]) /
                              $adu[$dayset[$i]] :
@@ -505,8 +506,8 @@ foreach ($reports as $rep) {
           if (!$rep['fake_adu']) {
             $td->appendChild($doc->createElement('br'));
             $td->appendChild($doc->createElement('small',
-                '('.formatValue($total[$dayset[$i]], null, 'kMG').'/'
-                .formatValue($adu[$dayset[$i]], null, 'kMG').')'));
+                '('.formatValue(@$total[$dayset[$i]], null, 'kMG').'/'
+                .formatValue(@$adu[$dayset[$i]], null, 'kMG').')'));
           }
         }
 
