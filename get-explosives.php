@@ -60,7 +60,7 @@ $reports = array(array('product'=>'Firefox',
                        'version_regex'=>'15\..*',
                        'throttlestart'=>null,
                        'fake_adu'=>false,
-                       'mincount'=>10,
+                       'mincount'=>20,
                       ),
                  array('product'=>'Firefox',
                        'version'=>'14',
@@ -377,8 +377,8 @@ foreach ($reports as $rep) {
           $prevdir = date('Y-m-d',
                           strtotime(date('Y-m-d', $anatime).' -'.$i.' day'));
           $dayset[] = $prevdir;
-          $aduset[] = $adu[$prevdir];
-          $totalset[] = $adu[$prevdir] ?
+          $aduset[] = array_key_exists($prevdir, $adu) ? $adu[$prevdir] : 0;
+          $totalset[] = array_key_exists($prevdir, $adu) ?
                         $t_factor[$prevdir] * $total[$prevdir] / $adu[$prevdir] :
                         0;
         }
