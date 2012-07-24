@@ -217,78 +217,57 @@ foreach ($reports as $rep) {
     print('Looking at data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
-    $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
-    $frawdata = $prdvershort.'-components-raw.csv';
     $fcompdata = $prdvershort.'-components.json';
     $fwebmask = '%s.'.$prdverfile.'.components.html';
     $fweb = sprintf($fwebmask, $anadir);
     $fwebweek = $anadir.'.'.$prdverfile.'.components.weekly.html';
 
-/*
-    $rep_query =
-      'SELECT COUNT(*) as cnt, signature '
-      .'FROM reports_clean LEFT JOIN signatures'
-      .' ON (reports_clean.signature_id=signatures.signature_id) '
-      .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
-      ." AND utc_day_is(date_processed, '".$anadir."')"
-      .'GROUP BY signature '
-      .'ORDER BY cnt DESC;';
-
-    $rep_result = pg_query($db_conn, $rep_query);
-    if (!$rep_result) {
-      print('--- ERROR: Reports/signatures query failed!'."\n");
-    }
-*/
-
-    // make sure we have the crashdata csv
-    if ($on_moz_server) {
-      $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-      if (!file_exists($anafcsvgz)) { break; }
-    }
-    else {
-      $anafcsv = $anadir.'/'.$fcsv;
-      if (!file_exists($anafcsv)) {
-        print('Fetching '.$anafcsv.' from the web'."\n");
-        $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-        if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
-      }
-      if (!file_exists($anafcsv)) { break; }
-    }
-
-    // get components data for the product
-    $anafrawdata = $anadir.'/'.$frawdata;
-    if (!file_exists($anafrawdata)) {
-      print('Getting raw '.$prdverdisplay.' components data'."\n");
-      // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
-      // some parts from that split into total and crashcount blocks, though
-      // $1 is signature, $7 is product, $8 is version, $20 is topmost_filename, $29 is release_channel
-      $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-              .(strlen($channel)?' && $29 ~ /^'.awk_quote($channel, '/').'$/':'')
-              .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
-              .' {printf "%s;%s\n",$1,$20}\'';
-      if ($on_moz_server) {
-        shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' > '.$anafrawdata);
-      }
-      else {
-        shell_exec($cmd.' '.$anafcsv.' > '.$anafrawdata);
-      }
-    }
-
-    // get summarized component data
     $anafcompdata = $anadir.'/'.$fcompdata;
     if (!file_exists($anafcompdata)) {
+      // get all crash IDs and signatures for the selected versions
+      $rep_query =
+        'SELECT uuid, signature '
+        .'FROM reports_clean LEFT JOIN signatures'
+        .' ON (reports_clean.signature_id=signatures.signature_id) '
+        .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+        ." AND utc_day_is(date_processed, '".$anadir."');";
+
+      $rep_result = pg_query($db_conn, $rep_query);
+      if (!$rep_result) {
+        print('--- ERROR: Reports/signatures query failed!'."\n");
+      }
+
       print('Getting summarized component data'."\n");
-      $anarawdata = explode("\n", file_get_contents($anafrawdata));
       $cd = array('total' => 0,
                   'tree' => array());
-      foreach ($anarawdata as $rawline) {
-        $sig = ''; $toplevel = ''; $subfile = null;
+      while ($rep_row = pg_fetch_array($rep_result)) {
+        $sig = $rep_row['signature'];
+        $crash_id = $rep_row['uuid'];
+
+        // get topmost filename for this crash ID (using day for performance)
+        $fname_query =
+          'SELECT topmost_filenames '
+          .'FROM reports '
+          ."WHERE uuid='".$crash_id."'"
+          ." AND utc_day_is(date_processed, '".$anadir."');";
+
+        $fname_result = pg_query($db_conn, $fname_query);
+        if (!$fname_result) {
+          print('--- ERROR: topmost_filenames query failed!'."\n");
+          $topmost_filenames = '';
+        }
+        else {
+          $fname_row = pg_fetch_array($fname_result);
+          $topmost_filenames = $fname_row['topmost_filenames'];
+        }
+
+        $toplevel = ''; $subfile = null;
         $cd['total']++;
-        if (preg_match('/^(.*);hg:([^:]+):([^:]+):([^:]+)$/', $rawline, $regs)) {
-          $sig = $regs[1]; // signature
-          $repo = $regs[2]; // currently ignorable, e.g. 'hg.mozilla.org/mozilla-central'
-          $path = $regs[3]; // *the meat*, e.g. 'dom/plugins/ipc/PluginInstanceChild.cpp'
-          $rev = $regs[4]; // hg revision, e.g. 'f41df039db03'
+
+        if (preg_match('/^hg:([^:]+):([^:]+):([^:]+)$/', $topmost_filenames, $regs)) {
+          $repo = $regs[1]; // currently ignorable, e.g. 'hg.mozilla.org/mozilla-central'
+          $path = $regs[2]; // *the meat*, e.g. 'dom/plugins/ipc/PluginInstanceChild.cpp'
+          $rev = $regs[3]; // hg revision, e.g. 'f41df039db03'
           if (preg_match('/^obj\-[a-z]+\/([^\/]+)(.*)$/', $path, $oregs) ||
               preg_match('/^([^\/]+)(.*)$/', $path, $pregs)) {
             $objdir = isset($oregs[1]); // is this in the objdir?
@@ -300,27 +279,21 @@ foreach ($reports as $rep) {
             $subfile = $path;
           }
         }
-        elseif (preg_match('/^(.*);F_?\d+_+/', $rawline, $regs)) {
-          $sig = $regs[1]; // signature
+        elseif (preg_match('/^F_?\d+_+/', $topmost_filenames, $regs)) {
           $toplevel = '.flash';
           $subfile = null;
         }
-        elseif (preg_match('/^e:\\\\fp_win_nf\\\\/', $rawline, $regs)) {
-          $sig = $regs[1]; // signature
+        elseif (preg_match('/^e:\\\\fp_win_nf\\\\/', $topmost_filenames, $regs)) {
           $toplevel = '.flash';
           $subfile = $path;
         }
-        elseif (preg_match('/^(.*);(.*)$/', $rawline, $regs)) { // always matches
-          $sig = $regs[1]; // signature
-          $path = $regs[2]; // should be a file path of some kind
-          if (preg_match('/^(\.\.\/)+([^\/]+)(.*)$/', $path, $pregs)) { // relative paths give modules
-            $toplevel = $pregs[2]; // toplevel directory
-            $subfile = $pregs[3]; // file path inside the toplevel
-          }
-          else { // absolute paths --> "unknown"
-            $toplevel = '.unknown';
-            $subfile = $path;
-          }
+        elseif (preg_match('/^(\.\.\/)+([^\/]+)(.*)$/', $topmost_filenames, $pregs)) { // relative paths give modules
+          $toplevel = $pregs[2]; // toplevel directory
+          $subfile = $pregs[3]; // file path inside the toplevel
+        }
+        else { // absolute paths --> "unknown"
+          $toplevel = '.unknown';
+          $subfile = $topmost_filenames;
         }
         if (!strlen($sig) || !strlen($toplevel)) {
           print('--- ERROR: line without signature or toplevel!'."\n");
