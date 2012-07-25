@@ -351,7 +351,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             'SELECT product_version_id, release_version, version_string '
             .'FROM product_versions '
             ."WHERE product_name = '".$product."'"
-            ." AND major_version IN ('".implode("','", $mver)."');";
+            ." AND major_version IN ('".implode("','", $mver)."')"
+            ." AND build_type = '".ucfirst($channel)."';";
           $pv_result = pg_query($db_conn, $pv_query);
           if (!$pv_result) {
             print('--- ERROR: product version query failed!'."\n");
@@ -412,7 +413,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           if (!array_key_exists($idx, $listbuilds)) {
             $listbuilds[$idx] = array('build' => $rep_row['build'],
                                       'pvid' => $rep_row['product_version_id'],
-                                      'cnt' => array('total', 'norm_total'));
+                                      'cnt' => array('total' => 0,
+                                                     'norm_total' => 0));
           }
           $ptype = strtolower($rep_row['process_type']);
           if (!array_key_exists($rep_row['crash_type'], $listbuilds[$idx]['cnt'])) {
