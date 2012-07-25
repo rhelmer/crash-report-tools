@@ -490,9 +490,6 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
           // signatures rows
           foreach ($listbuilds as $idx=>$builddata) {
-
-
-
             $tr = $table->appendChild($doc->createElement('tr'));
             $td = $tr->appendChild($doc->createElement('td',
                 htmlentities($product, ENT_COMPAT, 'UTF-8')));
@@ -504,30 +501,9 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                 htmlentities(@$notes[$idx], ENT_COMPAT, 'UTF-8')));
             if (@$buildadu[$idx]) {
               if (@$notes[$idx]) { $td->appendChild($doc->createElement('br')); }
-              if ($buildadu[$idx] > 10000000) { // 10M
-                $adu_out = sprintf('%d', $buildadu[$idx]/1000000).'M';
-              }
-              elseif ($buildadu[$idx] > 1000000) { // 1M
-                $adu_out = sprintf('%.1f', $buildadu[$idx]/1000000).'M';
-              }
-              elseif ($buildadu[$idx] > 10000) { // 10k
-                $adu_out = sprintf('%d', $buildadu[$idx]/1000).'k';
-              }
-              elseif ($buildadu[$idx] > 1000) { // 1k
-                $adu_out = sprintf('%.1f', $buildadu[$idx]/1000).'k';
-              }
-              else {
-                $adu_out = sprintf('%d', $buildadu[$idx]);
-              }
-
               $small = $td->appendChild($doc->createElement('small',
-                  $adu_out.' ADU'));
+                  formatValue($buildadu[$idx], null, 'kMG').' ADU'));
               $small->setAttribute('style', 'color:GrayText;');
-              if ($reladu[$idx]) {
-                $small->setAttribute('title',
-                    sprintf('%d', 100 * $reladu[$idx] / $buildadu[$idx])
-                    .'% on release');
-              }
             }
             foreach ($fields as $fld) {
               $ptype = !in_array($fld, array('hang','crash','total'))?$fld:'any';
@@ -548,7 +524,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               if (@$buildadu[$idx]) {
                 $td->appendChild($doc->createElement('br'));
                 $small = $td->appendChild($doc->createElement('small',
-                    sprintf('%.3f', $builddata[$fld]*100/$calcadu[$idx])));
+                    print_rate($builddata['cnt'][$fld], $buildadu[$idx], $channel)));
                 $small->setAttribute('title', 'per 100 ADU');
                 $small->setAttribute('style', 'color:GrayText;');
               }
@@ -558,7 +534,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             if (@$buildadu[$idx]) {
               $td->appendChild($doc->createElement('br'));
               $small = $td->appendChild($doc->createElement('small',
-                  sprintf('%.3f', $builddata['norm_total']*100/$calcadu[$idx])));
+                  print_rate($builddata['cnt']['norm_total'], $buildadu[$idx], $channel)));
               $small->setAttribute('title', 'per 100 ADU');
               $small->setAttribute('style', 'color:GrayText;');
             }
@@ -577,4 +553,9 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
 // *** helper functions ***
 
+// Function to print crash rates
+function print_rate($count, $adu, $channel) {
+  $t_factor = ($channel == 'release') ? 10 : 1;
+  return sprintf('%.3f', $count * $t_factor * 100 / $adu);
+}
 ?>
