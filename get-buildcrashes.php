@@ -430,7 +430,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               print('--- ERROR: ADU query failed!'."\n");
             }
             else {
-              $adu_row = pg_fetch_array($rep_result);
+              $adu_row = pg_fetch_array($adu_result);
               if (intval(@$adu_row['adu'])) {
                 $buildadu[$idx] = $adu_row['adu'];
               }
