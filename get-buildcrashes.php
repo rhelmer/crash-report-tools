@@ -431,7 +431,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             }
             else {
               $adu_row = pg_fetch_array($rep_result);
-              if (intval($adu_row['adu'])) {
+              if (intval(@$adu_row['adu'])) {
                 $buildadu[$idx] = $adu_row['adu'];
               }
             }
@@ -535,7 +535,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
               $td = $tr->appendChild($doc->createElement('td'));
               $td->setAttribute('align', 'right');
-              $link = $td->appendChild($doc->createElement('a', $builddata['cnt'][$fld]));
+              $link = $td->appendChild($doc->createElement('a', intval(@$builddata['cnt'][$fld])));
               $link->setAttribute('href',
                   'https://crash-stats.mozilla.com/query/query?product='.$product
                   .'&version=All'
