@@ -32,16 +32,13 @@ date_default_timezone_set('America/Los_Angeles');
 // *** data gathering variables ***
 
 // channels
-$channels = array('beta' => '15\.0',
-                  'release' => '14\.0(\.\d)?',
-                  'aurora' => '16\.0a2',
-                  'nightly' => '17\.0a1');
+$channels = array('release', 'beta', 'aurora', 'nightly', 'other');
 
 // products
 $products = array('Firefox','Fennec','FennecAndroid');
 
 // how many days back to look at
-$backlog_days = 7;
+$backlog_days = 0;
 
 // notes for specific builds
 $notes = array('Firefox-5.0-20110427143820' => '5.0b1',
@@ -231,134 +228,15 @@ $adudata = file_exists($fadu)?json_decode(file_get_contents($fadu), true):array(
 for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
   $anadir = date('Y-m-d', $anatime);
-  print('Looking at data for '.$anadir."\n");
+  print('Looking at per-build crash data for '.$anadir."\n");
   if (!file_exists($anadir)) { mkdir($anadir); }
 
-  $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
-  $fbcs = 'buildcrashes.csv';
-  $fbcrcnt = 'buildcrashcounts.json';
-  $fweb = $anadir.'.buildcrashes.html';
-
-  // make sure we have the crashdata csv
-  if ($on_moz_server) {
-    $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-    if (!file_exists($anafcsvgz)) { break; }
-  }
-  else {
-    $anafcsv = $anadir.'/'.$fcsv;
-    if (!file_exists($anafcsv)) {
-      print('Fetching '.$anafcsv.' from the web'."\n");
-      $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-      if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
-    }
-    if (!file_exists($anafcsv)) { break; }
-  }
-
-  // get list of wanted info for the crashes
-  $anafbcs = $anadir.'/'.$fbcs;
-  if (!file_exists($anafbcs)) {
-    print('Getting info for crashes'."\n");
-    // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
-    // some parts from that split into total and crashcount blocks, though
-    // $7 is product, $8 is version, $9 is build ID, $23 is hang id, $25 is process type
-    $cmd = 'awk \'-F\t\' \' {printf "\t%s;%s;%s;%s;%s\n",$7,$8,$9,($23!="\\\\N"),$25}\'';
-    if ($on_moz_server) {
-      shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' > '.$anafbcs);
-    }
-    else {
-      shell_exec($cmd.' '.$anafcsv.' > '.$anafbcs);
-    }
-  }
-
-  // get build list with counts per build
-  $anafbcrcnt = $anadir.'/'.$fbcrcnt;
-  if (!file_exists($anafbcrcnt)) {
-    print('Getting a list of build crash totals'."\n");
-    $cmd = 'cat '.$anafbcs.' | sort | uniq -c';
-    $builds = array();
-    $types = array();
-    $buildlist = explode("\n", shell_exec($cmd));
-    foreach ($buildlist as $buildline) {
-      if (preg_match('/^\s*(\d+)\s+(.*);(.*);(.*);(.*);(.*)$/', $buildline, $regs)) {
-        $idx = $regs[2].'-'.$regs[3].'-'.$regs[4]; // e.g. Firefox-5.0-20110517192056
-        if (!array_key_exists($idx, $builds)) {
-          $builds[$idx] = array('product' => $regs[2],
-                                'version' => $regs[3],
-                                'buildid' => $regs[4]);
-        }
-        if ($idx != 'product-version-build') {
-          $type = ($regs[6]=='\\N')?'browser':$regs[6];
-          $sum_id = 'num_'.($regs[5]?'hang':'crash').'_'.$type;
-          $builds[$idx][$sum_id] = $regs[1];
-          if (!in_array($type, $types)) { $types[] = $type; }
-        }
-      }
-    }
-    sort($types);
-    foreach ($builds as $idx=>$builddata) {
-      $totals = array('all' => 0, 'hang' => 0, 'crash' => 0);
-      foreach ($types as $type) {
-        $totals[$type] = 0;
-      }
-      foreach (array('hang','crash') as $issue) {
-        foreach ($types as $type) {
-          $sum_id = 'num_'.$issue.'_'.$type;
-          $builds[$idx][$sum_id] = intval(@$builddata[$sum_id]);
-          $totals['all'] += $builds[$idx][$sum_id];
-          $totals[$issue] += $builds[$idx][$sum_id];
-          $totals[$type] += $builds[$idx][$sum_id];
-        }
-        $builds[$idx]['num_'.$issue] = $totals[$issue];
-      }
-      foreach ($types as $type) {
-        $builds[$idx]['num_'.$type] = $totals[$type];
-      }
-      $builds[$idx]['num_total'] = $totals['all'];
-    }
-    file_put_contents($anafbcrcnt, json_encode($builds));
-  }
-  else {
-    $builds = json_decode(file_get_contents($anafbcrcnt), true);
-  }
+  $fweb = $anadir.'.buildcrashes-new.html';
 
   $anafweb = $anadir.'/'.$fweb;
   if (!file_exists($anafweb)) {
     // create out an HTML page
     print('Write HTML output'."\n");
-
-    $cbuilds = array();
-    foreach ($builds as $idx=>$builddata) {
-      foreach ($products as $product) {
-        foreach ($channels as $channel=>$regex) {
-          if (($builddata['product'] == $product) &&
-              (preg_match('/^'.$regex.'$/', $builddata['version'], $regs))) {
-            $cbuilds[$product][$channel][$idx] = $builddata;
-            unset($builds[$idx]);
-          }
-        }
-      }
-    }
-
-    $buildadu = array();
-    $reladu = array();
-    $calcadu = array();
-    if (@$adudata[$anadir]) {
-      foreach ($adudata[$anadir] as $badu) {
-        $idx = $badu['product'].'-'.$badu['version'].'-'.$badu['buildid'];
-        $buildadu[$idx] = $badu['adu'];
-        $reladu[$idx] = array_key_exists('release-adu', $badu)?$badu['release-adu']:0;
-        if (array_key_exists('throttle', $badu)) {
-          $calcadu[$idx] = $buildadu[$idx] * $badu['throttle'];
-        }
-        elseif ($reladu[$idx] && array_key_exists('release-throttle', $badu)) {
-          $calcadu[$idx] = ($buildadu[$idx] - $reladu[$idx]) +
-                           $reladu[$idx] * $badu['release-throttle'];
-        }
-        else {
-          $calcadu[$idx] = $buildadu[$idx];
-        }
-      }
-    }
 
     $doc = new DOMDocument('1.0', 'utf-8');
     $doc->formatOutput = true; // we want a nice output
@@ -384,19 +262,131 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       foreach ($channels as $channel=>$regexp) {
         $item = $list->appendChild($doc->createElement('li'));
         $link = $item->appendChild($doc->createElement('a',
-            $product.' '.$channel));
+            $product.' '.ucfirst($channel)));
         $link->setAttribute('href', '#'.$product.'-'.$channel);
       }
     }
 
     foreach ($products as $product) {
+      $regular_pv_ids = array();
       foreach ($channels as $channel=>$regexp) {
-        $listbuilds = ($channel!='other')?@$cbuilds[$product][$channel]:$builds;
+        $pvdata = array();
+        if ($channel != 'other') {
+          $mver = array();
+          // get featured major verion(s)
+          $feat_query =
+            'SELECT major_version '
+            .'FROM product_versions '
+            ."WHERE product_name = '".$product."'"
+            ." AND build_type = '".ucfirst($channel)."'"
+            ." AND featured_version = 't';";
+
+          $feat_result = pg_query($db_conn, $feat_query);
+          if (!$feat_result) {
+            print('--- ERROR: featured query failed!'."\n");
+          }
+
+          while ($feat_row = pg_fetch_array($feat_result)) {
+            $mver[] = $feat_row['major_version'];
+          }
+
+          if (!count($mver)) {
+            // get most recent major verion
+            $last_query =
+              'SELECT major_version '
+              .'FROM product_versions '
+              ."WHERE product_name = '".$product."'"
+              ." AND build_type = '".ucfirst($channel)."' "
+              ."ORDER BY build_date DESC LIMIT 1;";
+
+            $last_result = pg_query($db_conn, $last_query);
+            if (!$feat_result) {
+              print('--- ERROR: Reports/signatures query failed!'."\n");
+            }
+
+            while ($last_row = pg_fetch_array($last_result)) {
+              $mver[] = $last_row['major_version'];
+            }
+          }
+          if (!count($mver)) {
+            print('--- ERROR: no version found for '.$product.' '.ucfirst($channel).'!'."\n");
+            break;
+          }
+
+          $pv_ids = array();
+          $pv_query =
+            'SELECT product_version_id, release_version, version_string '
+            .'FROM product_versions '
+            ."WHERE product_name = '".$product."'"
+            ." AND major_version IN ('".implode("','", $mver)."');";
+          $pv_result = pg_query($db_conn, $pv_query);
+          if (!$pv_result) {
+            print('--- ERROR: product version query failed!'."\n");
+          }
+          while ($pv_row = pg_fetch_array($pv_result)) {
+            $pv_ids[] = $pv_row['product_version_id'];
+            $regular_pv_ids[] = $pv_row['product_version_id'];
+            $pvdata[$pv_row['product_version_id']] = $pv_row;
+          }
+        }
+        else {
+          $pv_ids = array();
+          $pv_query =
+            'SELECT product_version_id, release_version, version_string '
+            .'FROM product_versions '
+            ."WHERE product_name = '".$product."'"
+            ." AND sunset_date > '".$anadir."'"
+            .' AND product_version_id NOT IN ('.implode(',', $regular_pv_ids).');';
+          $pv_result = pg_query($db_conn, $pv_query);
+          if (!$pv_result) {
+            print('--- ERROR: product version query failed!'."\n");
+          }
+          while ($pv_row = pg_fetch_array($pv_result)) {
+            $pv_ids[] = $pv_row['product_version_id'];
+            $pvdata[$pv_row['product_version_id']] = $pv_row;
+          }
+        }
+
+        $rep_query =
+          'SELECT COUNT(*) as cnt, build, product_version_id,'
+          ." CASE WHEN hang_id IS NULL THEN 'crash' ELSE 'hang' END as crash_type,"
+          .' process_type'
+          .'FROM reports_clean '
+          .'WHERE product_version_id IN ('.implode(',', $pv_ids).')'
+          ." AND utc_day_is(date_processed, '".$anadir."') "
+          .'GROUP BY build, product_version_id, crash_type, process_type '
+          .'ORDER BY build ASC;';
+
+        $rep_result = pg_query($db_conn, $rep_query);
+        if (!$rep_result) {
+          print('--- ERROR: Reports/signatures query failed!'."\n");
+        }
+
+        $listbuilds = array();
+        $categories = array('crash'=>0, 'hang'=>0, 'browser'=>0);
+        while ($rep_row = pg_fetch_array($rep_result)) {
+          $idx = $rep_row['build'].'-'.$rep_row['product_version_id'];
+          if (!array_key_exists($idx, $listbuilds)) {
+            $listbuilds[$idx] = array('build' => $rep_row['build'],
+                                      'pvid' => $rep_row['product_version_id'],
+                                      'cnt' => array());
+          }
+          $ptype = strtolower($rep_row['process_type']);
+          $listbuilds[$idx]['cnt'][$rep_row['crash_type']] += $rep_row['cnt'];
+          $listbuilds[$idx]['cnt'][$ptype] += $rep_row['cnt'];
+          $listbuilds[$idx]['cnt']['total'] += $rep_row['cnt'];
+          if ($ptype != 'browser' || $rep_row['crash_type'] != 'hang') {
+            $listbuilds[$idx]['cnt']['norm_total'] += $rep_row['cnt'];
+          }
+          $categories[$rep_row['crash_type']] += $rep_row['cnt'];
+          $categories[$ptype] += $rep_row['cnt'];
+        }
+
         $h2 = $body->appendChild($doc->createElement('h2',
-            $product.' '.$channel));
+            $product.' '.ucfirst($channel)));
         $h2->setAttribute('id', $product.'-'.$channel);
 
-        if (count($listbuilds)) {
+        if (count($builddata)) {
           $table = $body->appendChild($doc->createElement('table'));
           $table->setAttribute('border', '1');
 
@@ -407,10 +397,10 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           $th = $tr->appendChild($doc->createElement('th', 'Build ID'));
           $th = $tr->appendChild($doc->createElement('th', 'Notes'));
           $fields = array();
-          foreach ($builds['product-version-build'] as $gfld=>$gdataone) {
-            if (preg_match('/^num_([^_]*)$/', $gfld, $regs)) {
-              $fields[] = $gfld;
-              $th = $tr->appendChild($doc->createElement('th', $regs[1]));
+          foreach ($categories as $cat=>$cnt) {
+            if ($cnt) {
+              $fields[] = $cat;
+              $th = $tr->appendChild($doc->createElement('th', $cat));
             }
           }
           $th = $tr->appendChild($doc->createElement('th', 'normalized'));
@@ -457,20 +447,19 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                 }
               }
               foreach ($fields as $fld) {
-                $sfld = str_replace('num_', '', $fld);
-                $ptype = !in_array($sfld, array('hang','crash','total'))?$sfld:'any';
-                $htype = in_array($sfld, array('hang','crash'))?$sfld:'any';
+                $ptype = !in_array($fld, array('hang','crash','total'))?$sfld:'any';
+                $htype = in_array($fld, array('hang','crash'))?$sfld:'any';
 
                 $td = $tr->appendChild($doc->createElement('td'));
                 $td->setAttribute('align', 'right');
                 $link = $td->appendChild($doc->createElement('a', $builddata[$fld]));
                 $link->setAttribute('href',
-                    'https://crash-stats.mozilla.com/query/query?product='.$builddata['product']
+                    'https://crash-stats.mozilla.com/query/query?product='.$product
                     .'&version=All'
-  //                  .'&version='.$builddata['product'].'%3A'.$builddata['version']    // would be correct but is broken on Socorro, see bug 679328
+                    .'&version='.$product.'%3A'.$pvdata[$builddata['pvid']]['version_string']
                     .'&range_value=1&range_unit=days&&date='.$anadir.'+23%3A59%3A59'
                     .'&query_type=contains&query=&reason='
-                    .'&build_id='.$builddata['buildid']
+                    .'&build_id='.$builddata['build']
                     .'&process_type='.$ptype.'&hang_type='.$htype
                     .'&do_query=1');
                 if (@$buildadu[$idx]) {
@@ -481,13 +470,12 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                   $small->setAttribute('style', 'color:GrayText;');
                 }
               }
-              $norm_total = $builddata['num_total'] - intval($builddata['num_hang']/2);
-              $td = $tr->appendChild($doc->createElement('td', $norm_total));
+              $td = $tr->appendChild($doc->createElement('td', $builddata['norm_total']));
               $td->setAttribute('align', 'right');
               if (@$buildadu[$idx]) {
                 $td->appendChild($doc->createElement('br'));
                 $small = $td->appendChild($doc->createElement('small',
-                    sprintf('%.3f', $norm_total*100/$calcadu[$idx])));
+                    sprintf('%.3f', $builddata['norm_total']*100/$calcadu[$idx])));
                 $small->setAttribute('title', 'per 100 ADU');
                 $small->setAttribute('style', 'color:GrayText;');
               }
