@@ -455,6 +455,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               $th = $tr->appendChild($doc->createElement('th', $cat));
             }
           }
+          $fields[] = 'total';
+          $th = $tr->appendChild($doc->createElement('th', 'total'));
           $th = $tr->appendChild($doc->createElement('th', 'normalized'));
           $th->setAttribute('title',
               'total minus half of all hangs (as hangs always come in pairs)');
@@ -463,11 +465,11 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           foreach ($listbuilds as $idx=>$builddata) {
             $tr = $table->appendChild($doc->createElement('tr'));
             $td = $tr->appendChild($doc->createElement('td',
-                htmlentities($builddata['product'], ENT_COMPAT, 'UTF-8')));
+                htmlentities($product, ENT_COMPAT, 'UTF-8')));
             $td = $tr->appendChild($doc->createElement('td',
-                htmlentities($builddata['version'], ENT_COMPAT, 'UTF-8')));
+                htmlentities($pvdata[$builddata['pvid']]['version_string'], ENT_COMPAT, 'UTF-8')));
             $td = $tr->appendChild($doc->createElement('td',
-                htmlentities($builddata['buildid'], ENT_COMPAT, 'UTF-8')));
+                htmlentities($builddata['build'], ENT_COMPAT, 'UTF-8')));
             $td = $tr->appendChild($doc->createElement('td',
                 htmlentities(@$notes[$idx], ENT_COMPAT, 'UTF-8')));
             if (@$buildadu[$idx]) {
@@ -498,12 +500,12 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               }
             }
             foreach ($fields as $fld) {
-              $ptype = !in_array($fld, array('hang','crash','total'))?$sfld:'any';
-              $htype = in_array($fld, array('hang','crash'))?$sfld:'any';
+              $ptype = !in_array($fld, array('hang','crash','total'))?$fld:'any';
+              $htype = in_array($fld, array('hang','crash'))?$fld:'any';
 
               $td = $tr->appendChild($doc->createElement('td'));
               $td->setAttribute('align', 'right');
-              $link = $td->appendChild($doc->createElement('a', $builddata[$fld]));
+              $link = $td->appendChild($doc->createElement('a', $builddata['cnt'][$fld]));
               $link->setAttribute('href',
                   'https://crash-stats.mozilla.com/query/query?product='.$product
                   .'&version=All'
@@ -521,7 +523,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                 $small->setAttribute('style', 'color:GrayText;');
               }
             }
-            $td = $tr->appendChild($doc->createElement('td', $builddata['norm_total']));
+            $td = $tr->appendChild($doc->createElement('td', $builddata['cnt']['norm_total']));
             $td->setAttribute('align', 'right');
             if (@$buildadu[$idx]) {
               $td->appendChild($doc->createElement('br'));
