@@ -35,7 +35,7 @@ date_default_timezone_set('America/Los_Angeles');
 $channels = array('release', 'beta', 'aurora', 'nightly', 'other');
 
 // products
-$products = array('Firefox','Fennec','FennecAndroid');
+$products = array('Firefox', 'Fennec', 'FennecAndroid');
 
 // how many days back to look at
 $backlog_days = 0;
@@ -287,7 +287,6 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         .' per different build '
         .'(product + version + Build ID combination).'));
 
-    $channels['other'] = '';
     $list = $body->appendChild($doc->createElement('ul'));
     foreach ($products as $product) {
       foreach ($channels as $channel) {
@@ -407,6 +406,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         }
 
         $listbuilds = array();
+        $buildadu = array();
         $categories = array('crash'=>0, 'hang'=>0, 'browser'=>0);
         while ($rep_row = pg_fetch_array($rep_result)) {
           $idx = $rep_row['build'].'-'.$rep_row['product_version_id'];
@@ -415,6 +415,26 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                                       'pvid' => $rep_row['product_version_id'],
                                       'cnt' => array('total' => 0,
                                                      'norm_total' => 0));
+
+            $adu_query =
+              'SELECT SUM(adu_count) as adu '
+              .'FROM raw_adu '
+              ."WHERE product_name = '".$product."'"
+              ." AND build_channel = '".$channel."'"
+              ." AND product_version = '".$pvdata[$rep_row['product_version_id']]['release_version']."'"
+              ." AND build = '".$rep_row['build']."'"
+              ." AND date = '".$anadir."';";
+
+            $adu_result = pg_query($db_conn, $adu_query);
+            if (!$adu_result) {
+              print('--- ERROR: ADU query failed!'."\n");
+            }
+            else {
+              $adu_row = pg_fetch_array($rep_result);
+              if (intval($adu_row['adu'])) {
+                $buildadu[$idx] = $adu_row['adu'];
+              }
+            }
           }
           $ptype = strtolower($rep_row['process_type']);
           if (!array_key_exists($rep_row['crash_type'], $listbuilds[$idx]['cnt'])) {
@@ -439,6 +459,11 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         $h2 = $body->appendChild($doc->createElement('h2',
             $product.' '.ucfirst($channel)));
         $h2->setAttribute('id', $product.'-'.$channel);
+
+        if ($channel == 'other') {
+          $body->appendChild($doc->createElement('p',
+              'Only known-by-Socorro builds of currently active versions are listed.'));
+        }
 
         if (count($listbuilds)) {
           $table = $body->appendChild($doc->createElement('table'));
@@ -465,6 +490,9 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
           // signatures rows
           foreach ($listbuilds as $idx=>$builddata) {
+
+
+
             $tr = $table->appendChild($doc->createElement('tr'));
             $td = $tr->appendChild($doc->createElement('td',
                 htmlentities($product, ENT_COMPAT, 'UTF-8')));
