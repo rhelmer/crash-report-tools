@@ -290,7 +290,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $channels['other'] = '';
     $list = $body->appendChild($doc->createElement('ul'));
     foreach ($products as $product) {
-      foreach ($channels as $channel=>$regexp) {
+      foreach ($channels as $channel) {
         $item = $list->appendChild($doc->createElement('li'));
         $link = $item->appendChild($doc->createElement('a',
             $product.' '.ucfirst($channel)));
@@ -300,7 +300,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
     foreach ($products as $product) {
       $regular_pv_ids = array();
-      foreach ($channels as $channel=>$regexp) {
+      foreach ($channels as $channel) {
         $pvdata = array();
         if ($channel != 'other') {
           $mver = array();
