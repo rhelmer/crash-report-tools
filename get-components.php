@@ -296,7 +296,7 @@ foreach ($reports as $rep) {
           $subfile = $topmost_filenames;
         }
         if (!strlen($sig) || !strlen($toplevel)) {
-          print('--- ERROR: line without signature or toplevel!'."\n");
+          print('--- ERROR: entry without signature or toplevel! (crash ID: '.$crash_id.')'."\n");
           break;
         }
         // Apply some additional filtering for cases where we obviously get it wrong.
