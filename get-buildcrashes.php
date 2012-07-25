@@ -524,7 +524,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               if (@$buildadu[$idx]) {
                 $td->appendChild($doc->createElement('br'));
                 $small = $td->appendChild($doc->createElement('small',
-                    print_rate($builddata['cnt'][$fld], $buildadu[$idx], $channel)));
+                    print_rate(intval(@$builddata['cnt'][$fld]), $buildadu[$idx], $channel)));
                 $small->setAttribute('title', 'per 100 ADU');
                 $small->setAttribute('style', 'color:GrayText;');
               }
