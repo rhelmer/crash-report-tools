@@ -142,6 +142,9 @@ $on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
 $url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
                              :'http://people.mozilla.com/crash_analysis/';
 
+// File storing the DB access data - including password!
+$fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
+
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
 else { chdir('/mnt/mozilla/projects/socorro/'); }
 
