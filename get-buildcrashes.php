@@ -387,7 +387,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         $rep_query =
           'SELECT COUNT(*) as cnt, build, product_version_id,'
           ." CASE WHEN hang_id IS NULL THEN 'crash' ELSE 'hang' END as crash_type,"
-          .' process_type'
+          .' process_type '
           .'FROM reports_clean '
           .'WHERE product_version_id IN ('.implode(',', $pv_ids).')'
           ." AND utc_day_is(date_processed, '".$anadir."') "
