@@ -384,6 +384,11 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           }
         }
 
+        if (!count($pv_ids)) {
+          print('--- ERROR: no product versions found for '.$product.' '.ucfirst($channel).'!'."\n");
+          break;
+        }
+
         $rep_query =
           'SELECT COUNT(*) as cnt, build, product_version_id,'
           ." CASE WHEN hang_id IS NULL THEN 'crash' ELSE 'hang' END as crash_type,"
@@ -407,16 +412,25 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           if (!array_key_exists($idx, $listbuilds)) {
             $listbuilds[$idx] = array('build' => $rep_row['build'],
                                       'pvid' => $rep_row['product_version_id'],
-                                      'cnt' => array());
+                                      'cnt' => array('total', 'norm_total'));
           }
           $ptype = strtolower($rep_row['process_type']);
+          if (!array_key_exists($rep_row['crash_type'], $listbuilds[$idx]['cnt'])) {
+            $listbuilds[$idx]['cnt'][$rep_row['crash_type']] = 0;
+          }
           $listbuilds[$idx]['cnt'][$rep_row['crash_type']] += $rep_row['cnt'];
+          if (!array_key_exists($ptype, $listbuilds[$idx]['cnt'])) {
+            $listbuilds[$idx]['cnt'][$ptype] = 0;
+          }
           $listbuilds[$idx]['cnt'][$ptype] += $rep_row['cnt'];
           $listbuilds[$idx]['cnt']['total'] += $rep_row['cnt'];
           if ($ptype != 'browser' || $rep_row['crash_type'] != 'hang') {
             $listbuilds[$idx]['cnt']['norm_total'] += $rep_row['cnt'];
           }
           $categories[$rep_row['crash_type']] += $rep_row['cnt'];
+          if (!array_key_exists($ptype, $categories)) {
+            $categories[$ptype] = 0;
+          }
           $categories[$ptype] += $rep_row['cnt'];
         }
 
