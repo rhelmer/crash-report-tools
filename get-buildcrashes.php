@@ -461,76 +461,74 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
           // signatures rows
           foreach ($listbuilds as $idx=>$builddata) {
-            if (preg_match('/^'.preg_quote($product).'-/', $idx)) {
-              $tr = $table->appendChild($doc->createElement('tr'));
-              $td = $tr->appendChild($doc->createElement('td',
-                  htmlentities($builddata['product'], ENT_COMPAT, 'UTF-8')));
-              $td = $tr->appendChild($doc->createElement('td',
-                  htmlentities($builddata['version'], ENT_COMPAT, 'UTF-8')));
-              $td = $tr->appendChild($doc->createElement('td',
-                  htmlentities($builddata['buildid'], ENT_COMPAT, 'UTF-8')));
-              $td = $tr->appendChild($doc->createElement('td',
-                  htmlentities(@$notes[$idx], ENT_COMPAT, 'UTF-8')));
-              if (@$buildadu[$idx]) {
-                if (@$notes[$idx]) { $td->appendChild($doc->createElement('br')); }
-                if ($buildadu[$idx] > 10000000) { // 10M
-                  $adu_out = sprintf('%d', $buildadu[$idx]/1000000).'M';
-                }
-                elseif ($buildadu[$idx] > 1000000) { // 1M
-                  $adu_out = sprintf('%.1f', $buildadu[$idx]/1000000).'M';
-                }
-                elseif ($buildadu[$idx] > 10000) { // 10k
-                  $adu_out = sprintf('%d', $buildadu[$idx]/1000).'k';
-                }
-                elseif ($buildadu[$idx] > 1000) { // 1k
-                  $adu_out = sprintf('%.1f', $buildadu[$idx]/1000).'k';
-                }
-                else {
-                  $adu_out = sprintf('%d', $buildadu[$idx]);
-                }
-
-                $small = $td->appendChild($doc->createElement('small',
-                    $adu_out.' ADU'));
-                $small->setAttribute('style', 'color:GrayText;');
-                if ($reladu[$idx]) {
-                  $small->setAttribute('title',
-                      sprintf('%d', 100 * $reladu[$idx] / $buildadu[$idx])
-                      .'% on release');
-                }
+            $tr = $table->appendChild($doc->createElement('tr'));
+            $td = $tr->appendChild($doc->createElement('td',
+                htmlentities($builddata['product'], ENT_COMPAT, 'UTF-8')));
+            $td = $tr->appendChild($doc->createElement('td',
+                htmlentities($builddata['version'], ENT_COMPAT, 'UTF-8')));
+            $td = $tr->appendChild($doc->createElement('td',
+                htmlentities($builddata['buildid'], ENT_COMPAT, 'UTF-8')));
+            $td = $tr->appendChild($doc->createElement('td',
+                htmlentities(@$notes[$idx], ENT_COMPAT, 'UTF-8')));
+            if (@$buildadu[$idx]) {
+              if (@$notes[$idx]) { $td->appendChild($doc->createElement('br')); }
+              if ($buildadu[$idx] > 10000000) { // 10M
+                $adu_out = sprintf('%d', $buildadu[$idx]/1000000).'M';
               }
-              foreach ($fields as $fld) {
-                $ptype = !in_array($fld, array('hang','crash','total'))?$sfld:'any';
-                $htype = in_array($fld, array('hang','crash'))?$sfld:'any';
-
-                $td = $tr->appendChild($doc->createElement('td'));
-                $td->setAttribute('align', 'right');
-                $link = $td->appendChild($doc->createElement('a', $builddata[$fld]));
-                $link->setAttribute('href',
-                    'https://crash-stats.mozilla.com/query/query?product='.$product
-                    .'&version=All'
-                    .'&version='.$product.'%3A'.$pvdata[$builddata['pvid']]['version_string']
-                    .'&range_value=1&range_unit=days&&date='.$anadir.'+23%3A59%3A59'
-                    .'&query_type=contains&query=&reason='
-                    .'&build_id='.$builddata['build']
-                    .'&process_type='.$ptype.'&hang_type='.$htype
-                    .'&do_query=1');
-                if (@$buildadu[$idx]) {
-                  $td->appendChild($doc->createElement('br'));
-                  $small = $td->appendChild($doc->createElement('small',
-                      sprintf('%.3f', $builddata[$fld]*100/$calcadu[$idx])));
-                  $small->setAttribute('title', 'per 100 ADU');
-                  $small->setAttribute('style', 'color:GrayText;');
-                }
+              elseif ($buildadu[$idx] > 1000000) { // 1M
+                $adu_out = sprintf('%.1f', $buildadu[$idx]/1000000).'M';
               }
-              $td = $tr->appendChild($doc->createElement('td', $builddata['norm_total']));
+              elseif ($buildadu[$idx] > 10000) { // 10k
+                $adu_out = sprintf('%d', $buildadu[$idx]/1000).'k';
+              }
+              elseif ($buildadu[$idx] > 1000) { // 1k
+                $adu_out = sprintf('%.1f', $buildadu[$idx]/1000).'k';
+              }
+              else {
+                $adu_out = sprintf('%d', $buildadu[$idx]);
+              }
+
+              $small = $td->appendChild($doc->createElement('small',
+                  $adu_out.' ADU'));
+              $small->setAttribute('style', 'color:GrayText;');
+              if ($reladu[$idx]) {
+                $small->setAttribute('title',
+                    sprintf('%d', 100 * $reladu[$idx] / $buildadu[$idx])
+                    .'% on release');
+              }
+            }
+            foreach ($fields as $fld) {
+              $ptype = !in_array($fld, array('hang','crash','total'))?$sfld:'any';
+              $htype = in_array($fld, array('hang','crash'))?$sfld:'any';
+
+              $td = $tr->appendChild($doc->createElement('td'));
               $td->setAttribute('align', 'right');
+              $link = $td->appendChild($doc->createElement('a', $builddata[$fld]));
+              $link->setAttribute('href',
+                  'https://crash-stats.mozilla.com/query/query?product='.$product
+                  .'&version=All'
+                  .'&version='.$product.'%3A'.$pvdata[$builddata['pvid']]['version_string']
+                  .'&range_value=1&range_unit=days&&date='.$anadir.'+23%3A59%3A59'
+                  .'&query_type=contains&query=&reason='
+                  .'&build_id='.$builddata['build']
+                  .'&process_type='.$ptype.'&hang_type='.$htype
+                  .'&do_query=1');
               if (@$buildadu[$idx]) {
                 $td->appendChild($doc->createElement('br'));
                 $small = $td->appendChild($doc->createElement('small',
-                    sprintf('%.3f', $builddata['norm_total']*100/$calcadu[$idx])));
+                    sprintf('%.3f', $builddata[$fld]*100/$calcadu[$idx])));
                 $small->setAttribute('title', 'per 100 ADU');
                 $small->setAttribute('style', 'color:GrayText;');
               }
+            }
+            $td = $tr->appendChild($doc->createElement('td', $builddata['norm_total']));
+            $td->setAttribute('align', 'right');
+            if (@$buildadu[$idx]) {
+              $td->appendChild($doc->createElement('br'));
+              $small = $td->appendChild($doc->createElement('small',
+                  sprintf('%.3f', $builddata['norm_total']*100/$calcadu[$idx])));
+              $small->setAttribute('title', 'per 100 ADU');
+              $small->setAttribute('style', 'color:GrayText;');
             }
           }
         }
