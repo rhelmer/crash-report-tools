@@ -222,6 +222,34 @@ breakpad=> SELECT * from reports_clean where utc_day_is(date_processed, '2012-07
 // get current day
 $curtime = time();
 
+if (file_exists($fdbsecret)) {
+  $dbsecret = json_decode(file_get_contents($fdbsecret), true);
+  if (!is_array($dbsecret) || !count($dbsecret)) {
+    print('ERROR: No DB secrets found, aborting!'."\n");
+    exit(1);
+  }
+  $db_conn = pg_pconnect('host='.$dbsecret['host']
+                         .' port='.$dbsecret['port']
+                         .' dbname=breakpad'
+                         .' user='.$dbsecret['user']
+                         .' password='.$dbsecret['password']);
+  if (!$db_conn) {
+    print('ERROR: DB connection failed, aborting!'."\n");
+    exit(1);
+  }
+  // For info on what data can be accessed, see also
+  // http://socorro.readthedocs.org/en/latest/databasetabledesc.html
+  // For the DB schema, see
+  // https://github.com/mozilla/socorro/blob/master/sql/schema.sql
+}
+else {
+  // Won't work! (Set just for documenting what fields are in the file.)
+  $dbsecret = array('host' => 'host.m.c', 'port' => '6432',
+                    'user' => 'analyst', 'password' => 'foo');
+  print('ERROR: No DB secrets found, aborting!'."\n");
+  exit(1);
+}
+
 $fadu = 'build-adu.json';
 $adudata = file_exists($fadu)?json_decode(file_get_contents($fadu), true):array();
 
@@ -285,9 +313,10 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           if (!$feat_result) {
             print('--- ERROR: featured query failed!'."\n");
           }
-
-          while ($feat_row = pg_fetch_array($feat_result)) {
-            $mver[] = $feat_row['major_version'];
+          else {
+            while ($feat_row = pg_fetch_array($feat_result)) {
+              $mver[] = $feat_row['major_version'];
+            }
           }
 
           if (!count($mver)) {
@@ -303,9 +332,10 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             if (!$feat_result) {
               print('--- ERROR: Reports/signatures query failed!'."\n");
             }
-
-            while ($last_row = pg_fetch_array($last_result)) {
-              $mver[] = $last_row['major_version'];
+            else {
+              while ($last_row = pg_fetch_array($last_result)) {
+                $mver[] = $last_row['major_version'];
+              }
             }
           }
           if (!count($mver)) {
@@ -323,10 +353,12 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           if (!$pv_result) {
             print('--- ERROR: product version query failed!'."\n");
           }
-          while ($pv_row = pg_fetch_array($pv_result)) {
-            $pv_ids[] = $pv_row['product_version_id'];
-            $regular_pv_ids[] = $pv_row['product_version_id'];
-            $pvdata[$pv_row['product_version_id']] = $pv_row;
+          else {
+            while ($pv_row = pg_fetch_array($pv_result)) {
+              $pv_ids[] = $pv_row['product_version_id'];
+              $regular_pv_ids[] = $pv_row['product_version_id'];
+              $pvdata[$pv_row['product_version_id']] = $pv_row;
+            }
           }
         }
         else {
@@ -341,9 +373,11 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           if (!$pv_result) {
             print('--- ERROR: product version query failed!'."\n");
           }
-          while ($pv_row = pg_fetch_array($pv_result)) {
-            $pv_ids[] = $pv_row['product_version_id'];
-            $pvdata[$pv_row['product_version_id']] = $pv_row;
+          else {
+            while ($pv_row = pg_fetch_array($pv_result)) {
+              $pv_ids[] = $pv_row['product_version_id'];
+              $pvdata[$pv_row['product_version_id']] = $pv_row;
+            }
           }
         }
 
@@ -360,6 +394,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         $rep_result = pg_query($db_conn, $rep_query);
         if (!$rep_result) {
           print('--- ERROR: Reports/signatures query failed!'."\n");
+          break;
         }
 
         $listbuilds = array();
@@ -386,7 +421,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             $product.' '.ucfirst($channel)));
         $h2->setAttribute('id', $product.'-'.$channel);
 
-        if (count($builddata)) {
+        if (count($listbuilds)) {
           $table = $body->appendChild($doc->createElement('table'));
           $table->setAttribute('border', '1');
 
