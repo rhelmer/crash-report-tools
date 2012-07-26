@@ -539,7 +539,9 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               if (@$buildadu[$idx]) {
                 $td->appendChild($doc->createElement('br'));
                 $small = $td->appendChild($doc->createElement('small',
-                    print_rate(intval(@$builddata['cnt'][$fld]), $buildadu[$idx], $channel)));
+                    print_rate(intval(@$builddata['cnt'][$fld]), $buildadu[$idx],
+                               strtolower($pvdata[$builddata['pvid']]['build_type']),
+                               $product)));
                 $small->setAttribute('title', 'per 100 ADU');
                 $small->setAttribute('style', 'color:GrayText;');
               }
@@ -549,7 +551,9 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             if (@$buildadu[$idx]) {
               $td->appendChild($doc->createElement('br'));
               $small = $td->appendChild($doc->createElement('small',
-                  print_rate($builddata['cnt']['norm_total'], $buildadu[$idx], $channel)));
+                  print_rate($builddata['cnt']['norm_total'], $buildadu[$idx],
+                             strtolower($pvdata[$builddata['pvid']]['build_type']),
+                             $product)));
               $small->setAttribute('title', 'per 100 ADU');
               $small->setAttribute('style', 'color:GrayText;');
             }
@@ -569,8 +573,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 // *** helper functions ***
 
 // Function to print crash rates
-function print_rate($count, $adu, $channel) {
-  $t_factor = ($channel == 'release') ? 10 : 1;
+function print_rate($count, $adu, $channel, $product) {
+  $t_factor = ($channel == 'release' && $product == 'Firefox') ? 10 : 1;
   return sprintf('%.3f', $count * $t_factor * 100 / $adu);
 }
 ?>
