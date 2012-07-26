@@ -310,7 +310,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         break;
       }
       else {
-        $pid_row = pg_fetch_array($pid_result)
+        $pid_row = pg_fetch_array($pid_result);
         $productid = $pid_row['productid'];
       }
       $regular_pv_ids = array();
