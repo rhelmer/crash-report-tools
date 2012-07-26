@@ -298,6 +298,21 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     }
 
     foreach ($products as $product) {
+      // get most recent major verion
+      $pid_query =
+        'SELECT productid '
+        .'FROM product_productid_map '
+        ."WHERE product_name = '".$product."';";
+
+      $pid_result = pg_query($db_conn, $pid_query);
+      if (!$pid_result) {
+        print('--- ERROR: Product ID query failed!'."\n");
+        break;
+      }
+      else {
+        $pid_row = pg_fetch_array($pid_result)
+        $productid = $pid_row['productid'];
+      }
       $regular_pv_ids = array();
       foreach ($channels as $channel) {
         $pvdata = array();
@@ -347,7 +362,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
           $pv_ids = array();
           $pv_query =
-            'SELECT product_version_id, release_version, version_string '
+            'SELECT product_version_id, release_version, version_string, build_type '
             .'FROM product_versions '
             ."WHERE product_name = '".$product."'"
             ." AND major_version IN ('".implode("','", $mver)."')"
@@ -367,7 +382,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         else {
           $pv_ids = array();
           $pv_query =
-            'SELECT product_version_id, release_version, version_string '
+            'SELECT product_version_id, release_version, version_string, build_type '
             .'FROM product_versions '
             ."WHERE product_name = '".$product."'"
             ." AND sunset_date > '".$anadir."'"
@@ -419,8 +434,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             $adu_query =
               'SELECT SUM(adu_count) as adu '
               .'FROM raw_adu '
-              ."WHERE product_name = '".$product."'"
-              ." AND build_channel = '".$channel."'"
+              ."WHERE product_guid = btrim('".$productid."', '{}')"
+              ." AND build_channel = '".strtolower($pvdata[$rep_row['product_version_id']]['build_type'])."'"
               ." AND product_version = '".$pvdata[$rep_row['product_version_id']]['release_version']."'"
               ." AND build = '".$rep_row['build']."'"
               ." AND date = '".$anadir."';";
