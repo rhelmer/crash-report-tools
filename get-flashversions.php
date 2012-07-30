@@ -33,7 +33,12 @@ date_default_timezone_set('America/Los_Angeles');
 
 // Flash versions to gather reports for.
 
-$flash_versions = array('11.3.300.268');
+$flash_versions = array('11.2.202.235',
+                        '11.3.300.257',
+                        '11.3.300.262',
+                        '11.3.300.265',
+                        '11.3.300.268',
+                        '11.4.400.231');
 
 // for how many days back to get the data
 $backlog_days = 0;
@@ -226,11 +231,10 @@ foreach ($flash_versions as $fver) {
       // description
       $para = $body->appendChild($doc->createElement('p',
           'Top '.$top_x.' crashes on '.$anadir.' containing Flash '.$fver
-          .' in the list of loaded modules.'));
+          .' in the list of loaded modules, in all versions of '.$product.'.'));
 
       $para = $body->appendChild($doc->createElement('p',
-          'Percentage is in relation to the total of Flash '.$fver
-          .' reports.'));
+          'Percentage is in relation to the total in this Flash version.'));
 
       $table = $body->appendChild($doc->createElement('table'));
       $table->setAttribute('border', '1');
