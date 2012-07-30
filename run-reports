@@ -9,6 +9,7 @@ cd `dirname $_`
 ./get-buildcrashes.php
 ./get-flashhangs.php
 ./get-flashhangdetails.php
+./get-flashversions.php
 ./get-components.php
 ./get-startupcrashes.php
 ./get-devicecrashes.php
