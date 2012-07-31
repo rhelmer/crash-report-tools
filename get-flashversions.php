@@ -251,7 +251,7 @@ foreach ($flash_versions as $fver) {
       foreach ($fvd['sigs'] as $data) {
         $pct = $fvd['total'] ?
                $data['cnt'] / $fvd['total'] : 0;
-        $sigdisplay = preg_replace('/_+.*$/', '', $data['sig']);
+        $sigdisplay = preg_replace('/_+\.*$/', '', $data['sig']);
 
         $tr = $table->appendChild($doc->createElement('tr'));
         $td = $tr->appendChild($doc->createElement('td', ++$rank));
