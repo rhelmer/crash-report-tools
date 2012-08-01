@@ -1,0 +1,94 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>KaiRo's Reports</title>
+<script>
+var gDay;
+
+window.onload = function() {
+  // Get date to analyze.
+  var anadate = new Date();
+  anadate.setDate(anadate.getDate() - 1); // yesterday
+  if (anadate.getUTCHours() < 13)
+    anadate.setDate(anadate.getDate() - 1); // the day before
+  // Format the date for ISO. Phew.
+  gDay = anadate.getUTCFullYear() + "-";
+  if (anadate.getUTCMonth() < 9)
+    gDay += "0";
+  gDay += (anadate.getUTCMonth() + 1) + "-";
+  if (anadate.getUTCDate() < 10)
+    gDay += "0";
+  gDay += anadate.getUTCDate();
+  document.getElementById("repDay").textContent = gDay;
+
+  // Get latest reports.
+  fetchFile(gDay + "/pages.json", "json",
+    function(aData) {
+      if (aData) {
+        var list = document.getElementsById("latest");
+        for (var rep in aData) {
+          var item = document.createElement("li");
+          var link = document.createElement("a");
+          link.setAttribute("href", gDay + "/" + rep);
+          link.appendChild(document.createTextNode(
+              aData[rep]["display_ver"] + " " + aData[rep]["display_rep"]
+          ));
+          item.appendChild(link);
+          list.appendChild(item);
+        }
+      }
+      else {
+        list.appendChild(document.createElement("li")
+            .appendChild(document.createTextNode("No reports found.")));
+      }
+    }
+  );
+}
+
+function fetchFile(aURL, aFormat, aCallback) {
+  var XHR = new XMLHttpRequest();
+  XHR.onreadystatechange = function() {
+    if (XHR.readyState == 4) {/*
+      gLog.appendChild(document.createElement("li"))
+          .appendChild(document.createTextNode(aURL + " - " + XHR.status +
+                                               " " + XHR.statusText));*/
+    }
+    if (XHR.readyState == 4 && XHR.status == 200) {
+      // so far so good
+      if (XHR.responseXML != null && aFormat == "xml" &&
+          XHR.responseXML.getElementById('test').firstChild.data)
+        aCallback(aXHR.responseXML.getElementById('test').firstChild.data);
+      else if (XHR.responseText != null && aFormat == "json")
+        aCallback(JSON.parse(XHR.responseText));
+      else
+        aCallback(XHR.responseText);
+    } else if (XHR.readyState == 4 && XHR.status != 200) {
+      // fetched the wrong page or network error...
+      aCallback(null);
+    }
+  };
+  XHR.open("GET", aURL);
+  XHR.send();
+}
+</script>
+<style>
+</style>
+</head>
+
+<body>
+<h1>KaiRo's Reports</h1>
+
+<p id="dateLine">Analyzed date: <span id="repDay"></span></p>
+
+<h2>Latest Reports</h2>
+
+<ul id="latest">
+</ul>
+
+</body>
+</html>
