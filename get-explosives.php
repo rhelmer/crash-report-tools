@@ -67,14 +67,14 @@ $reports = array(array('product'=>'Firefox',
                        'version_regex'=>'14\..*',
                        'throttlestart'=>strtotime('2012-07-20'), // >20%
                        'fake_adu'=>false,
-                       'mincount'=>100,
+                       'mincount'=>120,
                       ),
                  array('product'=>'Firefox',
                        'version'=>'13',
                        'version_regex'=>'13\..*',
                        'throttlestart'=>strtotime('2012-06-08'), // >20%
                        'fake_adu'=>false,
-                       'mincount'=>100,
+                       'mincount'=>50,
                       ),
                  array('product'=>'Firefox',
                        'version'=>'10',
@@ -294,6 +294,7 @@ foreach ($reports as $rep) {
     $ftotal = $prdvershort.'-total.csv';
     $fadu = $prdvershort.'-adu.csv';
     $fexpdata = $prdvershort.'-expdata.json';
+    $fpages = 'pages.json';
     $fweb = $anadir.'.'.$prdverfile.'.explosiveness.html';
 
     $t_factor[$anadir] = (!is_null($rep['throttlestart']) &&
@@ -548,6 +549,24 @@ foreach ($reports as $rep) {
         }
 
         $doc->saveHTMLFile($anafweb);
+
+        // add the page to the pages index
+        $anafpages = $anadir.'/'.$fpages;
+        if (file_exists($anafpages)) {
+          $pages = json_decode(file_get_contents($anafpages), true);
+        }
+        else {
+          $pages = array();
+        }
+        $pages[$fweb] =
+          array('product' => $rep['product'],
+                'channel' => $channel,
+                'version' => $ver,
+                'report' => 'explosive',
+                'report_sub' => null,
+                'display_ver' => $prdverdisplay,
+                'display_rep' => 'Explosiveness Report');
+        file_put_contents($anafpages, json_encode($pages));
       }
     }
     print("\n");

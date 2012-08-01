@@ -182,6 +182,7 @@ foreach ($reports as $rep) {
     print('Looking at data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
+    $fpages = 'pages.json';
     $fweb = $anadir.'.'.$prdverfile.'.flashhangs.html';
 
     if (!array_key_exists($anadir, $flashdata)) {
@@ -343,6 +344,24 @@ foreach ($reports as $rep) {
       }
 
       $doc->saveHTMLFile($anafweb);
+
+      // add the page to the pages index
+      $anafpages = $anadir.'/'.$fpages;
+      if (file_exists($anafpages)) {
+        $pages = json_decode(file_get_contents($anafpages), true);
+      }
+      else {
+        $pages = array();
+      }
+      $pages[$fweb] =
+        array('product' => $rep['product'],
+              'channel' => $channel,
+              'version' => $ver,
+              'report' => 'flashhangs',
+              'report_sub' => null,
+              'display_ver' => $prdverdisplay,
+              'display_rep' => 'Flash Hang Report');
+      file_put_contents($anafpages, json_encode($pages));
     }
 
     print("\n");

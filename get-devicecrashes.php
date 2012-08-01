@@ -145,6 +145,7 @@ foreach ($reports as $rep) {
     $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
     $frawdata = $prdvershort.'-devices-raw.csv';
     $fdevdata = $prdvershort.'-devices.json';
+    $fpages = 'pages.json';
     $fwebmask = '%s.'.$prdverfile.'.devices.html';
     $fweb = sprintf($fwebmask, $anadir);
     $fwebweek = $anadir.'.'.$prdverfile.'.devices.weekly.html';
@@ -515,7 +516,8 @@ foreach ($reports as $rep) {
           // signatures rows
           foreach ($sigdata['devices'] as $devname=>$count) {
             $tr = $table->appendChild($doc->createElement('tr'));
-            $td = $tr->appendChild($doc->createElement('td', htmlentities($devname, ENT_COMPAT, 'UTF-8')));
+            $td = $tr->appendChild($doc->createElement('td',
+                htmlentities($devname, ENT_COMPAT, 'UTF-8')));
             $td->setAttribute('class', 'devname');
             $td = $tr->appendChild($doc->createElement('td', $count));
             $td->setAttribute('class', 'num');
@@ -523,6 +525,25 @@ foreach ($reports as $rep) {
         }
 
         $doc->saveHTMLFile($anafweb);
+
+        // add the page to the pages index
+        $anafpages = $anadir.'/'.$fpages;
+        if (file_exists($anafpages)) {
+          $pages = json_decode(file_get_contents($anafpages), true);
+        }
+        else {
+          $pages = array();
+        }
+        $pages[$fwebcur] =
+          array('product' => $rep['product'],
+                'channel' => $channel,
+                'version' => $ver,
+                'report' => 'devices',
+                'report_sub' => $type,
+                'display_ver' => $prdverdisplay,
+                'display_rep' => ($type == 'week'?'Weekly ':'')
+                                 .'Device Crash Report');
+        file_put_contents($anafpages, json_encode($pages));
       }
     }
 

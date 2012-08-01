@@ -167,6 +167,7 @@ foreach ($reports as $rep) {
     $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
     $fdata = $prdvershort.'-startup.csv';
     $ftotal = $prdvershort.'-total.csv';
+    $fpages = 'pages.json';
     $fweb = $anadir.'.'.$prdverfile.'.startup.html';
 
     // make sure we have the crashdata csv
@@ -322,6 +323,24 @@ foreach ($reports as $rep) {
       }
 
       $doc->saveHTMLFile($anafweb);
+
+      // add the page to the pages index
+      $anafpages = $anadir.'/'.$fpages;
+      if (file_exists($anafpages)) {
+        $pages = json_decode(file_get_contents($anafpages), true);
+      }
+      else {
+        $pages = array();
+      }
+      $pages[$fweb] =
+        array('product' => $rep['product'],
+              'channel' => $channel,
+              'version' => $ver,
+              'report' => 'startup',
+              'report_sub' => null,
+              'display_ver' => $prdverdisplay,
+              'display_rep' => 'Startup Crash Report');
+      file_put_contents($anafpages, json_encode($pages));
     }
 
     print("\n");

@@ -41,7 +41,7 @@ $flash_versions = array('11.2.202.235',
                         '11.4.400.231');
 
 // for how many days back to get the data
-$backlog_days = 0;
+$backlog_days = 7;
 
 // how many top crashes to list
 $top_x = 100;
@@ -165,6 +165,7 @@ foreach ($flash_versions as $fver) {
     print('Looking at Flash version data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
+    $fpages = 'pages.json';
     $fweb = $anadir.'.'.$prd.'.flash.'.$fvdash.'.html';
 
     if (!array_key_exists($anadir, $flashverdata)) {
@@ -279,6 +280,24 @@ foreach ($flash_versions as $fver) {
       }
 
       $doc->saveHTMLFile($anafweb);
+
+      // add the page to the pages index
+      $anafpages = $anadir.'/'.$fpages;
+      if (file_exists($anafpages)) {
+        $pages = json_decode(file_get_contents($anafpages), true);
+      }
+      else {
+        $pages = array();
+      }
+      $pages[$fweb] =
+        array('product' => $product,
+              'channel' => '',
+              'version' => '',
+              'report' => 'flash',
+              'report_sub' => $fver,
+              'display_ver' => '',
+              'display_rep' => 'Flash '.$fver.' Report');
+      file_put_contents($anafpages, json_encode($pages));
     }
 
     print("\n");

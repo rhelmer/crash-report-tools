@@ -96,10 +96,6 @@ $reports = array(array('product'=>'Firefox',
                        'version'=>'15.0',
                       ),
                  array('product'=>'FennecAndroid',
-                       'channel'=>'beta',
-                       'version'=>'14.0',
-                      ),
-                 array('product'=>'FennecAndroid',
                        'channel'=>'nightly',
                        'weekly'=>true,
                       ),
@@ -176,6 +172,8 @@ foreach ($reports as $rep) {
                    .(strlen($channel)?' '.ucfirst($channel):'')
                    .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
+  $flatest = 'latestpages.json';
+
   $pv_ids = array();
   $pv_query =
     'SELECT product_version_id '
@@ -208,6 +206,7 @@ foreach ($reports as $rep) {
     if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fcompdata = $prdvershort.'-components.json';
+    $fpages = 'pages.json';
     $fwebmask = '%s.'.$prdverfile.'.components.html';
     $fweb = sprintf($fwebmask, $anadir);
     $fwebweek = $anadir.'.'.$prdverfile.'.components.weekly.html';
@@ -633,6 +632,25 @@ foreach ($reports as $rep) {
         }
 
         $doc->saveHTMLFile($anafweb);
+
+        // add the page to the pages index
+        $anafpages = $anadir.'/'.$fpages;
+        if (file_exists($anafpages)) {
+          $pages = json_decode(file_get_contents($anafpages), true);
+        }
+        else {
+          $pages = array();
+        }
+        $pages[$fwebcur] =
+          array('product' => $rep['product'],
+                'channel' => $channel,
+                'version' => $ver,
+                'report' => 'components',
+                'report_sub' => $type,
+                'display_ver' => $prdverdisplay,
+                'display_rep' => ($type == 'week'?'Weekly ':'')
+                                 .'Crash Components Report');
+        file_put_contents($anafpages, json_encode($pages));
       }
     }
 
