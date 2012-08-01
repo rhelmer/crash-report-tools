@@ -30,7 +30,7 @@ window.onload = function() {
   fetchFile(gDay + "/pages.json", "json",
     function(aData) {
       if (aData) {
-        var list = document.getElementsById("latest");
+        var list = document.getElementById("latest");
         for (var rep in aData) {
           var item = document.createElement("li");
           var link = document.createElement("a");
