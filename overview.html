@@ -30,7 +30,7 @@ window.onload = function() {
   fetchFile(gDay + "/pages.json", "json",
     function(aData) {
       if (aData) {
-        var list = document.getElementById("latest");
+        var list = document.getElementById("latestList");
         for (var rep in aData) {
           var item = document.createElement("li");
           var link = document.createElement("a");
@@ -83,11 +83,9 @@ function fetchFile(aURL, aFormat, aCallback) {
 <body>
 <h1>KaiRo's Reports</h1>
 
-<p id="dateLine">Analyzed date: <span id="repDay"></span></p>
+<h2 id="latest">Latest Reports (<span id="repDay"></span>)</h2>
 
-<h2>Latest Reports</h2>
-
-<ul id="latest">
+<ul id="latestList">
 </ul>
 
 </body>
