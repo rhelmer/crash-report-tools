@@ -57,7 +57,7 @@ window.onload = function() {
         for (var rep in aData) {
           var item = document.createElement("li");
           var link = document.createElement("a");
-          link.setAttribute("href", gDay + "/" + rep);
+          link.setAttribute("href", rep);
           link.appendChild(document.createTextNode(
               aData[rep]["display_ver"] + " " + aData[rep]["display_rep"]
           ));
