@@ -48,6 +48,38 @@ window.onload = function() {
       }
     }
   );
+
+  // Get summary reports.
+  fetchFile("summarypages.json", "json",
+    function(aData) {
+      if (aData) {
+        var list = document.getElementById("summaryList");
+        for (var rep in aData) {
+          var item = document.createElement("li");
+          var link = document.createElement("a");
+          link.setAttribute("href", gDay + "/" + rep);
+          link.appendChild(document.createTextNode(
+              aData[rep]["display_ver"] + " " + aData[rep]["display_rep"]
+          ));
+          item.appendChild(link);
+          var uspan = document.createElement("span");
+          uspan.classList.add("date");
+          uspan.appendChild(document.createTextNode(
+              " (updated " + aData[rep]["last_date"] + ")"
+          ));
+          item.appendChild(uspan);
+          if (aData[rep]["last_date"] < gDay) {
+            item.classList.add("outdated");
+          }
+          list.appendChild(item);
+        }
+      }
+      else {
+        list.appendChild(document.createElement("li")
+            .appendChild(document.createTextNode("No reports found.")));
+      }
+    }
+  );
 }
 
 function fetchFile(aURL, aFormat, aCallback) {
@@ -77,15 +109,28 @@ function fetchFile(aURL, aFormat, aCallback) {
 }
 </script>
 <style>
+.date { font-size: 0.75em; }
+.outdated { opacity: 0.5; }
 </style>
 </head>
 
 <body>
 <h1>KaiRo's Reports</h1>
 
-<h2 id="latest">Latest Reports (<span id="repDay"></span>)</h2>
+<ul id="topicList">
+  <li href="#latest">Latest Daily Reports</li>
+  <li href="#summary">Multi-Day Summary Reports</li>
+  <li href="#bugs">Bug Stats</li>
+</ul>
+
+<h2 id="latest">Latest Daily Reports (<span id="repDay"></span>)</h2>
 
 <ul id="latestList">
+</ul>
+
+<h2 id="summary">Multi-Day Summary Reports</h2>
+
+<ul id="summaryList">
 </ul>
 
 <h2 id="bugs">Bug Stats</h2>

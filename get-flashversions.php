@@ -291,8 +291,8 @@ foreach ($flash_versions as $fver) {
       }
       $pages[$fweb] =
         array('product' => $product,
-              'channel' => '',
-              'version' => '',
+              'channel' => null,
+              'version' => null,
               'report' => 'flash',
               'report_sub' => $fver,
               'display_ver' => '',

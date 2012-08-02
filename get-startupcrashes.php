@@ -148,6 +148,7 @@ foreach ($reports as $rep) {
                    .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
   $sdfile = $prdvershort.'.startup.json';
+  $fsumpages = 'summarypages.json';
   $fwebsum = $prdverfile.'.startupsummary.html';
 
   if (file_exists($sdfile)) {
@@ -400,7 +401,9 @@ foreach ($reports as $rep) {
     $th = $tr->appendChild($doc->createElement('th', 'absolute'));
     $th = $tr->appendChild($doc->createElement('th', '% of total'));
 
+    $lastdate = null;
     foreach (array_reverse($startupdata) as $date=>$sd) {
+      if (is_null($lastdate) || ($date > $lastdate)) { $lastdate = $date; }
       $all_count = array_sum($sd['startup']);
       $browser_count = intval(@$sd['startup']['browser']);
       $other_count = $all_count - $browser_count;
@@ -428,6 +431,24 @@ foreach ($reports as $rep) {
     }
 
     $doc->saveHTMLFile($fwebsum);
+
+    // add the page to the summary pages index
+    if (file_exists($fsumpages)) {
+      $sumpages = json_decode(file_get_contents($fsumpages), true);
+    }
+    else {
+      $sumpages = array();
+    }
+    $sumpages[$fwebsum] =
+      array('product' => $rep['product'],
+            'channel' => $channel,
+            'version' => $ver,
+            'report' => 'startup',
+            'report_sub' => null,
+            'last_date' => $lastdate;
+            'display_ver' => $prdverdisplay,
+            'display_rep' => 'Startup Summary Report');
+    file_put_contents($fsumpages, json_encode($sumpages));
   }
 }
 

@@ -191,6 +191,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   print('Looking at per-build crash data for '.$anadir."\n");
   if (!file_exists($anadir)) { mkdir($anadir); }
 
+  $fpages = 'pages.json';
   $fweb = $anadir.'.buildcrashes.html';
 
   $anafweb = $anadir.'/'.$fweb;
@@ -495,6 +496,24 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     }
 
     $doc->saveHTMLFile($anafweb);
+
+    // add the page to the pages index
+    $anafpages = $anadir.'/'.$fpages;
+    if (file_exists($anafpages)) {
+      $pages = json_decode(file_get_contents($anafpages), true);
+    }
+    else {
+      $pages = array();
+    }
+    $pages[$fweb] =
+      array('product' => null,
+            'channel' => null,
+            'version' => null,
+            'report' => 'buildcrashes',
+            'report_sub' => null,
+            'display_ver' => '',
+            'display_rep' => 'Crashes / Build');
+    file_put_contents($anafpages, json_encode($pages));
   }
   print("\n");
 }

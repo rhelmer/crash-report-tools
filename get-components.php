@@ -172,8 +172,6 @@ foreach ($reports as $rep) {
                    .(strlen($channel)?' '.ucfirst($channel):'')
                    .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
-  $flatest = 'latestpages.json';
-
   $pv_ids = array();
   $pv_query =
     'SELECT product_version_id '

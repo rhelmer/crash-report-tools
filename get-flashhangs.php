@@ -120,6 +120,7 @@ foreach ($reports as $rep) {
                    .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
   $fdfile = $prdvershort.'.flashhang.json';
+  $fsumpages = 'summarypages.json';
   $fwebsum = $prdverfile.'.flashsummary.html';
 
   if (file_exists($fdfile)) {
@@ -420,7 +421,9 @@ foreach ($reports as $rep) {
     $th = $tr->appendChild($doc->createElement('th', 'rate'));
     $th = $tr->appendChild($doc->createElement('th', 'rate'));
 
+    $lastdate = null;
     foreach (array_reverse($flashdata) as $date=>$fd) {
+      if (is_null($lastdate) || ($date > $lastdate)) { $lastdate = $date; }
       $adu_query =
         'SELECT SUM('.(count($throttle_ids)?'CASE
                   WHEN product_version_id IN ('.implode(',', $throttle_ids).')
@@ -494,6 +497,24 @@ foreach ($reports as $rep) {
     }
 
     $doc->saveHTMLFile($fwebsum);
+
+    // add the page to the summary pages index
+    if (file_exists($fsumpages)) {
+      $sumpages = json_decode(file_get_contents($fsumpages), true);
+    }
+    else {
+      $sumpages = array();
+    }
+    $sumpages[$fwebsum] =
+      array('product' => $rep['product'],
+            'channel' => $channel,
+            'version' => $ver,
+            'report' => 'flashsummary',
+            'report_sub' => null,
+            'last_date' => $lastdate;
+            'display_ver' => $prdverdisplay,
+            'display_rep' => 'Flash Summary Report');
+    file_put_contents($fsumpages, json_encode($sumpages));
   }
 }
 
