@@ -511,7 +511,7 @@ foreach ($reports as $rep) {
             'version' => $ver,
             'report' => 'flashsummary',
             'report_sub' => null,
-            'last_date' => $lastdate;
+            'last_date' => $lastdate,
             'display_ver' => $prdverdisplay,
             'display_rep' => 'Flash Summary Report');
     file_put_contents($fsumpages, json_encode($sumpages));
