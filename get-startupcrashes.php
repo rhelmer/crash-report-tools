@@ -120,10 +120,11 @@ $backlog_days = 7;
 // *** URLs ***
 
 $on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
-$url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
-                             :'http://people.mozilla.com/crash_analysis/';
 $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
 $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
+
+// File storing the DB access data - including password!
+$fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
 
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
 else { chdir('/mnt/mozilla/projects/socorro/'); }
@@ -132,6 +133,34 @@ else { chdir('/mnt/mozilla/projects/socorro/'); }
 
 // get current day
 $curtime = time();
+
+if (file_exists($fdbsecret)) {
+  $dbsecret = json_decode(file_get_contents($fdbsecret), true);
+  if (!is_array($dbsecret) || !count($dbsecret)) {
+    print('ERROR: No DB secrets found, aborting!'."\n");
+    exit(1);
+  }
+  $db_conn = pg_pconnect('host='.$dbsecret['host']
+                         .' port='.$dbsecret['port']
+                         .' dbname=breakpad'
+                         .' user='.$dbsecret['user']
+                         .' password='.$dbsecret['password']);
+  if (!$db_conn) {
+    print('ERROR: DB connection failed, aborting!'."\n");
+    exit(1);
+  }
+  // For info on what data can be accessed, see also
+  // http://socorro.readthedocs.org/en/latest/databasetabledesc.html
+  // For the DB schema, see
+  // https://github.com/mozilla/socorro/blob/master/sql/schema.sql
+}
+else {
+  // Won't work! (Set just for documenting what fields are in the file.)
+  $dbsecret = array('host' => 'host.m.c', 'port' => '6432',
+                    'user' => 'analyst', 'password' => 'foo');
+  print('ERROR: No DB secrets found, aborting!'."\n");
+  exit(1);
+}
 
 foreach ($reports as $rep) {
   $channel = array_key_exists('channel', $rep)?$rep['channel']:'';
@@ -151,6 +180,31 @@ foreach ($reports as $rep) {
   $fsumpages = 'summarypages.json';
   $fwebsum = $prdverfile.'.startupsummary.html';
 
+  $pv_ids = array();
+  $pv_query =
+    'SELECT product_version_id '
+    .'FROM product_versions '
+    ."WHERE product_name = '".$rep['product']."'"
+    .(strlen($ver)
+      ?' AND release_version '.(isset($rep['version_regex'])
+                                ?"~ '^".$rep['version_regex']."$'"
+                                :"= '".$ver."'")
+      :'')
+    .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
+    .';';
+  $pv_result = pg_query($db_conn, $pv_query);
+  if (!$pv_result) {
+    print('--- ERROR: product version query failed!'."\n");
+  }
+  while ($pv_row = pg_fetch_array($pv_result)) {
+    $pv_ids[] = $pv_row['product_version_id'];
+  }
+
+  if (!count($pv_ids)) {
+    print('--- ERROR: no versions found in DB for '.$prdverdisplay.'!'."\n");
+    break;
+  }
+
   if (file_exists($sdfile)) {
     print('Read stored data'."\n");
     $startupdata = json_decode(file_get_contents($sdfile), true);
@@ -165,61 +219,38 @@ foreach ($reports as $rep) {
     print('Looking at data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
-    $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
-    $fdata = $prdvershort.'-startup.csv';
     $ftotal = $prdvershort.'-total.csv';
     $fpages = 'pages.json';
     $fweb = $anadir.'.'.$prdverfile.'.startup.html';
 
-    // make sure we have the crashdata csv
-    if ($on_moz_server) {
-      $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-      if (!file_exists($anafcsvgz)) { break; }
-    }
-    else {
-      $anafcsv = $anadir.'/'.$fcsv;
-      if (!file_exists($anafcsv)) {
-        print('Fetching '.$anafcsv.' from the web'."\n");
-        $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-        if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
-      }
-      if (!file_exists($anafcsv)) { break; }
-    }
+    $rep_query =
+      'SELECT COUNT(*) as cnt, process_type, signature '
+      .'FROM reports_clean LEFT JOIN signatures'
+      .' ON (reports_clean.signature_id=signatures.signature_id) '
+      .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+      ." AND utc_day_is(date_processed, '".$anadir."')"
+      .' AND uptime <= '.$max_uptime
+      .'GROUP BY process_type, signature '
+      .'ORDER BY cnt DESC;';
 
-    // get startup data for the product
-    $anafdata = $anadir.'/'.$fdata;
-    if (!file_exists($anafdata)) {
-      print('Getting '.$prdverdisplay.' startup data'."\n");
-      // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
-      // some parts from that split into total and crashcount blocks, though
-      // $1 is signature, $7 is product, $8 is version, $17 is uptime_seconds, $25 is process type, $29 is release_channel
-      $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-              .(strlen($channel)?' && $29 ~ /^'.awk_quote($channel, '/').'$/':'')
-              .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
-              .' && $17 <= '.$max_uptime
-              .' {printf "%s;%s\n",$25,$1}\'';
-      if ($on_moz_server) {
-        shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' | sort | uniq -c | sort -nr > '.$anafdata);
-      }
-      else {
-        shell_exec($cmd.' '.$anafcsv.' | sort | uniq -c | sort -nr > '.$anafdata);
-      }
+    $rep_result = pg_query($db_conn, $rep_query);
+    if (!$rep_result) {
+      print('--- ERROR: Reports/signatures query failed!'."\n");
+      break;
     }
 
     $scrashes = array('all' => 0);
     $anacrashes = array();
-    foreach (explode("\n", shell_exec('cat '.$anafdata)) as $crashline) {
-      if (preg_match('/^\s*(\d+)\s+([^;]*);(.*)$/', $crashline, $regs)) {
-        $ptype = (strlen($regs[2]) && $regs[2] != '\\N')?$regs[2]:'browser';
-        $anacrashes[] = array('sig' => $regs[3],
-                              'process_type' => $ptype,
-                              'count' => $regs[1]);
+    while ($rep_row = pg_fetch_array($rep_result)) {
+      $ptype = strtolower($rep_row['process_type']);
+      $anacrashes[] = array('sig' => $rep_row['signature'],
+                            'process_type' => $ptype,
+                            'count' => $rep_row['cnt']);
 
-        if (!in_array($ptype, array_keys($scrashes))) {
-          $scrashes[$ptype] = 0;
-        }
-        $scrashes[$ptype] += $regs[1];
+      if (!in_array($ptype, array_keys($scrashes))) {
+        $scrashes[$ptype] = 0;
       }
+      $scrashes[$ptype] += $regs[1];
     }
 
     if (!array_key_exists($anadir, $startupdata) || (filemtime($sdfile) < filemtime($anafdata))) {
@@ -227,18 +258,24 @@ foreach ($reports as $rep) {
       $anaftotal = $anadir.'/'.$ftotal;
       if (!file_exists($anaftotal)) {
         print('Getting total crash count'."\n");
-        $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-                .(strlen($channel)?' && $29 ~ /^'.awk_quote($channel, '/').'$/':'')
-                .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
-                .' {printf "%s\n",$1}\'';
-        if ($on_moz_server) {
-          shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' | wc -l > '.$anaftotal);
+        $total_query =
+          'SELECT COUNT(*) as cnt '
+          .'FROM reports_clean '
+          .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+          ." AND utc_day_is(date_processed, '".$anadir."');";
+
+        $total_result = pg_query($db_conn, $total_query);
+        if (!$total_result) {
+          print('--- ERROR: Total query failed!'."\n");
+          break;
         }
-        else {
-          shell_exec($cmd.' '.$anafcsv.' | wc -l > '.$anaftotal);
-        }
+        $total_row = pg_fetch_array($total_result);
+        $anatotal = $total_row['cnt'];
+        file_put_contents($anaftotal, $anatotal);
       }
-      $anatotal = intval(file_get_contents($anaftotal));
+      else {
+        $anatotal = intval(file_get_contents($anaftotal));
+      }
 
       $startupdata[$anadir] = array('startup' => $scrashes,
                                     'total' => $anatotal);
