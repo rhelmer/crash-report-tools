@@ -250,7 +250,7 @@ foreach ($reports as $rep) {
       if (!in_array($ptype, array_keys($scrashes))) {
         $scrashes[$ptype] = 0;
       }
-      $scrashes[$ptype] += $regs[1];
+      $scrashes[$ptype] += $rep_row['cnt'];
     }
 
     if (!array_key_exists($anadir, $startupdata) || (filemtime($sdfile) < filemtime($anafdata))) {
