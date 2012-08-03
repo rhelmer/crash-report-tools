@@ -220,37 +220,53 @@ foreach ($reports as $rep) {
     if (!file_exists($anadir)) { mkdir($anadir); }
 
     $ftotal = $prdvershort.'-total.csv';
+    $fdata = $prdvershort.'-startup.json';
     $fpages = 'pages.json';
     $fweb = $anadir.'.'.$prdverfile.'.startup.html';
 
-    $rep_query =
-      'SELECT COUNT(*) as cnt, process_type, signature '
-      .'FROM reports_clean LEFT JOIN signatures'
-      .' ON (reports_clean.signature_id=signatures.signature_id) '
-      .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
-      ." AND utc_day_is(date_processed, '".$anadir."')"
-      .' AND EXTRACT(EPOCH FROM uptime) <= '.$max_uptime.' '
-      .'GROUP BY process_type, signature '
-      .'ORDER BY cnt DESC;';
+    // get startup data for the product
+    $anafdata = $anadir.'/'.$fdata;
+    if (!file_exists($anafdata)) {
+      print('Getting '.$prdverdisplay.' startup data'."\n");
 
-    $rep_result = pg_query($db_conn, $rep_query);
-    if (!$rep_result) {
-      print('--- ERROR: Reports/signatures query failed!'."\n");
-      break;
-    }
+      $rep_query =
+        'SELECT COUNT(*) as cnt, process_type, signature '
+        .'FROM reports_clean LEFT JOIN signatures'
+        .' ON (reports_clean.signature_id=signatures.signature_id) '
+        .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+        ." AND utc_day_is(date_processed, '".$anadir."')"
+        .' AND EXTRACT(EPOCH FROM uptime) <= '.$max_uptime.' '
+        .'GROUP BY process_type, signature '
+        .'ORDER BY cnt DESC;';
 
-    $scrashes = array('all' => 0);
-    $anacrashes = array();
-    while ($rep_row = pg_fetch_array($rep_result)) {
-      $ptype = strtolower($rep_row['process_type']);
-      $anacrashes[] = array('sig' => $rep_row['signature'],
-                            'process_type' => $ptype,
-                            'count' => $rep_row['cnt']);
-
-      if (!in_array($ptype, array_keys($scrashes))) {
-        $scrashes[$ptype] = 0;
+      $rep_result = pg_query($db_conn, $rep_query);
+      if (!$rep_result) {
+        print('--- ERROR: Reports/signatures query failed!'."\n");
+        break;
       }
-      $scrashes[$ptype] += $rep_row['cnt'];
+
+      $scrashes = array('all' => 0);
+      $anacrashes = array();
+      while ($rep_row = pg_fetch_array($rep_result)) {
+        $ptype = strtolower($rep_row['process_type']);
+        $anacrashes[] = array('sig' => $rep_row['signature'],
+                              'process_type' => $ptype,
+                              'count' => $rep_row['cnt']);
+
+        if (!in_array($ptype, array_keys($scrashes))) {
+          $scrashes[$ptype] = 0;
+        }
+        $scrashes[$ptype] += $rep_row['cnt'];
+      }
+      file_put_contents($anafdata,
+                        json_encode(array('anacrashes'=>$anacrashes,
+                                          'scrashes'=>$scrashes)));
+    }
+    else {
+      print('Read stored '.$prdverdisplay.' startup data'."\n");
+      $sdata = json_decode(file_get_contents($anafdata), true);
+      $anacrashes = $sdata['anacrashes'];
+      $scrashes = $sdata['scrashes'];
     }
 
     if (!array_key_exists($anadir, $startupdata) || (filemtime($sdfile) < filemtime($anafdata))) {
