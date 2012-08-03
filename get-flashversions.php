@@ -39,8 +39,7 @@ $flash_versions = array('11.2.202.235',
                         '11.3.300.265',
                         '11.3.300.268',
                         '11.3.300.270',
-                        '11.4.400.231',
-                        '11.4.400.249');
+                        '11.4.400.231');
 
 // for how many days back to get the data
 $backlog_days = 7;
