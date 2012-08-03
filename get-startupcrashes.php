@@ -104,10 +104,10 @@ $reports = array(array('product'=>'Firefox',
                        'version'=>'15.0',
                       ),
                  array('product'=>'FennecAndroid',
-                       'channel'=>'nightly',
+                       'channel'=>'aurora',
                       ),
                  array('product'=>'FennecAndroid',
-                       'channel'=>'aurora',
+                       'channel'=>'nightly',
                       ),
                 );
 
