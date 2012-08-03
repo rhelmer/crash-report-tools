@@ -229,7 +229,7 @@ foreach ($reports as $rep) {
       .' ON (reports_clean.signature_id=signatures.signature_id) '
       .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
       ." AND utc_day_is(date_processed, '".$anadir."')"
-      .' AND uptime <= '.$max_uptime
+      .' AND uptime <= '.$max_uptime.' '
       .'GROUP BY process_type, signature '
       .'ORDER BY cnt DESC;';
 
