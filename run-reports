@@ -5,8 +5,8 @@
 # Switch to the directory this script is placed in.
 cd `dirname $_`
 
-./get-explosives.php
 ./get-buildcrashes.php
+./get-explosives.php
 ./get-flashhangs.php
 ./get-flashhangdetails.php
 ./get-flashversions.php
