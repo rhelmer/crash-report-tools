@@ -34,12 +34,11 @@ date_default_timezone_set('America/Los_Angeles');
 // Flash versions to gather reports for.
 
 $flash_versions = array('11.2.202.235',
-                        '11.3.300.257',
-                        '11.3.300.262',
                         '11.3.300.265',
                         '11.3.300.268',
                         '11.3.300.270',
-                        '11.4.400.231');
+                        '11.4.400.231',
+                        '11.4.400.252');
 
 // for how many days back to get the data
 $backlog_days = 7;
