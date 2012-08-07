@@ -306,10 +306,11 @@ foreach ($flash_versions as $fver) {
         $td = $tr->appendChild($doc->createElement('td',
             sprintf('%.1f', 100 * $pct).'%'));
         $td->setAttribute('class', 'num');
-        if ($rank >= $top_x) { break; }
         $td = $tr->appendChild($doc->createElement('td',
             count($data['other_flash_ver'])?implode(', ', $data['other_flash_ver']):'None'));
         $td->setAttribute('class', 'otherver '.(count($data['other_flash_ver'])?'some':'none'));
+        // Make sure the table doesn't get too long.
+        if ($rank >= $top_x) { break; }
       }
 
       $doc->saveHTMLFile($anafweb);
