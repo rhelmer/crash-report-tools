@@ -188,9 +188,30 @@ foreach ($flash_versions as $fver) {
 
       $fvd = array('sigs' => array(), 'total' => 0);
       while ($rep_row = pg_fetch_array($rep_result)) {
+        $other_fv = array();
+        $other_query =
+          'SELECT flash_version '
+          .'FROM reports_clean LEFT JOIN flash_versions'
+          .' ON (reports_clean.flash_version_id=flash_versions.flash_version_id) '
+          .'WHERE signature_id = '.$rep_row['signature_id']
+          .' AND flash_version_id NOT IN ('.implode(',', $fv_ids).')'
+          .' AND product_version_id IN ('.implode(',', $pv_ids).')'
+          ." AND utc_day_is(date_processed, '".$anadir."')"
+          .'GROUP BY flash_version '
+          .'ORDER BY flash_version DESC;';
+
+        $other_result = pg_query($db_conn, $other_query);
+        if (!$other_result) {
+          print('--- ERROR: Other Flash versions query failed!'."\n");
+        }
+        while ($other_row = pg_fetch_array($other_result)) {
+          $other_fv[] = $other_row['flash_version'];
+        }
+
         $fvd['total'] += $rep_row['cnt'];
         $fvd['sigs'][] = array('sig' => $rep_row['signature'],
-                               'cnt' => $rep_row['cnt']);
+                               'cnt' => $rep_row['cnt'],
+                               'other_flash_ver' => $other_fv);
       }
       $flashverdata[$anadir] = $fvd;
 
@@ -221,6 +242,12 @@ foreach ($flash_versions as $fver) {
           .'.num, .pct {'."\n"
           .'  text-align: right;'."\n"
           .'}'."\n"
+          '.otherver.some {'."\n"
+          .'  font-size: small;'."\n"
+          .'}'."\n"
+          '.otherver.none {'."\n"
+          .'  font-weight: bold;'."\n"
+          .'}'."\n"
       ));
 
       $body = $root->appendChild($doc->createElement('body'));
@@ -235,7 +262,7 @@ foreach ($flash_versions as $fver) {
           .' in the list of loaded modules, in all versions of '.$product.'.'));
 
       $para = $body->appendChild($doc->createElement('p',
-          'Percentage is in relation to the total in this Flash version.'));
+          'Percentage is in relation to the total in this Flash version, &quot;Other Versions&quot; lists other Flash versions this signatures appears in on that day.'));
 
       $table = $body->appendChild($doc->createElement('table'));
       $table->setAttribute('border', '1');
@@ -247,6 +274,9 @@ foreach ($flash_versions as $fver) {
       $th = $tr->appendChild($doc->createElement('th', 'Signature'));
       $th = $tr->appendChild($doc->createElement('th', 'Count'));
       $th = $tr->appendChild($doc->createElement('th', 'Pct'));
+      $th->setAttribute('title', 'Percentage out of all crashes with this Flash version');
+      $th = $tr->appendChild($doc->createElement('th', 'Other Versions'));
+      $th->setAttribute('title', 'Other Flash versions this signatures appears in');
 
       $rank = 0;
       foreach ($fvd['sigs'] as $data) {
@@ -277,6 +307,9 @@ foreach ($flash_versions as $fver) {
             sprintf('%.1f', 100 * $pct).'%'));
         $td->setAttribute('class', 'num');
         if ($rank >= $top_x) { break; }
+        $td = $tr->appendChild($doc->createElement('td',
+            count($data['other_flash_ver'])?implode(', ', $data['other_flash_ver']):'None'));
+        $td->setAttribute('class', 'otherver '.(count($data['other_flash_ver'])?'some':'none'));
       }
 
       $doc->saveHTMLFile($anafweb);
