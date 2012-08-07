@@ -242,10 +242,10 @@ foreach ($flash_versions as $fver) {
           .'.num, .pct {'."\n"
           .'  text-align: right;'."\n"
           .'}'."\n"
-          '.otherver.some {'."\n"
+          .'.otherver.some {'."\n"
           .'  font-size: small;'."\n"
           .'}'."\n"
-          '.otherver.none {'."\n"
+          .'.otherver.none {'."\n"
           .'  font-weight: bold;'."\n"
           .'}'."\n"
       ));
