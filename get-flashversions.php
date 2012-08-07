@@ -194,7 +194,7 @@ foreach ($flash_versions as $fver) {
           .'FROM reports_clean LEFT JOIN flash_versions'
           .' ON (reports_clean.flash_version_id=flash_versions.flash_version_id) '
           .'WHERE signature_id = '.$rep_row['signature_id']
-          .' AND flash_version_id NOT IN ('.implode(',', $fv_ids).')'
+          .' AND reports_clean.flash_version_id NOT IN ('.implode(',', $fv_ids).')'
           .' AND product_version_id IN ('.implode(',', $pv_ids).')'
           ." AND utc_day_is(date_processed, '".$anadir."')"
           .'GROUP BY flash_version '
