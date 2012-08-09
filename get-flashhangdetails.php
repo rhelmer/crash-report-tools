@@ -260,6 +260,20 @@ foreach ($reports as $rep) {
       $title = $head->appendChild($doc->createElement('title',
           $anadir.' '.$prdverdisplay.' Flash Hang Details Report'));
 
+      $style = $head->appendChild($doc->createElement('style'));
+      $style->setAttribute('type', 'text/css');
+      $style->appendChild($doc->createCDATASection(
+          '.sig {'."\n"
+          .'  font-size: small;'."\n"
+          .'}'."\n"
+          .'.num {'."\n"
+          .'  text-align: right;'."\n"
+          .'}'."\n"
+          .'.flashver {'."\n"
+          .'  font-size: small;'."\n"
+          .'}'."\n"
+      ));
+
       $body = $root->appendChild($doc->createElement('body'));
       $h1 = $body->appendChild($doc->createElement('h1',
           $anadir.' '.$prdverdisplay.' Flash Hang Details Report'));
@@ -286,7 +300,10 @@ foreach ($reports as $rep) {
         }
       }
       $para = $body->appendChild($doc->createElement('p',
-        'The following Flash versions appear in those: '.implode(', ', $fver)));
+        'The following Flash versions appear in those:'));
+      $para->appendChild($doc->createElement('br'));
+      $span = $para->appendChild($doc->createElement('span', implode(', ', $fver)));
+      $span->setAttribute('class', 'flashver');
 
       $table = $body->appendChild($doc->createElement('table'));
       $table->setAttribute('border', '1');
@@ -302,7 +319,7 @@ foreach ($reports as $rep) {
         $tr = $table->appendChild($doc->createElement('tr'));
 
         $td = $tr->appendChild($doc->createElement('td'));
-        $td->setAttribute('style', 'font-size: small;');
+        $td->setAttribute('class', 'sig');
         if (!strlen($hangentry['plugin'])) {
           $link = $td->appendChild($doc->createElement('a', '(empty signature)'));
           $link->setAttribute('href', $url_nullsiglink.'&process_type=plugin&hang_type=hang');
@@ -318,7 +335,7 @@ foreach ($reports as $rep) {
         }
 
         $td = $tr->appendChild($doc->createElement('td'));
-        $td->setAttribute('style', 'font-size: small;');
+        $td->setAttribute('class', 'sig');
         if (is_null($hangentry['browser'])) {
           $td->appendChild($doc->createTextNode('(no report found)'));
         }
@@ -337,13 +354,14 @@ foreach ($reports as $rep) {
         }
 
         $td = $tr->appendChild($doc->createElement('td', $hangentry['count']));
-        $td->setAttribute('align', 'right');
+        $td->setAttribute('class', 'num');
 
         $fver = array();
         foreach ($hangentry['count_flash'] as $fv=>$fvcnt) {
           $fver[] = $fv.' ('.sprintf('%.1f', 100 * $fvcnt / $hangentry['count']).'%)';
         }
         $td = $tr->appendChild($doc->createElement('td', implode(', ', $fver)));
+        $td->setAttribute('class', 'flashver');
       }
 
       $doc->saveHTMLFile($anafweb);
