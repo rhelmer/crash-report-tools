@@ -312,8 +312,8 @@ foreach ($reports as $rep) {
         }
         else {
           // common case, useful signature
-          $link = $td->appendChild($doc->createElement('a',
-              htmlentities(preg_replace('/^hang \|\s*/', '', $hangentry['plugin']))));
+          $sigdisplay = preg_replace('/^hang \|\s*(.*[^_])(_+\.*)?$/', '\1', $hangentry['plugin']);
+          $link = $td->appendChild($doc->createElement('a', htmlentities($sigdisplay)));
           $link->setAttribute('href', $url_siglinkbase.rawurlencode($hangentry['plugin']));
         }
 
@@ -331,8 +331,8 @@ foreach ($reports as $rep) {
         }
         else {
           // common case, useful signature
-          $link = $td->appendChild($doc->createElement('a',
-              htmlentities(preg_replace('/^hang \|\s*/', '', $hangentry['browser']))));
+          $sigdisplay = preg_replace('/^hang \|\s*(.*[^_])(_+\.*)?$/', '\1', $hangentry['browser']);
+          $link = $td->appendChild($doc->createElement('a', htmlentities($sigdisplay)));
           $link->setAttribute('href', $url_siglinkbase.rawurlencode($hangentry['browser']));
         }
 

@@ -282,7 +282,6 @@ foreach ($flash_versions as $fver) {
       foreach ($fvd['sigs'] as $data) {
         $pct = $fvd['total'] ?
                $data['cnt'] / $fvd['total'] : 0;
-        $sigdisplay = preg_replace('/_+\.*$/', '', $data['sig']);
 
         $tr = $table->appendChild($doc->createElement('tr'));
         $td = $tr->appendChild($doc->createElement('td', ++$rank));
@@ -298,6 +297,7 @@ foreach ($flash_versions as $fver) {
         }
         else {
           // common case, useful signature
+          $sigdisplay = preg_replace('/_+\.*$/', '', $data['sig']);
           $link = $td->appendChild($doc->createElement('a', htmlentities($sigdisplay)));
           $link->setAttribute('href', $url_siglinkbase.rawurlencode($data['sig']));
         }
