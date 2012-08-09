@@ -315,6 +315,9 @@ foreach ($reports as $rep) {
       $th = $tr->appendChild($doc->createElement('th', 'Count'));
       $th = $tr->appendChild($doc->createElement('th', 'Flash Versions'));
 
+      // PCRE regex to make signature display nicer (and shorter)
+      $sig_regex = '/^(?:hang \|\s*)?((?U).*)(?:_+\.*)?$/';
+
       foreach ($hangdata as $hangentry) {
         $tr = $table->appendChild($doc->createElement('tr'));
 
@@ -329,7 +332,7 @@ foreach ($reports as $rep) {
         }
         else {
           // common case, useful signature
-          $sigdisplay = preg_replace('/^hang \|\s*(.*[^_])(_+\.*)?$/', '\1', $hangentry['plugin']);
+          $sigdisplay = preg_replace($sig_regex, '\1', $hangentry['plugin']);
           $link = $td->appendChild($doc->createElement('a', htmlentities($sigdisplay)));
           $link->setAttribute('href', $url_siglinkbase.rawurlencode($hangentry['plugin']));
         }
@@ -348,7 +351,7 @@ foreach ($reports as $rep) {
         }
         else {
           // common case, useful signature
-          $sigdisplay = preg_replace('/^hang \|\s*(.*[^_])(_+\.*)?$/', '\1', $hangentry['browser']);
+          $sigdisplay = preg_replace($sig_regex, '\1', $hangentry['browser']);
           $link = $td->appendChild($doc->createElement('a', htmlentities($sigdisplay)));
           $link->setAttribute('href', $url_siglinkbase.rawurlencode($hangentry['browser']));
         }
