@@ -34,11 +34,10 @@ date_default_timezone_set('America/Los_Angeles');
 // Flash versions to gather reports for.
 
 $flash_versions = array('11.2.202.235',
-                        '11.3.300.265',
                         '11.3.300.268',
                         '11.3.300.270',
-                        '11.4.400.231',
-                        '11.4.400.252');
+                        '11.4.400.252',
+                        '11.4.400.257');
 
 // for how many days back to get the data
 $backlog_days = 7;
@@ -196,7 +195,7 @@ foreach ($flash_versions as $fver) {
           .'WHERE signature_id = '.$rep_row['signature_id']
           .' AND reports_clean.flash_version_id NOT IN ('.implode(',', $fv_ids).')'
           .' AND product_version_id IN ('.implode(',', $pv_ids).')'
-          ." AND utc_day_is(date_processed, '".$anadir."')"
+          ." AND utc_day_is(date_processed, '".$anadir."') "
           .'GROUP BY flash_version '
           .'ORDER BY flash_version DESC;';
 
