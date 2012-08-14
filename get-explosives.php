@@ -37,120 +37,102 @@ ini_set('memory_limit', '512M');
 // reports to gather. fields:
 //   product - product name
 //   version - empty is all versions
-//   throttlestart - throttle start date
 //   fake_adu - no ADUs known, fake the value
 //   mincount - minimum count of crashes per day to analyze
 
 $reports = array(array('product'=>'Firefox',
                        'version'=>'17',
                        'version_regex'=>'17\..*',
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>10,
                       ),
                  array('product'=>'Firefox',
                        'version'=>'16',
                        'version_regex'=>'16\..*',
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>10,
                       ),
                  array('product'=>'Firefox',
                        'version'=>'15',
                        'version_regex'=>'15\..*',
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>40,
                       ),
                  array('product'=>'Firefox',
                        'version'=>'14',
                        'version_regex'=>'14\..*',
-                       'throttlestart'=>strtotime('2012-07-20'), // >20%
                        'fake_adu'=>false,
                        'mincount'=>120,
                       ),
                  array('product'=>'Firefox',
                        'version'=>'13',
                        'version_regex'=>'13\..*',
-                       'throttlestart'=>strtotime('2012-06-08'), // >20%
                        'fake_adu'=>false,
                        'mincount'=>50,
                       ),
                  array('product'=>'Firefox',
                        'version'=>'10',
                        'version_regex'=>'10\..*', // keep around for ESR
-                       'throttlestart'=>strtotime('2012-02-04'), // >20%
                        'fake_adu'=>false,
                        'mincount'=>20,
                       ),
                  array('product'=>'Firefox',
                        'channel'=>'aurora',
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>10,
                       ),
                  array('product'=>'Firefox',
                        'channel'=>'nightly',
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>10,
                       ),
                  array('product'=>'Fennec',
                        'version'=>'10',
                        'version_regex'=>'10\..*', // keep around for ESR
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>10,
                       ),
                  array('product'=>'Fennec',
                        'version'=>'15',
                        'version_regex'=>'15\..*',
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>10,
                       ),
                  array('product'=>'Fennec',
                        'version'=>'14',
                        'version_regex'=>'14\..*',
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>10,
                       ),
                  array('product'=>'Fennec',
                        'channel'=>'aurora',
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>6,
                       ),
                  array('product'=>'Fennec',
                        'channel'=>'nightly',
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>6,
                       ),
                  array('product'=>'FennecAndroid',
                        'version'=>'14',
                        'version_regex'=>'14\..*',
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>20,
                       ),
                  array('product'=>'FennecAndroid',
                        'version'=>'15',
                        'version_regex'=>'15\..*',
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>10,
                       ),
                  array('product'=>'FennecAndroid',
                        'channel'=>'aurora',
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>6,
                       ),
                  array('product'=>'FennecAndroid',
                        'channel'=>'nightly',
-                       'throttlestart'=>null,
                        'fake_adu'=>false,
                        'mincount'=>6,
                       ),
@@ -233,9 +215,9 @@ foreach ($reports as $rep) {
 
   $crdata = array();
   $adu = array();
+  $virtual_adu = array(); // reduced for throttling
   $total = array();
   $sigcnt = array();
-  $t_factor = array();
 
   $pv_ids = array();
   $pv_query =
@@ -262,10 +244,34 @@ foreach ($reports as $rep) {
     break;
   }
 
+  $throttle_ids = array();
+  if ($rep['product'] == 'Firefox') {
+    $throttle_query =
+      'SELECT product_version_id '
+      .'FROM product_versions '
+      ."WHERE build_type = 'Release' AND product_name = '".$rep['product']."'"
+      .(strlen($ver)
+        ?' AND release_version '.(isset($rep['version_regex'])
+                                  ?"~ '^".$rep['version_regex']."$'"
+                                  :"= '".$ver."'")
+        :'')
+      .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
+      .';';
+    $throttle_result = pg_query($db_conn, $throttle_query);
+    if ($throttle_result) {
+      while ($throttle_row = pg_fetch_array($throttle_result)) {
+        $throttle_ids[] = $throttle_row['product_version_id'];
+      }
+    }
+  }
+
   if (!$rep['fake_adu']) {
     $first_day = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -'.($backlog_days + 1).' day'));
     $adu_query =
-      'SELECT SUM(adu_count) as adu, adu_date '
+      'SELECT SUM('.(count($throttle_ids)?'CASE
+                  WHEN product_version_id IN ('.implode(',', $throttle_ids).')
+                  THEN adu_count / 10 ELSE adu_count END':'adu_count').') as v_adu,
+              SUM(adu_count) as adu, adu_date '
       .'FROM product_adu '
       .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
       ." AND adu_date >= '".$first_day."' "
@@ -279,6 +285,7 @@ foreach ($reports as $rep) {
 
     while ($adu_row = pg_fetch_array($adu_result)) {
       $adu[$adu_row['adu_date']] = $adu_row['adu'];
+      $virtual_adu[$adu_row['adu_date']] = $adu_row['v_adu'];
     }
   }
 
@@ -295,11 +302,9 @@ foreach ($reports as $rep) {
     $fpages = 'pages.json';
     $fweb = $anadir.'.'.$prdverfile.'.explosiveness.html';
 
-    $t_factor[$anadir] = (!is_null($rep['throttlestart']) &&
-                          ($rep['throttlestart'] <= $anatime)) ? 10 : 1;
-
     if (!array_key_exists($anadir, $adu) && $rep['fake_adu']) {
       $adu[$anadir] = 1000000;
+      $virtual_adu[$anadir] = 1000000;
     }
 
     $rep_query =
@@ -353,7 +358,7 @@ foreach ($reports as $rep) {
     }
 
     // get explosiveness
-    if (intval(@$adu[$anadir]) && intval(@$total[$anadir]) &&
+    if (intval(@$virtual_adu[$anadir]) && intval(@$total[$anadir]) &&
         ($daysback < $backlog_days - 8)) {
       $anafexpdata = $anadir.'/'.$fexpdata;
       if (!file_exists($anafexpdata)) {
@@ -362,16 +367,15 @@ foreach ($reports as $rep) {
 
         $exp = array();
         $dayset = array($anadir);
-        $aduset = array($adu[$anadir]);
-        $totalset = array($t_factor[$anadir] *
-                          $total[$anadir] / $adu[$anadir]);
+        $aduset = array($virtual_adu[$anadir]);
+        $totalset = array($total[$anadir] / $virtual_adu[$anadir]);
         for ($i = 1; $i < 11; $i++) {
           $prevdir = date('Y-m-d',
                           strtotime(date('Y-m-d', $anatime).' -'.$i.' day'));
           $dayset[] = $prevdir;
-          $aduset[] = array_key_exists($prevdir, $adu) ? $adu[$prevdir] : 0;
-          $totalset[] = array_key_exists($prevdir, $adu) ?
-                        $t_factor[$prevdir] * $total[$prevdir] / $adu[$prevdir] :
+          $aduset[] = array_key_exists($prevdir, $virtual_adu) ? $virtual_adu[$prevdir] : 0;
+          $totalset[] = array_key_exists($prevdir, $virtual_adu) ?
+                        $total[$prevdir] / $virtual_adu[$prevdir] :
                         0;
         }
         $exp_total = get_explosiveness($totalset, $aduset, $exp_vars);
@@ -380,15 +384,13 @@ foreach ($reports as $rep) {
         // loop over signatures over a certain threshold
         foreach ($sigs as $sigidx=>$sig) {
           if (intval(@$crdata[$sigidx][$anadir]) > $rep['mincount']) {
-            $dataset = array($t_factor[$anadir] *
-                             $crdata[$sigidx][$anadir] / $adu[$anadir]);
+            $dataset = array($crdata[$sigidx][$anadir] / $virtual_adu[$anadir]);
             $rawcountset = array($crdata[$sigidx][$anadir]);
             // get crash counts for previous days if not yet in the array
             for ($i = 1; $i < 11; $i++) {
-              $dataset[] = array_key_exists($dayset[$i], $adu) ?
-                           $t_factor[$dayset[$i]] *
-                             intval(@$crdata[$sigidx][$dayset[$i]]) /
-                             $adu[$dayset[$i]] :
+              $dataset[] = array_key_exists($dayset[$i], $virtual_adu) ?
+                           intval(@$crdata[$sigidx][$dayset[$i]]) /
+                             $virtual_adu[$dayset[$i]] :
                            0;
               $rawcountset[] = intval(@$crdata[$sigidx][$dayset[$i]]);
             }
@@ -566,6 +568,12 @@ foreach ($reports as $rep) {
                 'display_rep' => 'Explosiveness Report');
         file_put_contents($anafpages, json_encode($pages));
       }
+    }
+    elseif (!intval(@$total[$anadir])) {
+      print('--- ERROR: No ADU data found for '.$anadir.' and '.$prdverdisplay.'!'."\n");
+    }
+    elseif (!intval(@$virtual_adu[$anadir])) {
+      print('--- ERROR: No ADU data found for '.$anadir.' and '.$prdverdisplay.'!'."\n");
     }
     print("\n");
   }
