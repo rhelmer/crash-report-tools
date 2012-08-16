@@ -31,113 +31,13 @@ date_default_timezone_set('America/Los_Angeles');
 
 // *** data gathering variables ***
 
-// channels
-$channels = array('release', 'beta', 'aurora', 'nightly', 'other');
-
-// products
-$products = array('Firefox', 'Fennec', 'FennecAndroid');
+// products and channels to cover
+$prodchan = array('Firefox' => array('release', 'beta', 'aurora', 'nightly', 'esr'),
+                  'Fennec' => array('esr', 'beta', 'aurora', 'nightly'),
+                  'FennecAndroid' => array('release', 'beta', 'aurora', 'nightly'));
 
 // how many days back to look at
 $backlog_days = 7;
-
-// notes for specific builds
-$notes = array('Firefox-5.0-20110427143820' => '5.0b1',
-               'Firefox-5.0-20110517192056' => '5.0b2',
-               'Firefox-5.0-20110527093235' => '5.0b3',
-               'Firefox-5.0-20110603100923' => '5.0b4',
-               'Firefox-5.0-20110608151458' => '5.0b5',
-               'Firefox-5.0-20110613165758' => '5.0b6',
-               'Firefox-5.0-20110614174314' => '5.0b7',
-               'Firefox-6.0-20110705195857' => '6.0b1',
-               'Firefox-6.0-20110713171652' => '6.0b2',
-               'Firefox-6.0-20110721152715' => '6.0b3',
-               'Firefox-6.0-20110729080751' => '6.0b4',
-               'Firefox-6.0-20110804030150' => '6.0b5',
-               'Firefox-7.0-20110816154714' => '7.0b1',
-               'Firefox-7.0-20110824172139' => '7.0b2',
-               'Firefox-7.0-20110830100616' => '7.0b3',
-               'Firefox-7.0-20110902161802' => '7.0b4',
-               'Firefox-7.0-20110908135051' => '7.0b5',
-               'Firefox-7.0-20110916091512' => '7.0b6',
-               'Firefox-8.0-20110928060149' => '8.0b1',
-               'Firefox-8.0-20111006182035' => '8.0b2',
-               'Firefox-8.0-20111011182523' => '8.0b3',
-               'Firefox-8.0-20111019081014' => '8.0b4',
-               'Firefox-8.0-20111026191032' => '8.0b5',
-               'Firefox-8.0-20111102223350' => '8.0b6',
-               'Firefox-9.0-20111109112850' => '9.0b1',
-               'Firefox-9.0-20111116091359' => '9.0b2',
-               'Firefox-9.0-20111122192043' => '9.0b3',
-               'Firefox-9.0-20111130065942' => '9.0b4',
-               'Firefox-9.0-20111206234556' => '9.0b5',
-               'Firefox-9.0-20111212185108' => '9.0b6',
-               'Firefox-10.0-20111221135037' => '10.0b1',
-               'Firefox-10.0-20111228055358' => '10.0b2',
-               'Firefox-10.0-20120104111456' => '10.0b3',
-               'Firefox-10.0-20120111092507' => '10.0b4',
-               'Firefox-10.0-20120118081945' => '10.0b5',
-               'Firefox-10.0-20120123235200' => '10.0b6',
-               'Firefox-11.0-20120201153158' => '11.0b1',
-               'Firefox-11.0-20120208012847' => '11.0b2',
-               'Firefox-11.0-20120215222917' => '11.0b3',
-               'Firefox-11.0-20120222074758' => '11.0b4',
-               'Firefox-11.0-20120228210006' => '11.0b5',
-               'Firefox-11.0-20120305181207' => '11.0b6',
-               'Firefox-11.0-20120308162450' => '11.0b7',
-               'Firefox-11.0-20120310173008' => '11.0b8',
-               'Firefox-12.0-20120314195616' => '12.0b1',
-               'Firefox-12.0-20120321033733' => '12.0b2',
-               'Firefox-12.0-20120328051619' => '12.0b3',
-               'Firefox-12.0-20120403211507' => '12.0b4',
-               'Firefox-12.0-20120411064248' => '12.0b5',
-               'Firefox-12.0-20120417165043' => '12.0b6',
-               'Firefox-13.0-20120425123149' => '13.0b1',
-               'Firefox-13.0-20120501201020' => '13.0b2',
-               'Firefox-13.0-20120509070325' => '13.0b3',
-               'Firefox-13.0-20120516113045' => '13.0b4',
-               'Firefox-13.0-20120523114940' => '13.0b5',
-               'Firefox-13.0-20120528154913' => '13.0b6',
-               'Firefox-13.0-20120531155942' => '13.0b7',
-               'Firefox-14.0-20120605113340' => '14.0b6',
-               'Firefox-14.0-20120612164001' => '14.0b7',
-               'Firefox-14.0-20120619191901' => '14.0b8',
-               'Firefox-14.0-20120624012213' => '14.0b9',
-               'Firefox-14.0-20120628060610' => '14.0b10',
-               'Firefox-14.0-20120704090211' => '14.0b11',
-               'Firefox-14.0-20120710123126' => '14.0b12',
-               'Firefox-15.0-20120717110313' => '15.0b1',
-               'Firefox-15.0-20120724191344' => '15.0b2',
-               'Firefox-15.0-20120731150526' => '15.0b3',
-               'Firefox-15.0-20120808131812' => '15.0b4',
-               'Firefox-15.0-20120814224555' => '15.0b5',
-               'Firefox-14.0.1-20120713134347' => 'official',
-               'Firefox-13.0.1-20120614114901' => 'official',
-               'Firefox-13.0-20120601045813' => 'official',
-               'Firefox-12.0-20120420145725' => 'official',
-               'Firefox-11.0-20120312181643' => 'official',
-               'Firefox-10.0.5-20120531185831' => 'ESR',
-               'Firefox-10.0.4-20120420145309' => 'ESR',
-               'Firefox-10.0.3-20120309135702' => 'ESR',
-               'Firefox-10.0.2-20120216092139' => 'ESR',
-               'Firefox-10.0.2-20120215223356' => 'official',
-               'Firefox-10.0.1-20120208062825' => 'ESR',
-               'Firefox-10.0.1-20120208060813' => 'official',
-               'Firefox-10.0-20120130064731' => 'ESR',
-               'Firefox-10.0-20120129021758' => 'official',
-               'Firefox-9.0.1-20111220165912' => 'official',
-               'Firefox-9.0-20111216140209' => 'official',
-               'Firefox-8.0.1-20111120135848' => 'official',
-               'Firefox-8.0-20111104165243' => 'official',
-               'Firefox-7.0.1-20110928134238' => 'official',
-               'Firefox-7.0-20110922153450' => 'official',
-               'Firefox-6.0.2-20110902133214' => 'official',
-               'Firefox-6.0.1-20110830092941' => 'official',
-               'Firefox-6.0-20110811165603' => 'official',
-               'Firefox-5.0-20110615151330' => 'official',
-               'Firefox-5.0.1-20110707182747' => 'official',
-               'Firefox-4.0.1-20110413222027' => 'official',
-               'Firefox-4.0-20110318052756' => 'official',
-              );
 
 // *** URLs ***
 
@@ -218,7 +118,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         .'(product + version + Build ID combination).'));
 
     $list = $body->appendChild($doc->createElement('ul'));
-    foreach ($products as $product) {
+    foreach ($prodchan as $product=>$channels) {
+      $channels[] = 'other';
       foreach ($channels as $channel) {
         $item = $list->appendChild($doc->createElement('li'));
         $link = $item->appendChild($doc->createElement('a',
@@ -227,7 +128,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       }
     }
 
-    foreach ($products as $product) {
+    foreach ($prodchan as $product=>$channels) {
+      $channels[] = 'other';
       // get most recent major verion
       $pid_query =
         'SELECT productid '
@@ -361,12 +263,19 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                                       'cnt' => array('total' => 0,
                                                      'norm_total' => 0));
 
+            $adu_channel = strtolower($pvdata[$rep_row['product_version_id']]['build_type']);
+            $adu_version =
+                ($adu_channel == 'esr') ?
+                str_replace('esr', '',
+                            $pvdata[$rep_row['product_version_id']]['release_version']) :
+                0;
+
             $adu_query =
               'SELECT SUM(adu_count) as adu '
               .'FROM raw_adu '
               ."WHERE product_guid = btrim('".$productid."', '{}')"
-              ." AND build_channel = '".strtolower($pvdata[$rep_row['product_version_id']]['build_type'])."'"
-              ." AND product_version = '".$pvdata[$rep_row['product_version_id']]['release_version']."'"
+              ." AND build_channel = '".$adu_channel."'"
+              ." AND product_version = '".$adu_version."'"
               ." AND build = '".$rep_row['build']."'"
               ." AND date = '".$anadir."';";
 
