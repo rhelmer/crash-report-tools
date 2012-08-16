@@ -231,6 +231,7 @@ foreach ($reports as $rep) {
         $devname = str_replace('Dell Inc. Dell', 'Dell', $devname);
         $devname = str_replace('Archos ARCHOS', 'Archos', $devname);
         $devname = str_replace('MID MID', 'MID', $devname);
+        $devname = str_replace('MEDION MEDION', 'Medion', $devname);
         $devname = str_replace('Amazon Amazon ', 'Amazon ', $devname);
         $devname = str_replace('Unknown Amazon ', 'Amazon ', $devname);
         if (!array_key_exists($devname, $dd['devices'])) {
