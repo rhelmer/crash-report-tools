@@ -82,9 +82,6 @@ else {
   exit(1);
 }
 
-$fadu = 'build-adu.json';
-$adudata = file_exists($fadu)?json_decode(file_get_contents($fadu), true):array();
-
 for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
   $anadir = date('Y-m-d', $anatime);
