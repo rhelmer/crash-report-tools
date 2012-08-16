@@ -99,7 +99,7 @@ foreach ($products as $product) {
     'SELECT version_string '
     .'FROM product_versions '
     ."WHERE product_name = '".$product."'"
-    ." AND sunset_date > '".$anadir."';";
+    ." AND sunset_date > '".$day_start."';";
   $ver_result = pg_query($db_conn, $ver_query);
   if (!$ver_result) {
     print('--- ERROR: versions query failed!'."\n");
