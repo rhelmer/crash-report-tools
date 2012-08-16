@@ -31,35 +31,8 @@ date_default_timezone_set('America/Los_Angeles');
 
 // *** data gathering variables ***
 
-// daily reports to gather info from.
-//   product as key, array of versions as value
-
-$daily = array(
-    'Firefox' => array('10.0.1esr', '10.0.2esr', '10.0.3esr', '10.0.4esr', '10.0.5esr', '10.0.6esr',
-                       '10.0', '10.0.1', '10.0.2',
-                       '11.0b1', '11.0b2', '11.0b3', '11.0b4', '11.0b5', '11.0b6', '11.0b7', '11.0b8', '11.0',
-                       '12.0a2', '12.0b1', '12.0b2', '12.0b3', '12.0b4', '12.0b5', '12.0b6', '12.0',
-                       '13.0a1', '13.0a2', '13.0b1', '13.0b2', '13.0b3', '13.0b4', '13.0b5', '13.0b6', '13.0b7', '13.0', '13.0.1',
-                       '14.0a1', '14.0a2', '14.0b6', '14.0b7', '14.0b8', '14.0b9', '14.0b10', '14.0b11', '14.0b12', '14.0.1',
-                       '15.0a1', '15.0a2', '15.0b1', '15.0b2', '15.0b3', '15.0b4', '15.0b5',
-                       '16.0a1', '16.0a2',
-                       '17.0a1'),
-    'Fennec' => array('10.0.3esr', '10.0.4esr', '10.0.5esr', '10.0.6esr',
-                      '10.0', '10.0.1', '10.0.2',
-                      '11.0b1', '11.0b2', '11.0b3', '11.0b4', '11.0b5', '11.0b6',
-                      '12.0a2', '12.0b1', '12.0b2', '12.0b3', '12.0b4', '12.0b5', '12.0b6',
-                      '13.0a1', '13.0a2', '13.0b1', '13.0b2', '13.0b3',
-                      '14.0a1', '14.0a2', '14.0b1', '14.0b2', '14.0b6', '14.0b7', '14.0b8', '14.0b10', '14.0b11', '14.0b12', '14.0', '14.0.1',
-                      '15.0a1', '15.0a2', '15.0b1', '15.0b2', '15.0b3', '15.0b4', '15.0b5',
-                      '16.0a1', '16.0a2',
-                      '17.0a1'),
-    'FennecAndroid' => array('11.0b1', '11.0b2', '12.0a2',
-                             '13.0a1', '13.0a2',
-                             '14.0a1', '14.0a2', '14.0b1', '14.0b2', '14.0b3', '14.0b4', '14.0b5', '14.0b6', '14.0b7', '14.0b8', '14.0b10', '14.0b11', '14.0b12', '14.0', '14.0.1', '14.0.2',
-                             '15.0a1', '15.0a2', '15.0b1', '15.0b2', '15.0b3', '15.0b4', '15.0b5',
-                             '16.0a1', '16.0a2',
-                             '17.0a1'),
-);
+// products to gather data from
+$products = array('Firefox', 'Fennec', 'FennecAndroid');
 
 // for how many days back to get the data
 $backlog_days = 20;
@@ -109,7 +82,7 @@ else {
   exit(1);
 }
 
-foreach ($daily as $product=>$versions) {
+foreach ($products as $product) {
   $fproddata = $product.'-daily.json';
 
   if (file_exists($fproddata)) {
@@ -118,6 +91,23 @@ foreach ($daily as $product=>$versions) {
   }
   else {
     $proddata = array();
+  }
+
+  // Get all active versions for that product.
+  $versions = array();
+  $ver_query =
+    'SELECT version_string '
+    .'FROM product_versions '
+    ."WHERE product_name = '".$product."'"
+    ." AND sunset_date > '".$anadir."';";
+  $ver_result = pg_query($db_conn, $ver_query);
+  if (!$ver_result) {
+    print('--- ERROR: versions query failed!'."\n");
+  }
+  else {
+    while ($ver_row = pg_fetch_array($ver_result)) {
+      $versions[] = $ver_row['version_string'];
+    }
   }
 
   print('Fetch daily data for '.$product.' '.implode(', ', $versions)."\n");
