@@ -265,7 +265,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                 ($adu_channel == 'esr') ?
                 str_replace('esr', '',
                             $pvdata[$rep_row['product_version_id']]['release_version']) :
-                0;
+                $pvdata[$rep_row['product_version_id']]['release_version'];
 
             $adu_query =
               'SELECT SUM(adu_count) as adu '
