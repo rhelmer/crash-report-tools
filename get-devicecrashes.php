@@ -114,6 +114,9 @@ $url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
 $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
 $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
 
+// File storing the DB access data - including password!
+$fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
+
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
 else { chdir('/mnt/mozilla/projects/socorro/'); }
 
@@ -121,6 +124,34 @@ else { chdir('/mnt/mozilla/projects/socorro/'); }
 
 // get current day
 $curtime = time();
+
+if (file_exists($fdbsecret)) {
+  $dbsecret = json_decode(file_get_contents($fdbsecret), true);
+  if (!is_array($dbsecret) || !count($dbsecret)) {
+    print('ERROR: No DB secrets found, aborting!'."\n");
+    exit(1);
+  }
+  $db_conn = pg_pconnect('host='.$dbsecret['host']
+                         .' port='.$dbsecret['port']
+                         .' dbname=breakpad'
+                         .' user='.$dbsecret['user']
+                         .' password='.$dbsecret['password']);
+  if (!$db_conn) {
+    print('ERROR: DB connection failed, aborting!'."\n");
+    exit(1);
+  }
+  // For info on what data can be accessed, see also
+  // http://socorro.readthedocs.org/en/latest/databasetabledesc.html
+  // For the DB schema, see
+  // https://github.com/mozilla/socorro/blob/master/sql/schema.sql
+}
+else {
+  // Won't work! (Set just for documenting what fields are in the file.)
+  $dbsecret = array('host' => 'host.m.c', 'port' => '6432',
+                    'user' => 'analyst', 'password' => 'foo');
+  print('ERROR: No DB secrets found, aborting!'."\n");
+  exit(1);
+}
 
 foreach ($reports as $rep) {
   $channel = array_key_exists('channel', $rep)?$rep['channel']:'';
@@ -136,63 +167,82 @@ foreach ($reports as $rep) {
                    .(strlen($channel)?' '.ucfirst($channel):'')
                    .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
+  $pv_ids = array();
+  $pv_query =
+    'SELECT product_version_id '
+    .'FROM product_versions '
+    ."WHERE product_name = '".$rep['product']."'"
+    .(strlen($ver)
+      ?' AND release_version '.(isset($rep['version_regex'])
+                                ?"~ '^".$rep['version_regex']."$'"
+                                :"= '".$ver."'")
+      :'')
+    .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
+    .';';
+  $pv_result = pg_query($db_conn, $pv_query);
+  if (!$pv_result) {
+    print('--- ERROR: product version query failed!'."\n");
+  }
+  while ($pv_row = pg_fetch_array($pv_result)) {
+    $pv_ids[] = $pv_row['product_version_id'];
+  }
+
+  if (!count($pv_ids)) {
+    print('--- ERROR: no versions found in DB for '.$prdverdisplay.'!'."\n");
+    break;
+  }
+
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
     print('Looking at data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
-    $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
-    $frawdata = $prdvershort.'-devices-raw.csv';
     $fdevdata = $prdvershort.'-devices.json';
     $fpages = 'pages.json';
     $fwebmask = '%s.'.$prdverfile.'.devices.html';
     $fweb = sprintf($fwebmask, $anadir);
     $fwebweek = $anadir.'.'.$prdverfile.'.devices.weekly.html';
 
-    // make sure we have the crashdata csv
-    if ($on_moz_server) {
-      $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-      if (!file_exists($anafcsvgz)) { break; }
-    }
-    else {
-      $anafcsv = $anadir.'/'.$fcsv;
-      if (!file_exists($anafcsv)) {
-        print('Fetching '.$anafcsv.' from the web'."\n");
-        $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-        if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
-      }
-      if (!file_exists($anafcsv)) { break; }
-    }
-
-    // get startup data for the product
-    $anafrawdata = $anadir.'/'.$frawdata;
-    if (!file_exists($anafrawdata)) {
-      print('Getting raw '.$prdverdisplay.' device data'."\n");
-      // simplified from http://people.mozilla.org/~chofmann/crash-stats/top-crash+also-found-in40.sh
-      // some parts from that split into total and crashcount blocks, though
-      // $1 is signature, $7 is product, $8 is version, $26 is app_notes, $29 is release_channel
-      $cmd = 'awk \'-F\t\' \'$7 ~ /^'.$rep['product'].'$/'
-              .(strlen($channel)?' && $29 ~ /^'.awk_quote($channel, '/').'$/':'')
-              .(strlen($ver)?' && $8 ~ /^'.(isset($rep['version_regex'])?$rep['version_regex']:awk_quote($ver, '/')).'$/':'')
-              .' {printf "%s!!!%s\n",$1,$26}\'';
-      if ($on_moz_server) {
-        shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' > '.$anafrawdata);
-      }
-      else {
-        shell_exec($cmd.' '.$anafcsv.' > '.$anafrawdata);
-      }
-    }
-
-    // get summarized device data
     $anafdevdata = $anadir.'/'.$fdevdata;
     if (!file_exists($anafdevdata)) {
+      // get all crash IDs and signatures for the selected versions
+      $rep_query =
+        'SELECT uuid, signature '
+        .'FROM reports_clean LEFT JOIN signatures'
+        .' ON (reports_clean.signature_id=signatures.signature_id) '
+        .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+        ." AND utc_day_is(date_processed, '".$anadir."');";
+
+      $rep_result = pg_query($db_conn, $rep_query);
+      if (!$rep_result) {
+        print('--- ERROR: Reports/signatures query failed!'."\n");
+      }
+
       print('Getting summarized device data'."\n");
       $dd = array('total_crashes' => 0,
                   'devices' => array());
-      foreach (explode("\n", shell_exec('cat '.$anafrawdata)) as $crashline) {
-        if (!strlen($crashline)) { break; }
-        list($sig, $appnotes) = explode('!!!', $crashline);
+      while ($rep_row = pg_fetch_array($rep_result)) {
+        $sig = $rep_row['signature'];
+        $crash_id = $rep_row['uuid'];
+
+        // get app notes for this crash ID (using day for performance)
+        $notes_query =
+          'SELECT app_notes '
+          .'FROM reports '
+          ."WHERE uuid='".$crash_id."'"
+          ." AND utc_day_is(date_processed, '".$anadir."');";
+
+        $notes_result = pg_query($db_conn, $notes_query);
+        if (!$fname_result) {
+          print('--- ERROR: app_notes query failed!'."\n");
+          $appnotes = '';
+        }
+        else {
+          $notes_row = pg_fetch_array($notes_result);
+          $appnotes = $notes_row['app_notes'];
+        }
+
         if (preg_match("/Model: '(.*)', Product: '.*', Manufacturer: '(.*)', Hardware: '.*'.*\| [^:\s]+:(\d\.[^\/\s]+|AOSP)\/[^:\s]+:[^\s]*keys/", $appnotes, $regs)) {
           $devname = ucfirst($regs[2].' '.$regs[1]);
           $andver = $regs[3];
