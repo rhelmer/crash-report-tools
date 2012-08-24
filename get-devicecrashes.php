@@ -234,7 +234,7 @@ foreach ($reports as $rep) {
           ." AND utc_day_is(date_processed, '".$anadir."');";
 
         $notes_result = pg_query($db_conn, $notes_query);
-        if (!$fname_result) {
+        if (!$notes_result) {
           print('--- ERROR: app_notes query failed!'."\n");
           $appnotes = '';
         }
