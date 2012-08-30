@@ -52,7 +52,7 @@ $reports = array(
                      'products' => array('FennecAndroid')));
 
 // for how many days back to get the data
-$backlog_days = 0;
+$backlog_days = 7;
 
 // how many top crashes to list
 $top_x = 100;
@@ -130,7 +130,7 @@ foreach ($reports as $rname=>$rep) {
 
   foreach ($rep['products'] as $product) {
     $ver_query =
-      'SELECT version_string, product_version_id '
+      'SELECT build_date, version_string, product_version_id '
       .'FROM product_versions '
       ."WHERE product_name = '".$product."'"
       ." AND featured_version = 't';";
@@ -144,6 +144,8 @@ foreach ($reports as $rname=>$rep) {
       $pv_ids = array($ver_row['product_version_id']);
       $ver = $ver_row['version_string'];
       $channel = '';
+
+      $min_date = $ver_row['build_date'];
 
       $prd = strtolower($product);
       $prdvershort = (($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':(($prd == 'fennecandroid')?'fna':$prd)))
@@ -161,15 +163,17 @@ foreach ($reports as $rname=>$rep) {
       for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
         $anadir = date('Y-m-d', $anatime);
-        print('Looking at '.$prdverdisplay.' on '.$rep['display_name'].' data for '.$anadir."\n");
-        if (!file_exists($anadir)) { mkdir($anadir); }
+        if ($min_date <= $anadir) {
+          print('Looking at '.$prdverdisplay.' on '.$rep['display_name'].' data for '.$anadir."\n");
+          if (!file_exists($anadir)) { mkdir($anadir); }
+        }
 
         $ftcdata = $prdvershort.'-'.$rname.'-topcrash.json';
         $fpages = 'pages.json';
         $fweb = $anadir.'.'.$prdverfile.'.'.$rname.'.topcrash.html';
 
         $anaftcdata = $anadir.'/'.$ftcdata;
-        if (!file_exists($anaftcdata)) {
+        if (!file_exists($anaftcdata) && ($min_date <= $anadir)) {
           $rep_query =
             'SELECT COUNT(*) as cnt, signatures.signature, signatures.signature_id '
             .'FROM '
