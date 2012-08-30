@@ -324,8 +324,9 @@ foreach ($reports as $rname=>$rep) {
                   'display_ver' => $prdverdisplay,
                   'display_rep' => $rep['display_name'].' Top Crash Report');
           file_put_contents($anafpages, json_encode($pages));
-        }
 */
+        }
+
         print("\n");
       }
     }
