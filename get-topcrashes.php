@@ -49,7 +49,7 @@ $reports = array(
     'armv6' => array('display_name' => 'ARMv6',
                      'include_reports_table' => true,
                      'wherex' => " AND reports.os_version ~ 'armv6l$'",
-                     'products' => array('FennecAndroid'));
+                     'products' => array('FennecAndroid')));
 
 // for how many days back to get the data
 $backlog_days = 0;
