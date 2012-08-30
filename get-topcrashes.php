@@ -163,17 +163,18 @@ foreach ($reports as $rname=>$rep) {
       for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
         $anadir = date('Y-m-d', $anatime);
-        if ($min_date <= $anadir) {
-          print('Looking at '.$prdverdisplay.' on '.$rep['display_name'].' data for '.$anadir."\n");
-          if (!file_exists($anadir)) { mkdir($anadir); }
+        if ($min_date > $anadir) {
+          break;
         }
+        print('Looking at '.$prdverdisplay.' on '.$rep['display_name'].' data for '.$anadir."\n");
+        if (!file_exists($anadir)) { mkdir($anadir); }
 
         $ftcdata = $prdvershort.'-'.$rname.'-topcrash.json';
         $fpages = 'pages.json';
         $fweb = $anadir.'.'.$prdverfile.'.'.$rname.'.topcrash.html';
 
         $anaftcdata = $anadir.'/'.$ftcdata;
-        if (!file_exists($anaftcdata) && ($min_date <= $anadir)) {
+        if (!file_exists($anaftcdata)) {
           $rep_query =
             'SELECT COUNT(*) as cnt, signatures.signature, signatures.signature_id '
             .'FROM '
