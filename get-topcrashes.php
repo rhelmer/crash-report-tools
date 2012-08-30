@@ -164,7 +164,7 @@ foreach ($reports as $rname=>$rep) {
         $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
         $anadir = date('Y-m-d', $anatime);
         if ($min_date > $anadir) {
-          break;
+          continue;
         }
         print('Looking at '.$prdverdisplay.' on '.$rep['display_name'].' data for '.$anadir."\n");
         if (!file_exists($anadir)) { mkdir($anadir); }
@@ -311,7 +311,7 @@ foreach ($reports as $rname=>$rep) {
           }
 
           $doc->saveHTMLFile($anafweb);
-/*
+
           // add the page to the pages index
           $anafpages = $anadir.'/'.$fpages;
           if (file_exists($anafpages)) {
@@ -329,7 +329,6 @@ foreach ($reports as $rname=>$rep) {
                   'display_ver' => $prdverdisplay,
                   'display_rep' => $rep['display_name'].' Top Crash Report');
           file_put_contents($anafpages, json_encode($pages));
-*/
         }
 
         print("\n");
