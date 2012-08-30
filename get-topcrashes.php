@@ -182,6 +182,9 @@ foreach ($reports as $rname=>$rep) {
             .' WHERE reports_clean.product_version_id IN ('.implode(',', $pv_ids).') '
             .$rep_wherex
             ." AND utc_day_is(reports_clean.date_processed, '".$anadir."')"
+            .((array_key_exists('include_reports_table', $rep) && $rep['include_reports_table'])?
+                " AND utc_day_is(reports.date_processed, '".$anadir."')"
+              :'')
             .'GROUP BY signatures.signature_id, signatures.signature '
             .'ORDER BY cnt DESC;';
 
