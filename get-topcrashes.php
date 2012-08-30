@@ -48,8 +48,7 @@ $reports = array(
                       'products' => array('Firefox')),
     'armv6' => array('display_name' => 'ARMv6',
                      'include_reports_table' => true,
-                     'wherex' => " AND reports.os_version ~ 'armv6l$'"),
-                     'show_other_os' => false,
+                     'wherex' => " AND reports.os_version ~ 'armv6l$'",
                      'products' => array('FennecAndroid'));
 
 // for how many days back to get the data
@@ -105,7 +104,7 @@ else {
 }
 
 foreach ($reports as $rname=>$rep) {
-  $rep_wherex = $rep['wherex'];
+  $rep_wherex = array_key_exists('wherex', $rep)?$rep['wherex']:'';
   if (array_key_exists('os_name', $rep)) {
     $os_ids = array();
     $os_query =
@@ -129,7 +128,7 @@ foreach ($reports as $rname=>$rep) {
     $rep_wherex .= ' AND reports_clean.os_version_id IN ('.implode(',', $os_ids).')';
   }
 
-  foreach ($products as $product) {
+  foreach ($rep['products'] as $product) {
     $ver_query =
       'SELECT version_string, product_version_id '
       .'FROM product_versions '
