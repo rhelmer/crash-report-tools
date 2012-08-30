@@ -145,14 +145,14 @@ foreach ($reports as $rname=>$rep) {
       $ver = $ver_row['version_string'];
       $channel = '';
 
-      $prd = strtolower($rep['product']);
+      $prd = strtolower($product);
       $prdvershort = (($prd == 'firefox')?'ff':(($prd == 'fennec')?'fn':(($prd == 'fennecandroid')?'fna':$prd)))
                     .(strlen($channel)?'-'.$channel:'')
                     .(strlen($ver)?'-'.$ver:'');
       $prdverfile = $prd
                     .(strlen($channel)?'.'.$channel:'')
                     .(strlen($ver)?'.'.$ver:'');
-      $prdverdisplay = $rep['product']
+      $prdverdisplay = $product
                       .(strlen($channel)?' '.ucfirst($channel):'')
                       .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
@@ -171,7 +171,7 @@ foreach ($reports as $rname=>$rep) {
         $anaftcdata = $anadir.'/'.$ftcdata;
         if (!file_exists($anaftcdata)) {
           $rep_query =
-            'SELECT COUNT(*) as cnt, reports_clean.signature, signatures.signature_id '
+            'SELECT COUNT(*) as cnt, signatures.signature, signatures.signature_id '
             .'FROM '
             .($rep['include_reports_table']?
                 '(reports_clean LEFT JOIN reports'
@@ -182,7 +182,7 @@ foreach ($reports as $rname=>$rep) {
             .' WHERE reports_clean.product_version_id IN ('.implode(',', $pv_ids).') '
             .$rep_wherex
             ." AND utc_day_is(reports_clean.date_processed, '".$anadir."')"
-            .'GROUP BY signatures.signature_id, reports_clean.signature '
+            .'GROUP BY signatures.signature_id, signatures.signature '
             .'ORDER BY cnt DESC;';
 
           $rep_result = pg_query($db_conn, $rep_query);
