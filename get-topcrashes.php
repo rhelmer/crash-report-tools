@@ -173,7 +173,7 @@ foreach ($reports as $rname=>$rep) {
           $rep_query =
             'SELECT COUNT(*) as cnt, signatures.signature, signatures.signature_id '
             .'FROM '
-            .($rep['include_reports_table']?
+            .((array_key_exists('include_reports_table', $rep) && $rep['include_reports_table'])?
                 '(reports_clean LEFT JOIN reports'
                 .' ON (reports_clean.uuid=reports.uuid))'
               :'reports_clean')
@@ -241,8 +241,6 @@ foreach ($reports as $rname=>$rep) {
           $body = $root->appendChild($doc->createElement('body'));
           $h1 = $body->appendChild($doc->createElement('h1',
               $anadir.' '.$prdverdisplay.' on '.$rep['display_name'].' Top Crash Report'));
-
-          $fvd = $flashverdata[$anadir];
 
           // description
           $para = $body->appendChild($doc->createElement('p',
