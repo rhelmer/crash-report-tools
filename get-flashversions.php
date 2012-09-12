@@ -28,6 +28,9 @@ umask(022);
 // set default time zone - right now, always the one the server is in!
 date_default_timezone_set('America/Los_Angeles');
 
+// set higher memory limit so we can process large JSON files
+ini_set('memory_limit', '512M');
+
 
 // *** data gathering variables ***
 
