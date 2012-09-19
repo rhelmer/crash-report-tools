@@ -95,6 +95,11 @@ if (file_exists($fdbsecret)) {
   // http://socorro.readthedocs.org/en/latest/databasetabledesc.html
   // For the DB schema, see
   // https://github.com/mozilla/socorro/blob/master/sql/schema.sql
+
+  // Make sure we get UTF-8 data.
+  print('encoding: '.pg_client_encoding($db_conn)."\n");
+  pg_set_client_encoding($db_conn, 'UNICODE');
+  print('encoding: '.pg_client_encoding($db_conn)."\n");
 }
 else {
   // Won't work! (Set just for documenting what fields are in the file.)
