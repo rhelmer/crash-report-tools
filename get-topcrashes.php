@@ -324,7 +324,7 @@ foreach ($reports as $rname=>$rep) {
             $td = $tr->appendChild($doc->createElement('td',
                 sprintf('%.1f', 100 * $pct).'%'));
             $td->setAttribute('class', 'num');
-            $td = $tr->appendChild($doc->createElement('td');
+            $td = $tr->appendChild($doc->createElement('td'));
             foreach ($data['bugs'] as $bug=>$bugdata) {
               if (strlen($td->textContent)) {
                 $td->appendChild($doc->createTextNode(', '));
