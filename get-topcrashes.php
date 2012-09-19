@@ -205,7 +205,7 @@ foreach ($reports as $rname=>$rep) {
             $bug_query =
               'SELECT bug_id, status, resolution, short_desc '
               .'FROM bug_associations LEFT JOIN bugs'
-              .' ON (bug_associations.bug_id=bugs.id)'
+              .' ON (bug_associations.bug_id=bugs.id) '
               ."WHERE signature = '".pg_escape_string($rep_row['signature'])."';";
 
             $bug_result = pg_query($db_conn, $bug_query);
@@ -213,9 +213,9 @@ foreach ($reports as $rname=>$rep) {
               print('--- ERROR: Bug associations query failed!'."\n");
             }
             while ($bug_row = pg_fetch_array($bug_result)) {
-              $bugs[$bug_row['bug_id']] = array($bug_row['status'],
-                                                $bug_row['resolution'],
-                                                $bug_row['short_desc']);
+              $bugs[$bug_row['bug_id']] = array('status' => $bug_row['status'],
+                                                'resolution' => $bug_row['resolution'],
+                                                'short_desc' => $bug_row['short_desc']);
             }
 
             $tcd['total'] += $rep_row['cnt'];
