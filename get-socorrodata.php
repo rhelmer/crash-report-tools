@@ -35,7 +35,7 @@ date_default_timezone_set('America/Los_Angeles');
 $products = array('Firefox', 'Fennec', 'FennecAndroid');
 
 // for how many days back to get the data
-$backlog_days = 20;
+$backlog_days = 15;
 
 // *** URLs and paths ***
 
@@ -51,7 +51,7 @@ else { chdir('/mnt/mozilla/projects/socorro/'); }
 // *** code start ***
 
 // Get start and end dates
-$day_start = date('Y-m-d', strtotime('15 days ago'));
+$day_start = date('Y-m-d', strtotime($backlog_days.' days ago'));
 $day_end = date('Y-m-d', strtotime('yesterday'));
 
 if (file_exists($fdbsecret)) {
