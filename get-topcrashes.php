@@ -299,7 +299,7 @@ foreach ($reports as $rname=>$rep) {
           $rank = 0;
           foreach ($tcd['sigs'] as $data) {
             $pct = $tcd['total'] ?
-                  $data['cnt'] / $tcd['total'] : 0;
+                   $data['cnt'] / $tcd['total'] : 0;
 
             $tr = $table->appendChild($doc->createElement('tr'));
             $td = $tr->appendChild($doc->createElement('td', ++$rank));
@@ -325,17 +325,22 @@ foreach ($reports as $rname=>$rep) {
                 sprintf('%.1f', 100 * $pct).'%'));
             $td->setAttribute('class', 'num');
             $td = $tr->appendChild($doc->createElement('td'));
-            foreach ($data['bugs'] as $bug=>$bugdata) {
-              if (strlen($td->textContent)) {
-                $td->appendChild($doc->createTextNode(', '));
+            if (array_key_exists('bugs', $data) && count($data['bugs'])) {
+              foreach ($data['bugs'] as $bug => $bugdata) {
+                if (strlen($td->textContent)) {
+                  $td->appendChild($doc->createTextNode(', '));
+                }
+                $link = $td->appendChild($doc->createElement('a', $bug));
+                $link->setAttribute('href', $url_buglinkbase.$bug);
+                $link->setAttribute('title', $bugdata['status'].' '.$bugdata['resolution']
+                                            .' - '.htmlentities($bugdata['short_desc']));
+                if ($bugdata['status'] == 'RESOLVED') {
+                  $link->setAttribute('class', 'resolvedbug');
+                }
               }
-              $link = $td->appendChild($doc->createElement('a', $bug));
-              $link->setAttribute('href', $url_buglinkbase.$bug);
-              $link->setAttribute('title', $bugdata['status'].' '.$bugdata['resolution']
-                                           .' - '.htmlentities($bugdata['short_desc']));
-              if ($bugdata['status'] == 'RESOLVED') {
-                $link->setAttribute('class', 'resolvedbug');
-              }
+            }
+            else {
+              $td->appendChild($doc->createTextNode(' '));
             }
             if ($show_other_os) {
               $td = $tr->appendChild($doc->createElement('td',
