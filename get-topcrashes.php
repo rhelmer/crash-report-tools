@@ -249,13 +249,13 @@ foreach ($reports as $rname=>$rep) {
           $style = $head->appendChild($doc->createElement('style'));
           $style->setAttribute('type', 'text/css');
           $style->appendChild($doc->createCDATASection(
-              '.sig {'."\n"
+              '.sig, .bug {'."\n"
               .'  font-size: small;'."\n"
               .'}'."\n"
               .'.num, .pct {'."\n"
               .'  text-align: right;'."\n"
               .'}'."\n"
-              .'.resolvedbug {'."\n"
+              .'.resolved {'."\n"
               .'  text-decoration: line-through;'."\n"
               .'}'."\n"
               .($show_other_os?
@@ -337,12 +337,15 @@ foreach ($reports as $rname=>$rep) {
                     $bugdata['status'].' '.$bugdata['resolution'].' - '
                     .htmlentities($bugdata['short_desc'], ENT_COMPAT, 'UTF-8'));
                 if ($bugdata['status'] == 'RESOLVED') {
-                  $link->setAttribute('class', 'resolvedbug');
+                  $link->setAttribute('class', 'bug resolved');
+                }
+                else {
+                  $link->setAttribute('class', 'bug');
                 }
               }
             }
             else {
-              $td->appendChild($doc->createTextNode(' '));
+              $td->appendChild($doc->createTextNode('&nbsp;'));
             }
             if ($show_other_os) {
               $td = $tr->appendChild($doc->createElement('td',
