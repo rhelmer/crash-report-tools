@@ -66,6 +66,7 @@ $fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
 
 $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
 $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
+$url_buglinkbase = 'https://bugzilla.mozilla.org/show_bug.cgi?id=';
 
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
 else { chdir('/mnt/mozilla/projects/socorro/'); }
@@ -200,9 +201,27 @@ foreach ($reports as $rname=>$rep) {
 
           $tcd = array('sigs' => array(), 'total' => 0);
           while ($rep_row = pg_fetch_array($rep_result)) {
+            $bugs = array();
+            $bug_query =
+              'SELECT bug_id, status, resolution, short_desc '
+              .'FROM bug_associations LEFT JOIN bugs'
+              .' ON (bug_associations.bug_id=bugs.id)'
+              ."WHERE signature = '".pg_escape_string($rep_row['signature'])."';";
+
+            $bug_result = pg_query($db_conn, $bug_query);
+            if (!$bug_result) {
+              print('--- ERROR: Bug associations query failed!'."\n");
+            }
+            while ($bug_row = pg_fetch_array($bug_result)) {
+              $bugs[$bug_row['bug_id']] = array($bug_row['status'],
+                                                $bug_row['resolution'],
+                                                $bug_row['short_desc']);
+            }
+
             $tcd['total'] += $rep_row['cnt'];
             $tcd['sigs'][] = array('sig' => $rep_row['signature'],
-                                   'cnt' => $rep_row['cnt']);
+                                   'cnt' => $rep_row['cnt'],
+                                   'bugs' => $bugs);
           }
           ksort($tcd); // sort by date (key), ascending
 
@@ -236,6 +255,9 @@ foreach ($reports as $rname=>$rep) {
               .'.num, .pct {'."\n"
               .'  text-align: right;'."\n"
               .'}'."\n"
+              .'.resolvedbug {'."\n"
+              .'  text-decoration: line-through;'."\n"
+              .'}'."\n"
               .($show_other_os?
                   '.otherver.some {'."\n"
                   .'  font-size: small;'."\n"
@@ -268,6 +290,7 @@ foreach ($reports as $rname=>$rep) {
           $th = $tr->appendChild($doc->createElement('th', 'Count'));
           $th = $tr->appendChild($doc->createElement('th', 'Pct'));
           $th->setAttribute('title', 'Percentage out of all crashes for '.$prdverdisplay.' on '.$rep['display_name']);
+          $th = $tr->appendChild($doc->createElement('th', 'Bugs'));
           if ($show_other_os) {
             $th = $tr->appendChild($doc->createElement('th', 'Other Versions'));
             $th->setAttribute('title', 'Other versions this signatures appears in');
@@ -301,6 +324,19 @@ foreach ($reports as $rname=>$rep) {
             $td = $tr->appendChild($doc->createElement('td',
                 sprintf('%.1f', 100 * $pct).'%'));
             $td->setAttribute('class', 'num');
+            $td = $tr->appendChild($doc->createElement('td');
+            foreach ($data['bugs'] as $bug=>$bugdata) {
+              if (strlen($td->textContent)) {
+                $td->appendChild($doc->createTextNode(', '));
+              }
+              $link = $td->appendChild($doc->createElement('a', $bug));
+              $link->setAttribute('href', $url_buglinkbase.$bug);
+              $link->setAttribute('title', $bugdata['status'].' '.$bugdata['resolution']
+                                           .' - '.htmlentities($bugdata['short_desc']));
+              if ($bugdata['status'] == 'RESOLVED') {
+                $link->setAttribute('class', 'resolvedbug');
+              }
+            }
             if ($show_other_os) {
               $td = $tr->appendChild($doc->createElement('td',
                   count($data['other_flash_ver'])?implode(', ', $data['other_flash_ver']):'None'));
