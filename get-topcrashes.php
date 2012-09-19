@@ -249,11 +249,15 @@ foreach ($reports as $rname=>$rep) {
           $style = $head->appendChild($doc->createElement('style'));
           $style->setAttribute('type', 'text/css');
           $style->appendChild($doc->createCDATASection(
-              '.sig, .bug {'."\n"
+              '.sig {'."\n"
               .'  font-size: small;'."\n"
               .'}'."\n"
               .'.num, .pct {'."\n"
               .'  text-align: right;'."\n"
+              .'}'."\n"
+              .'.bug {'."\n"
+              .'  font-size: small;'."\n"
+              .'  empty-cells: show;'."\n"
               .'}'."\n"
               .'.resolved {'."\n"
               .'  text-decoration: line-through;'."\n"
@@ -343,9 +347,6 @@ foreach ($reports as $rname=>$rep) {
                   $link->setAttribute('class', 'bug');
                 }
               }
-            }
-            else {
-              $td->appendChild($doc->createTextNode('&nbsp;'));
             }
             if ($show_other_os) {
               $td = $tr->appendChild($doc->createElement('td',
