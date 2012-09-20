@@ -300,7 +300,8 @@ foreach ($flash_versions as $fver) {
         else {
           // common case, useful signature
           $sigdisplay = preg_replace('/_+\.*$/', '', $data['sig']);
-          $link = $td->appendChild($doc->createElement('a', htmlentities($sigdisplay)));
+          $link = $td->appendChild($doc->createElement('a',
+              htmlentities($sigdisplay, ENT_COMPAT, 'UTF-8')));
           $link->setAttribute('href', $url_siglinkbase.rawurlencode($data['sig']));
         }
         $td = $tr->appendChild($doc->createElement('td', $data['cnt']));

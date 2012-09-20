@@ -525,7 +525,8 @@ foreach ($reports as $rep) {
           }
           else {
             // common case, useful signature
-            $link = $td->appendChild($doc->createElement('a', htmlentities($expdata['sig'])));
+            $link = $td->appendChild($doc->createElement('a',
+                htmlentities($expdata['sig'], ENT_COMPAT, 'UTF-8')));
             $link->setAttribute('href', $url_siglinkbase.rawurlencode($expdata['sig']));
           }
           $td = $tr->appendChild($doc->createElement('td',

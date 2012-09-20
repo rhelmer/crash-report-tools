@@ -623,7 +623,8 @@ foreach ($reports as $rep) {
               }
               else {
                 // common case, useful signature
-                $link = $td->appendChild($doc->createElement('a', htmlentities($sname)));
+                $link = $td->appendChild($doc->createElement('a',
+                    htmlentities($sname, ENT_COMPAT, 'UTF-8')));
                 $link->setAttribute('href', $url_siglinkbase.rawurlencode($sname));
               }
               $td = $tr->appendChild($doc->createElement('td', $sdata['.count']));

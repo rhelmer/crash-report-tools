@@ -339,7 +339,8 @@ foreach ($reports as $rep) {
         else {
           // common case, useful signature
           $sigdisplay = preg_replace($sig_regex, '\1', $hangentry['plugin']);
-          $link = $td->appendChild($doc->createElement('a', htmlentities($sigdisplay)));
+          $link = $td->appendChild($doc->createElement('a',
+              htmlentities($sigdisplay, ENT_COMPAT, 'UTF-8')));
           $link->setAttribute('href', $url_siglinkbase.rawurlencode($hangentry['plugin']));
         }
 
@@ -358,7 +359,8 @@ foreach ($reports as $rep) {
         else {
           // common case, useful signature
           $sigdisplay = preg_replace($sig_regex, '\1', $hangentry['browser']);
-          $link = $td->appendChild($doc->createElement('a', htmlentities($sigdisplay)));
+          $link = $td->appendChild($doc->createElement('a',
+              htmlentities($sigdisplay, ENT_COMPAT, 'UTF-8')));
           $link->setAttribute('href', $url_siglinkbase.rawurlencode($hangentry['browser']));
         }
 

@@ -525,7 +525,8 @@ foreach ($reports as $rep) {
             }
             else {
               // common case, useful signature
-              $link = $td->appendChild($doc->createElement('a', htmlentities($sig)));
+              $link = $td->appendChild($doc->createElement('a',
+                  htmlentities($sig, ENT_COMPAT, 'UTF-8')));
               $link->setAttribute('href', $url_siglinkbase.rawurlencode($sig));
             }
             $td->setAttribute('class', 'sig');
@@ -564,7 +565,8 @@ foreach ($reports as $rep) {
           }
           else {
             // common case, useful signature
-            $link = $th->appendChild($doc->createElement('a', htmlentities($sig)));
+            $link = $th->appendChild($doc->createElement('a',
+                htmlentities($sig, ENT_COMPAT, 'UTF-8')));
             $link->setAttribute('href', $url_siglinkbase.rawurlencode($sig));
           }
           $th = $tr->appendChild($doc->createElement('th', $sigdata['.count']));

@@ -348,6 +348,9 @@ foreach ($reports as $rname=>$rep) {
                 }
               }
             }
+            else {
+              $td->appendChild($doc->createTextNode('-'));
+            }
             if ($show_other_os) {
               $td = $tr->appendChild($doc->createElement('td',
                   count($data['other_flash_ver'])?implode(', ', $data['other_flash_ver']):'None'));

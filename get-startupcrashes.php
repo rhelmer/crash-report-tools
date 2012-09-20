@@ -371,7 +371,8 @@ foreach ($reports as $rep) {
         }
         else {
           // common case, useful signature
-          $link = $td->appendChild($doc->createElement('a', htmlentities($anacrash['sig'])));
+          $link = $td->appendChild($doc->createElement('a',
+              htmlentities($anacrash['sig'], ENT_COMPAT, 'UTF-8')));
           $link->setAttribute('href', $url_siglinkbase.rawurlencode($anacrash['sig']));
         }
         $td->setAttribute('class', 'sig');
