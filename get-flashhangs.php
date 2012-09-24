@@ -201,16 +201,15 @@ foreach ($reports as $rep) {
 
   $days_to_analyze = array();
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
-    $days_to_analyze[] = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
+    $days_to_analyze[] = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day'));
   }
   foreach ($force_dates as $anaday) {
-    $anatime = strtotime($anaday);
-    if (!array_key_exists($anatime, $days_to_analyze)) {
-      $days_to_analyze[] = $anatime;
+    if (!array_key_exists($anaday, $days_to_analyze)) {
+      $days_to_analyze[] = $anaday;
     }
   }
-  foreach ($days_to_analyze as $anatime) {
-    $anadir = date('Y-m-d', $anatime);
+  foreach ($days_to_analyze as $anaday) {
+    $anadir = $anaday;
     print('Looking at data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
