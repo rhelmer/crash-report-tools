@@ -204,7 +204,7 @@ foreach ($reports as $rep) {
     $days_to_analyze[] = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day'));
   }
   foreach ($force_dates as $anaday) {
-    if (!array_key_exists($anaday, $days_to_analyze)) {
+    if (!in_array($anaday, $days_to_analyze)) {
       $days_to_analyze[] = $anaday;
     }
   }
