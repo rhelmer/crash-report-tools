@@ -203,8 +203,11 @@ foreach ($reports as $rep) {
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $days_to_analyze[] = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
   }
-  foreach ($force_dates as $anatime) {
-    $days_to_analyze[] = $anatime;
+  foreach ($force_dates as $anaday) {
+    $anatime = strtotime($anaday);
+    if (!array_key_exists($anatime, $days_to_analyze)) {
+      $days_to_analyze[] = $anatime;
+    }
   }
   foreach ($days_to_analyze as $anatime) {
     $anadir = date('Y-m-d', $anatime);
