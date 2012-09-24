@@ -5,6 +5,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // This script retrieves stats comparing flash versions in hangs and crashes.
+// Dates (in YYYY-MM-DD format) given as arguments will be "forcefully" updated.
 
 // *** non-commandline handling ***
 
@@ -28,6 +29,21 @@ umask(022);
 // set default time zone - right now, always the one the server is in!
 date_default_timezone_set('America/Los_Angeles');
 
+
+// *** deal with arguments ***
+$php_self = array_shift($argv);
+$force_dates = array();
+if (count($argv)) {
+  foreach ($argv as $date) {
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) &&
+        date('Y-m-d', strtotime($date)) == $date) {
+      $force_dates[] = $date;
+    }
+  }
+}
+if (count($force_dates)) {
+  print('Forcing update for the following dates: '.implode(', ', $force_dates)."\n\n");
+}
 
 // *** data gathering variables ***
 
@@ -183,8 +199,14 @@ foreach ($reports as $rep) {
     }
   }
 
+  $days_to_analyze = array();
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
-    $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
+    $days_to_analyze[] = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
+  }
+  foreach ($force_dates as $anatime) {
+    $days_to_analyze[] = $anatime;
+  }
+  foreach ($days_to_analyze as $anatime) {
     $anadir = date('Y-m-d', $anatime);
     print('Looking at data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
@@ -192,7 +214,7 @@ foreach ($reports as $rep) {
     $fpages = 'pages.json';
     $fweb = $anadir.'.'.$prdverfile.'.flashhangs.html';
 
-    if (!array_key_exists($anadir, $flashdata)) {
+    if (!array_key_exists($anadir, $flashdata) || in_array($anadir, $force_dates)) {
       print('Fetch Flash/hang data for '.$prdverdisplay."\n");
 
       $rep_query =
