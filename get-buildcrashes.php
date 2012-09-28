@@ -33,7 +33,7 @@ date_default_timezone_set('America/Los_Angeles');
 
 // products and channels to cover
 $prodchan = array('Firefox' => array('release', 'beta', 'aurora', 'nightly', 'esr'),
-                  'Fennec' => array('esr', 'beta', 'aurora', 'nightly'),
+                  'Fennec' => array('esr'),
                   'FennecAndroid' => array('release', 'beta', 'aurora', 'nightly'));
 
 // how many days back to look at
