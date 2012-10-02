@@ -340,7 +340,7 @@ foreach ($reports as $rname=>$rep) {
                 $link->setAttribute('title',
                     $bugdata['status'].' '.$bugdata['resolution'].' - '
                     .htmlentities($bugdata['short_desc'], ENT_COMPAT, 'UTF-8'));
-                if ($bugdata['status'] == 'RESOLVED') {
+                if ($bugdata['status'] == 'RESOLVED' || $bugdata['status'] == 'VERIFIED') {
                   $link->setAttribute('class', 'bug resolved');
                 }
                 else {
