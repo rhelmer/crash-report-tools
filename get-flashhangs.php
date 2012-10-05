@@ -240,13 +240,13 @@ foreach ($reports as $rep) {
           $fd['full'][$htype][$fver] += $rep_row['cnt'];
         }
         else {
-          $fd['full'][$htype][$fver] = $rep_row['cnt'];
+          $fd['full'][$htype][$fver] = intval($rep_row['cnt']);
         }
         if (array_key_exists($fvshort, $fd['main'][$htype])) {
           $fd['main'][$htype][$fvshort] += $rep_row['cnt'];
         }
         else {
-          $fd['main'][$htype][$fvshort] = $rep_row['cnt'];
+          $fd['main'][$htype][$fvshort] = intval($rep_row['cnt']);
         }
         $fd['total'][$htype] += $rep_row['cnt'];
         if (strlen($fver)) { $fd['total_flash'][$htype] += $rep_row['cnt']; }
@@ -560,7 +560,7 @@ function getADU($days, $pv_ids, $throttle_ids, $db_conn) {
     print('--- ERROR: ADU query failed!'."\n");
   }
   while ($adu_row = pg_fetch_array($adu_result)) {
-    $adu[$adu_row['adu_date']] = $adu_row['adu'];
+    $adu[$adu_row['adu_date']] = intval($adu_row['adu']);
   }
   return $adu;
 }
