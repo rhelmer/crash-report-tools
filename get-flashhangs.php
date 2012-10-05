@@ -251,6 +251,10 @@ foreach ($reports as $rep) {
         $fd['total'][$htype] += $rep_row['cnt'];
         if (strlen($fver)) { $fd['total_flash'][$htype] += $rep_row['cnt']; }
       }
+      $adu = getADU($pv_ids, $throttle_ids, array($anaday));
+      if (array_key_exists($anaday, $adu)) {
+        $fd['adu'] = $adu[$anaday];
+      }
       $flashdata[$anadir] = $fd;
 
       ksort($flashdata); // sort by date (key), ascending
@@ -444,21 +448,17 @@ foreach ($reports as $rep) {
     $lastdate = null;
     foreach (array_reverse($flashdata) as $date=>$fd) {
       if (is_null($lastdate) || ($date > $lastdate)) { $lastdate = $date; }
-      $adu_query =
-        'SELECT SUM('.(count($throttle_ids)?'CASE
-                  WHEN product_version_id IN ('.implode(',', $throttle_ids).')
-                  THEN adu_count / 10 ELSE adu_count END':'adu_count').') as adu,
-                adu_date '
-        .'FROM product_adu '
-        .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
-        ." AND adu_date = '".$date."' "
-        .'GROUP BY adu_date;';
-      $adu_result = pg_query($db_conn, $adu_query);
-      if (!$adu_result) {
-        print('--- ERROR: ADU query failed!'."\n");
+      $adu = intval(@$fd['adu']);
+      if (!$adu) {
+        // We should only get here to backfill on old data.
+        $adus = getADU($pv_ids, $throttle_ids, array($date));
+        if (array_key_exists($date, $adus)) {
+          $adu = $adus[$date];
+          // Put it in $flashdata and save it.
+          $flashdata[$date]['adu'] = $adu;
+          file_put_contents($fdfile, json_encode($flashdata));
+        }
       }
-      $adu_row = pg_fetch_array($adu_result);
-      $adu = $adu_row['adu'];
 
       $total_hang_pairs = $fd['total']['hang'] / 2;
       $hang_pct = $fd['total']['hang']
@@ -539,5 +539,30 @@ foreach ($reports as $rep) {
 }
 
 // *** helper functions ***
+
+function getADU($pv_ids, $throttle_ids, $days) {
+  if (!count($days)) { return array(); }
+  $adu = array();
+
+  $adu_query =
+    'SELECT SUM('.(count($throttle_ids)?'CASE
+              WHEN product_version_id IN ('.implode(',', $throttle_ids).')
+              THEN adu_count / 10 ELSE adu_count END':'adu_count').') as adu,
+            adu_date '
+    .'FROM product_adu '
+    .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+    .' AND '
+    .((count($days) > 1) ? " adu_date IN ('".implode("','", $days)."') "
+                         : " adu_date = '".$days[0]."') ")
+    .'GROUP BY adu_date;';
+  $adu_result = pg_query($db_conn, $adu_query);
+  if (!$adu_result) {
+    print('--- ERROR: ADU query failed!'."\n");
+  }
+  while ($adu_row = pg_fetch_array($adu_result)) {
+    $adu[$adu_row['date']] = $adu_row['adu'];
+  }
+  return $adu;
+}
 
 ?>
