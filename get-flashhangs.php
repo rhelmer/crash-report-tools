@@ -553,7 +553,7 @@ function getADU($days, $pv_ids, $throttle_ids, $db_conn) {
     .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
     .' AND '
     .((count($days) > 1) ? " adu_date IN ('".implode("','", $days)."') "
-                         : " adu_date = '".$days[0]."') ")
+                         : " adu_date = '".$days[0]."' ")
     .'GROUP BY adu_date;';
   $adu_result = pg_query($db_conn, $adu_query);
   if (!$adu_result) {
