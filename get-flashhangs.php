@@ -251,7 +251,7 @@ foreach ($reports as $rep) {
         $fd['total'][$htype] += $rep_row['cnt'];
         if (strlen($fver)) { $fd['total_flash'][$htype] += $rep_row['cnt']; }
       }
-      $adu = getADU(array($anaday), $pv_ids, $throttle_ids, $db_query);
+      $adu = getADU(array($anaday), $pv_ids, $throttle_ids, $db_conn);
       if (array_key_exists($anaday, $adu)) {
         $fd['adu'] = $adu[$anaday];
       }
@@ -451,7 +451,7 @@ foreach ($reports as $rep) {
       $adu = intval(@$fd['adu']);
       if (!$adu) {
         // We should only get here to backfill on old data.
-        $adus = getADU(array($date), $pv_ids, $throttle_ids, $db_query);
+        $adus = getADU(array($date), $pv_ids, $throttle_ids, $db_conn);
         if (array_key_exists($date, $adus)) {
           $adu = $adus[$date];
           // Put it in $flashdata and save it.
@@ -540,7 +540,7 @@ foreach ($reports as $rep) {
 
 // *** helper functions ***
 
-function getADU($days, $pv_ids, $throttle_ids, $db_query) {
+function getADU($days, $pv_ids, $throttle_ids, $db_conn) {
   if (!count($days)) { return array(); }
   $adu = array();
 
