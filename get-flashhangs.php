@@ -560,7 +560,7 @@ function getADU($days, $pv_ids, $throttle_ids, $db_conn) {
     print('--- ERROR: ADU query failed!'."\n");
   }
   while ($adu_row = pg_fetch_array($adu_result)) {
-    $adu[$adu_row['date']] = $adu_row['adu'];
+    $adu[$adu_row['adu_date']] = $adu_row['adu'];
   }
   return $adu;
 }
