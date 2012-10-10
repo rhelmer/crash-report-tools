@@ -156,7 +156,7 @@ foreach ($reports as $rep) {
 
   if (!count($pv_ids)) {
     print('--- ERROR: no versions found in DB for '.$prdverdisplay.'!'."\n");
-    break;
+    continue;
   }
 
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
@@ -171,7 +171,7 @@ foreach ($reports as $rep) {
     $fweb = $anadir.'.'.$prdverfile.'.flashhangdetails.html';
 
     // Make sure we have flashdata.
-    if (!array_key_exists($anadir, $flashdata)) { break; }
+    if (!array_key_exists($anadir, $flashdata)) { continue; }
 
     // Get summarized list with counts per flash version and hang/crash.
     $anafhdrawdata = $anadir.'/'.$fhdrawdata;

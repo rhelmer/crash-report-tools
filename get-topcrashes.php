@@ -139,7 +139,7 @@ foreach ($reports as $rname=>$rep) {
     $ver_result = pg_query($db_conn, $ver_query);
     if (!$ver_result) {
       print('--- ERROR: version query failed!'."\n");
-      break;
+      continue;
     }
     while ($ver_row = pg_fetch_array($ver_result)) {
       $pv_ids = array($ver_row['product_version_id']);

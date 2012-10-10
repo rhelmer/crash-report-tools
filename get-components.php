@@ -190,7 +190,7 @@ foreach ($reports as $rep) {
 
   if (!count($pv_ids)) {
     print('--- ERROR: no versions found in DB for '.$prdverdisplay.'!'."\n");
-    break;
+    continue;
   }
 
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
@@ -280,7 +280,7 @@ foreach ($reports as $rep) {
         }
         if (!strlen($sig) || !strlen($toplevel)) {
           print('--- ERROR: entry without signature or toplevel! (crash ID: '.$crash_id.')'."\n");
-          break;
+          continue;
         }
         // Apply some additional filtering for cases where we obviously get it wrong.
         if (($toplevel != '.flash') && (preg_match('/.+@0x[0-9a-f]+$/', $sig))) {

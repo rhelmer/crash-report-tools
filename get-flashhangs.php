@@ -175,7 +175,7 @@ foreach ($reports as $rep) {
 
   if (!count($pv_ids)) {
     print('--- ERROR: no versions found in DB for '.$prdverdisplay.'!'."\n");
-    break;
+    continue;
   }
 
   $throttle_ids = array();

@@ -127,7 +127,7 @@ foreach ($flash_versions as $fver) {
 
   if (!count($fv_ids)) {
     print('--- ERROR: no versions found in DB for Flash '.$fver.'!'."\n");
-    break;
+    continue;
   }
 
   $pv_ids = array();
@@ -146,7 +146,7 @@ foreach ($flash_versions as $fver) {
 
   if (!count($pv_ids)) {
     print('--- ERROR: no versions found in DB for '.$product.'!'."\n");
-    break;
+    continue;
   }
 
   $throttle_ids = array();

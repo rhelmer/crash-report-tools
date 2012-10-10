@@ -182,7 +182,7 @@ foreach ($reports as $rep) {
 
   if (!count($pv_ids)) {
     print('--- ERROR: no versions found in DB for '.$prdverdisplay.'!'."\n");
-    break;
+    continue;
   }
 
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {

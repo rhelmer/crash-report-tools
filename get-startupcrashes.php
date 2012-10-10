@@ -202,7 +202,7 @@ foreach ($reports as $rep) {
 
   if (!count($pv_ids)) {
     print('--- ERROR: no versions found in DB for '.$prdverdisplay.'!'."\n");
-    break;
+    continue;
   }
 
   if (file_exists($sdfile)) {
@@ -242,7 +242,7 @@ foreach ($reports as $rep) {
       $rep_result = pg_query($db_conn, $rep_query);
       if (!$rep_result) {
         print('--- ERROR: Reports/signatures query failed!'."\n");
-        break;
+        continue;
       }
 
       $scrashes = array('all' => 0);
@@ -283,7 +283,7 @@ foreach ($reports as $rep) {
         $total_result = pg_query($db_conn, $total_query);
         if (!$total_result) {
           print('--- ERROR: Total query failed!'."\n");
-          break;
+          continue;
         }
         $total_row = pg_fetch_array($total_result);
         $anatotal = $total_row['cnt'];
