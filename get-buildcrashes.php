@@ -138,7 +138,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $pid_result = pg_query($db_conn, $pid_query);
       if (!$pid_result) {
         print('--- ERROR: Product ID query failed!'."\n");
-        break;
+        continue;
       }
       else {
         $pid_row = pg_fetch_array($pid_result);
@@ -188,7 +188,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           }
           if (!count($mver)) {
             print('--- ERROR: no version found for '.$product.' '.ucfirst($channel).'!'."\n");
-            break;
+            continue;
           }
 
           $pv_ids = array();
@@ -232,7 +232,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
         if (!count($pv_ids)) {
           print('--- ERROR: no product versions found for '.$product.' '.ucfirst($channel).'!'."\n");
-          break;
+          continue;
         }
 
         $rep_query =
@@ -248,7 +248,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         $rep_result = pg_query($db_conn, $rep_query);
         if (!$rep_result) {
           print('--- ERROR: Reports/signatures query failed!'."\n");
-          break;
+          continue;
         }
 
         $listbuilds = array();
