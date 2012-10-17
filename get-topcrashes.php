@@ -48,7 +48,7 @@ $reports = array(
                       'products' => array('Firefox')),
     'armv6' => array('display_name' => 'ARMv6',
                      'include_reports_table' => true,
-                     'wherex' => " AND reports.os_version ~ 'armv6l$'",
+                     'wherex' => " AND reports.os_version ~ ' armv6l'",
                      'products' => array('FennecAndroid')));
 
 // for how many days back to get the data
