@@ -230,7 +230,8 @@ foreach ($reports as $rep) {
       $fd = array('total' => array('hang' => 0, 'crash' => 0),
                   'total_flash' => array('hang' => 0, 'crash' => 0),
                   'full' => array('hang' => array(), 'crash' => array()),
-                  'main' => array('hang' => array(), 'crash' => array()));
+                  'main' => array('hang' => array(), 'crash' => array()),
+                  'latest' => array());
       while ($rep_row = pg_fetch_array($rep_result)) {
         $htype = $rep_row['is_hang']?'hang':'crash';
         $fver = preg_match('/^\d/', $rep_row['flash_version'])?$rep_row['flash_version']:'';
@@ -254,6 +255,17 @@ foreach ($reports as $rep) {
         }
         $fd['total'][$htype] += $rep_row['cnt'];
         if (strlen($fver)) { $fd['total_flash'][$htype] += $rep_row['cnt']; }
+        if (array_key_exists($fvshort, $fd['latest'])) {
+          $fvparts = explode('.', $fver);
+          $flparts = explode('.', $fd['latest'][$fvshort]);
+          if (($fvparts[3] > $flparts[3]) ||
+              (($fvparts[3] == $flparts[3]) && ($fvparts[4] > $flparts[4]))) {
+            $fd['latest'][$fvshort] = $fver;
+          }
+        }
+        else {
+          $fd['latest'][$fvshort] = $fver;
+        }
       }
       $adu = getADU(array($anaday), $pv_ids, $throttle_ids, $db_conn);
       if (array_key_exists($anaday, $adu)) {
