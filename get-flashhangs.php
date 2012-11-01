@@ -293,6 +293,26 @@ foreach ($reports as $rep) {
       $title = $head->appendChild($doc->createElement('title',
           $anadir.' '.$prdverdisplay.' Flash Hang Report'));
 
+      $style = $head->appendChild($doc->createElement('style'));
+      $style->setAttribute('type', 'text/css');
+      $style->appendChild($doc->createCDATASection(
+          '.pct, .pctdiff {'."\n"
+          .'  text-align: right;'."\n"
+          .'}'."\n"
+          .'.pctdiff.hangy {'."\n"
+          .'  color: red;'."\n"
+          .'}'."\n"
+          .'.pctdiff.neutral {'."\n"
+          .'  color: gray;'."\n"
+          .'}'."\n"
+          .'.pctdiff.crashy {'."\n"
+          .'  color: black;'."\n"
+          .'}'."\n"
+          .'.latestver {'."\n"
+          .'  font-weight: bold;'."\n"
+          .'}'."\n"
+      ));
+
       $body = $root->appendChild($doc->createElement('body'));
       $h1 = $body->appendChild($doc->createElement('h1',
           $anadir.' '.$prdverdisplay.' Flash Hang Report'));
@@ -344,28 +364,40 @@ foreach ($reports as $rep) {
 
             $tr = $table->appendChild($doc->createElement('tr'));
             $td = $tr->appendChild($doc->createElement('td', $fver));
+            if ($fvertype == 'full') {
+              if (preg_match('/^(\d+\.\d+)/', $fver, $fvregs)) {
+                $fvshort = $fvregs[1];
+              }
+              else {
+                $fvshort = $fver;
+              }
+              if ($fd['latest'][$fvshort] == $fver) {
+                $td->setAttribute('class', 'latestver');
+              }
+            }
 
             $td = $tr->appendChild($doc->createElement('td',
                 sprintf('%.1f', 100 * $hang_rate).'%'));
-            $td->setAttribute('align', 'right');
+            $td->setAttribute('class', 'pct');
             $td->setAttribute('title', $num.' hangs');
 
             $td = $tr->appendChild($doc->createElement('td',
                 sprintf('%+.1f', 100 * ($hang_rate - $crash_rate)).'%'));
-            $td->setAttribute('align', 'right');
+            $classes = array('pctdiff');
             if ($hang_rate > $crash_rate + .02) {
-              $td->setAttribute('style', 'color: red;');
+              $classes[] = 'hangy';
             }
             elseif ($hang_rate > $crash_rate - .02) {
-              $td->setAttribute('style', 'color: gray;');
+              $classes[] = 'neutral';
             }
             else {
-              $td->setAttribute('style', 'color: black;');
+              $classes[] = 'crashy';
             }
+            $td->setAttribute('class', implode(' ', $classes));
 
             $td = $tr->appendChild($doc->createElement('td',
                 sprintf('%.1f', 100 * $crash_rate).'%'));
-            $td->setAttribute('align', 'right');
+            $td->setAttribute('class', 'pct');
             $td->setAttribute('title', $cnum.' crashes');
           }
         }
@@ -381,7 +413,7 @@ foreach ($reports as $rep) {
 
             $td = $tr->appendChild($doc->createElement('td',
                 sprintf('%.1f', 100 * $crash_rate).'%'));
-            $td->setAttribute('align', 'right');
+            $td->setAttribute('class', 'pct');
             $td->setAttribute('title', $cnum.' crashes');
           }
         }
@@ -424,6 +456,14 @@ foreach ($reports as $rep) {
     $head = $root->appendChild($doc->createElement('head'));
     $title = $head->appendChild($doc->createElement('title',
         $prdverdisplay.' Flash Summary Report'));
+
+    $style = $head->appendChild($doc->createElement('style'));
+    $style->setAttribute('type', 'text/css');
+    $style->appendChild($doc->createCDATASection(
+        '.num, .pct {'."\n"
+        .'  text-align: right;'."\n"
+        .'}'."\n"
+    ));
 
     $body = $root->appendChild($doc->createElement('body'));
     $h1 = $body->appendChild($doc->createElement('h1',
@@ -506,31 +546,31 @@ foreach ($reports as $rep) {
         $td = $tr->appendChild($doc->createElement('td', $date));
         $td = $tr->appendChild($doc->createElement('td',
                   $fd['total_flash']['hang']));
-        $td->setAttribute('style', 'text-align:right;');
+        $td->setAttribute('class', 'num');
         $td = $tr->appendChild($doc->createElement('td',
                   sprintf('%.1f', 100 * $hang_pct).'%'));
-        $td->setAttribute('style', 'text-align:right;');
+        $td->setAttribute('class', 'pct');
         $td = $tr->appendChild($doc->createElement('td',
                   sprintf('%.2f', $hang_rate)));
-        $td->setAttribute('style', 'text-align:right;');
+        $td->setAttribute('class', 'num');
         $td = $tr->appendChild($doc->createElement('td',
                   $fd['total_flash']['crash']));
-        $td->setAttribute('style', 'text-align:right;');
+        $td->setAttribute('class', 'num');
         $td = $tr->appendChild($doc->createElement('td',
                   sprintf('%.1f', 100 * $crash_pct).'%'));
-        $td->setAttribute('style', 'text-align:right;');
+        $td->setAttribute('class', 'pct');
         $td = $tr->appendChild($doc->createElement('td',
                   sprintf('%.2f', $crash_rate)));
-        $td->setAttribute('style', 'text-align:right;');
+        $td->setAttribute('class', 'num');
         $td = $tr->appendChild($doc->createElement('td',
                   sprintf('%.1f', 100 * $total_pct).'%'));
-        $td->setAttribute('style', 'text-align:right;');
+        $td->setAttribute('class', 'pct');
         $td = $tr->appendChild($doc->createElement('td',
                   sprintf('%.2f', $total_rate)));
-        $td->setAttribute('style', 'text-align:right;');
+        $td->setAttribute('class', 'num');
         $td = $tr->appendChild($doc->createElement('td',
                   sprintf('%.2f', $total_rev_rate)));
-        $td->setAttribute('style', 'text-align:right;');
+        $td->setAttribute('class', 'num');
         $td->setAttribute('title', $adu.' (adjusted) ADU');
       }
     }
