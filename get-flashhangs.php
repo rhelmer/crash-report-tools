@@ -259,8 +259,9 @@ foreach ($reports as $rep) {
           if (array_key_exists($fvshort, $fd['latest'])) {
             $fvparts = explode('.', $fver);
             $flparts = explode('.', $fd['latest'][$fvshort]);
-            if (($fvparts[3] > $flparts[3]) ||
-                (($fvparts[3] == $flparts[3]) && ($fvparts[4] > $flparts[4]))) {
+            if ((intval(@$fvparts[3]) > intval(@$flparts[3])) ||
+                ((intval(@$fvparts[3]) == intval(@$flparts[3])) &&
+                 (intval(@$fvparts[4]) > intval(@$flparts[4])))) {
               $fd['latest'][$fvshort] = $fver;
             }
           }
