@@ -254,17 +254,19 @@ foreach ($reports as $rep) {
           $fd['main'][$htype][$fvshort] = intval($rep_row['cnt']);
         }
         $fd['total'][$htype] += $rep_row['cnt'];
-        if (strlen($fver)) { $fd['total_flash'][$htype] += $rep_row['cnt']; }
-        if (array_key_exists($fvshort, $fd['latest'])) {
-          $fvparts = explode('.', $fver);
-          $flparts = explode('.', $fd['latest'][$fvshort]);
-          if (($fvparts[3] > $flparts[3]) ||
-              (($fvparts[3] == $flparts[3]) && ($fvparts[4] > $flparts[4]))) {
+        if (strlen($fver)) {
+          $fd['total_flash'][$htype] += $rep_row['cnt'];
+          if (array_key_exists($fvshort, $fd['latest'])) {
+            $fvparts = explode('.', $fver);
+            $flparts = explode('.', $fd['latest'][$fvshort]);
+            if (($fvparts[3] > $flparts[3]) ||
+                (($fvparts[3] == $flparts[3]) && ($fvparts[4] > $flparts[4]))) {
+              $fd['latest'][$fvshort] = $fver;
+            }
+          }
+          else {
             $fd['latest'][$fvshort] = $fver;
           }
-        }
-        else {
-          $fd['latest'][$fvshort] = $fver;
         }
       }
       $adu = getADU(array($anaday), $pv_ids, $throttle_ids, $db_conn);
