@@ -487,7 +487,7 @@ foreach ($reports as $rep) {
         if ($exp_total['warn_1']) { $classes[] = 'explosive1'; }
         if ($exp_total['warn_3']) { $classes[] = 'explosive3'; }
         if (count($classes)) {
-          $td->setAttribute('class', implode(' ', $classes));
+          $tr->setAttribute('class', implode(' ', $classes));
         }
         $td = $tr->appendChild($doc->createElement('td', 'Total crashes'));
         $td->setAttribute('colspan', '2');
@@ -517,7 +517,7 @@ foreach ($reports as $rep) {
           if ($exp_total['warn_1']) { $classes[] = 'explosive1'; }
           if ($exp_total['warn_3']) { $classes[] = 'explosive3'; }
           if (count($classes)) {
-            $td->setAttribute('class', implode(' ', $classes));
+            $tr->setAttribute('class', implode(' ', $classes));
           }
           $td = $tr->appendChild($doc->createElement('td', $expdata['tcrank']));
           $td->setAttribute('class', 'num');
