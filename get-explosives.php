@@ -417,6 +417,29 @@ foreach ($reports as $rep) {
         $title = $head->appendChild($doc->createElement('title',
             $anadir.' '.$prdverdisplay.' Explosiveness Report'));
 
+        $style = $head->appendChild($doc->createElement('style'));
+        $style->setAttribute('type', 'text/css');
+        $style->appendChild($doc->createCDATASection(
+            '.num {'."\n"
+            .'  text-align: right;'."\n"
+            .'}'."\n"
+            .'.datelabel,'."\n"
+            .'.sig {'."\n"
+            .'  font-size: small;'."\n"
+            .'}'."\n"
+            .'.explosive1 > .totallabel,'."\n"
+            .'.explosive3 > .totallabel,'."\n"
+            .'.explosive1 > .sig,'."\n"
+            .'.explosive3 > .sig {'."\n"
+            .'  font-weight: bold;'."\n"
+            .'}'."\n"
+            .'.explosive1 > .exp1,'."\n"
+            .'.explosive3 > .exp3 {'."\n"
+            .'  font-weight: bold;'."\n"
+            .'  color: red;'."\n"
+            .'}'."\n"
+        ));
+
         $body = $root->appendChild($doc->createElement('body'));
         $h1 = $body->appendChild($doc->createElement('h1',
             $anadir.' '.$prdverdisplay.' Explosiveness Report'));
@@ -455,32 +478,30 @@ foreach ($reports as $rep) {
         $th = $tr->appendChild($doc->createElement('th', '3-day'));
         for ($i = 0; $i < 11; $i++) {
           $th = $tr->appendChild($doc->createElement('th', $dayset[$i]));
-          $th->setAttribute('style', 'font-size: small;');
+          $th->setAttribute('class', 'datelabel');
         }
 
         // total crashes row
         $tr = $table->appendChild($doc->createElement('tr'));
+        $classes = array();
+        if ($exp_total['warn_1']) { $classes[] = 'explosive1'; }
+        if ($exp_total['warn_3']) { $classes[] = 'explosive3'; }
+        if (count($classes)) {
+          $td->setAttribute('class', implode(' ', $classes));
+        }
         $td = $tr->appendChild($doc->createElement('td', 'Total crashes'));
         $td->setAttribute('colspan', '2');
-        if ($exp_total['warn_1'] || $exp_total['warn_3']) {
-          $td->setAttribute('style', 'font-weight: bold;');
-        }
+        $td->setAttribute('class', 'totallabel');
         $td = $tr->appendChild($doc->createElement('td',
             sprintf('%.1f', $exp_total['explosiveness_1'])));
-        $td->setAttribute('align', 'right');
-        if ($exp_total['warn_1']) {
-          $td->setAttribute('style', 'font-weight: bold; color: red;');
-        }
+        $td->setAttribute('class', 'num exp1');
         $td = $tr->appendChild($doc->createElement('td',
             sprintf('%.1f', $exp_total['explosiveness_3'])));
-        $td->setAttribute('align', 'right');
-        if ($exp_total['warn_3']) {
-          $td->setAttribute('style', 'font-weight: bold; color: red;');
-        }
+        $td->setAttribute('class', 'num exp3');
         foreach ($exp_total['dataset'] as $i=>$c_per_adu) {
           $td = $tr->appendChild($doc->createElement('td',
               sprintf($rep['fake_adu']?'%d':'%.3f', $c_per_adu * pow(10, 6))));
-          $td->setAttribute('align', 'right');
+          $td->setAttribute('class', 'num');
           if (!$rep['fake_adu']) {
             $td->appendChild($doc->createElement('br'));
             $td->appendChild($doc->createElement('small',
@@ -492,14 +513,16 @@ foreach ($reports as $rep) {
         // signatures rows
         foreach ($exp as $expdata) {
           $tr = $table->appendChild($doc->createElement('tr'));
-          $td = $tr->appendChild($doc->createElement('td', $expdata['tcrank']));
-          $td->setAttribute('align', 'right');
-          $td = $tr->appendChild($doc->createElement('td'));
-          $style = 'font-size: small;';
-          if ($expdata['warn_1'] || $expdata['warn_3']) {
-            $style .= 'font-weight: bold;';
+          $classes = array();
+          if ($exp_total['warn_1']) { $classes[] = 'explosive1'; }
+          if ($exp_total['warn_3']) { $classes[] = 'explosive3'; }
+          if (count($classes)) {
+            $td->setAttribute('class', implode(' ', $classes));
           }
-          $td->setAttribute('style', $style);
+          $td = $tr->appendChild($doc->createElement('td', $expdata['tcrank']));
+          $td->setAttribute('class', 'num');
+          $td = $tr->appendChild($doc->createElement('td'));
+          $td->setAttribute('class', 'sig');
           if (!strlen($expdata['sig'])) {
             $link = $td->appendChild($doc->createElement('a', '(empty signature)'));
             $link->setAttribute('href', $url_nullsiglink);
@@ -515,20 +538,14 @@ foreach ($reports as $rep) {
           }
           $td = $tr->appendChild($doc->createElement('td',
               sprintf('%.1f', $expdata['explosiveness_1'])));
-          $td->setAttribute('align', 'right');
-          if ($expdata['warn_1']) {
-            $td->setAttribute('style', 'font-weight: bold; color: red;');
-          }
+          $td->setAttribute('class', 'num exp1');
           $td = $tr->appendChild($doc->createElement('td',
               sprintf('%.1f', $expdata['explosiveness_3'])));
-          $td->setAttribute('align', 'right');
-          if ($expdata['warn_3']) {
-            $td->setAttribute('style', 'font-weight: bold; color: red;');
-          }
+          $td->setAttribute('class', 'num exp3');
           foreach ($expdata['dataset'] as $idx=>$c_per_adu) {
             $td = $tr->appendChild($doc->createElement('td',
                 sprintf($rep['fake_adu']?'%d':'%.3f', $c_per_adu * pow(10,6))));
-            $td->setAttribute('align', 'right');
+            $td->setAttribute('class', 'num');
             $td->setAttribute('title', $expdata['rawcountset'][$idx].' crashes');
           }
         }

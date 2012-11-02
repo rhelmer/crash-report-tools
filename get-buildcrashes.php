@@ -106,6 +106,17 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $title = $head->appendChild($doc->createElement('title',
         $anadir.' Crashes / Build'));
 
+    $style = $head->appendChild($doc->createElement('style'));
+    $style->setAttribute('type', 'text/css');
+    $style->appendChild($doc->createCDATASection(
+        '.num {'."\n"
+        .'  text-align: right;'."\n"
+        .'}'."\n"
+        .'.buildadu, .buildrate {'."\n"
+        .'  color: GrayText;'."\n"
+        .'}'."\n"
+    ));
+
     $body = $root->appendChild($doc->createElement('body'));
     $h1 = $body->appendChild($doc->createElement('h1',
         $anadir.' Crashes / Build'));
@@ -356,14 +367,14 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               if (@$notes[$idx]) { $td->appendChild($doc->createElement('br')); }
               $small = $td->appendChild($doc->createElement('small',
                   formatValue($buildadu[$idx], null, 'kMG').' ADU'));
-              $small->setAttribute('style', 'color:GrayText;');
+              $small->setAttribute('class', 'buildadu;');
             }
             foreach ($fields as $fld) {
               $ptype = !in_array($fld, array('hang','crash','total'))?$fld:'any';
               $htype = in_array($fld, array('hang','crash'))?$fld:'any';
 
               $td = $tr->appendChild($doc->createElement('td'));
-              $td->setAttribute('align', 'right');
+              $td->setAttribute('class', 'num');
               $link = $td->appendChild($doc->createElement('a', intval(@$builddata['cnt'][$fld])));
               $link->setAttribute('href',
                   'https://crash-stats.mozilla.com/query/query?product='.$product
@@ -381,11 +392,11 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                                strtolower($pvdata[$builddata['pvid']]['build_type']),
                                $product)));
                 $small->setAttribute('title', 'per 100 ADU');
-                $small->setAttribute('style', 'color:GrayText;');
+                $small->setAttribute('class', 'buildrate');
               }
             }
             $td = $tr->appendChild($doc->createElement('td', $builddata['cnt']['norm_total']));
-            $td->setAttribute('align', 'right');
+            $td->setAttribute('class', 'num');
             if (@$buildadu[$idx]) {
               $td->appendChild($doc->createElement('br'));
               $small = $td->appendChild($doc->createElement('small',
@@ -393,7 +404,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                              strtolower($pvdata[$builddata['pvid']]['build_type']),
                              $product)));
               $small->setAttribute('title', 'per 100 ADU');
-              $small->setAttribute('style', 'color:GrayText;');
+              $small->setAttribute('class', 'buildrate');
             }
           }
         }
