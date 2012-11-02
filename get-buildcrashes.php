@@ -367,7 +367,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               if (@$notes[$idx]) { $td->appendChild($doc->createElement('br')); }
               $small = $td->appendChild($doc->createElement('small',
                   formatValue($buildadu[$idx], null, 'kMG').' ADU'));
-              $small->setAttribute('class', 'buildadu;');
+              $small->setAttribute('class', 'buildadu');
             }
             foreach ($fields as $fld) {
               $ptype = !in_array($fld, array('hang','crash','total'))?$fld:'any';
