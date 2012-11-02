@@ -514,8 +514,8 @@ foreach ($reports as $rep) {
         foreach ($exp as $expdata) {
           $tr = $table->appendChild($doc->createElement('tr'));
           $classes = array();
-          if ($exp_total['warn_1']) { $classes[] = 'explosive1'; }
-          if ($exp_total['warn_3']) { $classes[] = 'explosive3'; }
+          if ($expdata['warn_1']) { $classes[] = 'explosive1'; }
+          if ($expdata['warn_3']) { $classes[] = 'explosive3'; }
           if (count($classes)) {
             $tr->setAttribute('class', implode(' ', $classes));
           }
