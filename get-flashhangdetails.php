@@ -39,10 +39,6 @@ date_default_timezone_set('America/Los_Angeles');
 //   version - empty is all versions
 
 $reports = array(array('product'=>'Firefox',
-                       'version'=>'15.0',
-                       'version_regex'=>'15\.0.*',
-                      ),
-                 array('product'=>'Firefox',
                        'version'=>'16.0',
                        'version_regex'=>'16\.0.*',
                       ),
