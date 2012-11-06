@@ -85,9 +85,7 @@ else {
 for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
   $anadir = date('Y-m-d', $anatime);
-  if ($min_date > $anadir) {
-    continue;
-  }
+
   print('Looking at B2G data for '.$anadir."\n");
   if (!file_exists($anadir)) { mkdir($anadir); }
 
@@ -124,7 +122,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
   $anafweb = $anadir.'/'.$fweb;
   if (!file_exists($anafweb) &&
-      count($tcd) && $tcd['total']) {
+      count($bcd) && $bcd['total']) {
     // create out an HTML page
     print('Writing HTML output'."\n");
     $doc = new DOMDocument('1.0', 'utf-8');
