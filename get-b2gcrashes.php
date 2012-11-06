@@ -187,8 +187,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         $link->setAttribute('href', $url_siglinkbase.rawurlencode($crash['signature']));
       }
       $td = $tr->appendChild($doc->createElement('td'));
-      $link = $td->appendChild($doc->createElement('a', $data['date_processed']));
-      $link->setAttribute('href', $url_replinkbase.$data['uuid']);
+      $link = $td->appendChild($doc->createElement('a', $crash['date_processed']));
+      $link->setAttribute('href', $url_replinkbase.$crash['uuid']);
     }
 
     $doc->saveHTMLFile($anafweb);
