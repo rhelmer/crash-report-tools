@@ -139,7 +139,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         '.sig, .time {'."\n"
         .'  font-size: small;'."\n"
         .'}'."\n"
-        .'.buildid.timepart {'."\n"
+        .'.buildid > .timepart {'."\n"
         .'  color: GrayText;'."\n"
         .'}'."\n"
         .'.device.unagi {'."\n"
