@@ -139,8 +139,20 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         '.sig {'."\n"
         .'  font-size: small;'."\n"
         .'}'."\n"
-        .'.crashid {'."\n"
-        .'  font-size: small;'."\n"
+        .'.buildid.timepart {'."\n"
+        .'  color: GrayText;'."\n"
+        .'}'."\n"
+        .'.device.unagi {'."\n"
+        .'}'."\n"
+        .'.device.otoro {'."\n"
+        .'}'."\n"
+        .'.device.unknown {'."\n"
+        .'  color: GrayText;'."\n"
+        .'}'."\n"
+        .'.ptype.gecko {'."\n"
+        .'}'."\n"
+        .'.ptype.content {'."\n"
+        .'  color: GrayText;'."\n"
         .'}'."\n"
     ));
 
@@ -162,7 +174,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $th = $tr->appendChild($doc->createElement('th', 'Device'));
     $th = $tr->appendChild($doc->createElement('th', 'Process'));
     $th = $tr->appendChild($doc->createElement('th', 'Signature'));
-    $th = $tr->appendChild($doc->createElement('th', 'Timee'));
+    $th = $tr->appendChild($doc->createElement('th', 'Time'));
 
     foreach ($bcd['list'] as $crash) {
       $tr = $table->appendChild($doc->createElement('tr'));
@@ -172,13 +184,13 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $td->setAttribute('class', 'buildid');
       $span = $td->appendChild($doc->createElement('span', substr($crash['build'], 0, 8)));
       $span->setAttribute('class', 'datepart');
-      $span = $td->appendChild($doc->createElement('span', substr($crash['build'], 9)));
+      $span = $td->appendChild($doc->createElement('span', substr($crash['build'], 8)));
       $span->setAttribute('class', 'timepart');
       $td = $tr->appendChild($doc->createElement('td', $crash['device']));
       $td->setAttribute('class', 'device '.$crash['device']);
-      $td = $tr->appendChild($doc->createElement('td',
-          strlen($crash['process_type'])?$crash['process_type']:'gecko'));
-      $td->setAttribute('class', 'ptype');
+      $ptype = strlen($crash['process_type'])?$crash['process_type']:'gecko';
+      $td = $tr->appendChild($doc->createElement('td', $ptype));
+      $td->setAttribute('class', 'ptype '.$ptype);
       $td = $tr->appendChild($doc->createElement('td'));
       $td->setAttribute('class', 'sig');
       if (!strlen($crash['signature'])) {
