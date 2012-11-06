@@ -162,14 +162,23 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $th = $tr->appendChild($doc->createElement('th', 'Device'));
     $th = $tr->appendChild($doc->createElement('th', 'Process'));
     $th = $tr->appendChild($doc->createElement('th', 'Signature'));
-    $th = $tr->appendChild($doc->createElement('th', 'Date'));
+    $th = $tr->appendChild($doc->createElement('th', 'Timee'));
 
     foreach ($bcd['list'] as $crash) {
       $tr = $table->appendChild($doc->createElement('tr'));
       $td = $tr->appendChild($doc->createElement('td', $crash['version']));
-      $td = $tr->appendChild($doc->createElement('td', $crash['build']));
+      $td->setAttribute('class', 'version');
+      $td = $tr->appendChild($doc->createElement('td'));
+      $td->setAttribute('class', 'buildid');
+      $span = $td->appendChild($doc->createElement('span', substr($crash['build'], 0, 8)));
+      $span->setAttribute('class', 'datepart');
+      $span = $td->appendChild($doc->createElement('span', substr($crash['build'], 9)));
+      $span->setAttribute('class', 'timepart');
       $td = $tr->appendChild($doc->createElement('td', $crash['device']));
-      $td = $tr->appendChild($doc->createElement('td', $crash['process_type']));
+      $td->setAttribute('class', 'device '.$crash['device']);
+      $td = $tr->appendChild($doc->createElement('td',
+          strlen($crash['process_type'])?$crash['process_type']:'gecko'));
+      $td->setAttribute('class', 'ptype');
       $td = $tr->appendChild($doc->createElement('td'));
       $td->setAttribute('class', 'sig');
       if (!strlen($crash['signature'])) {
@@ -187,7 +196,9 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         $link->setAttribute('href', $url_siglinkbase.rawurlencode($crash['signature']));
       }
       $td = $tr->appendChild($doc->createElement('td'));
-      $link = $td->appendChild($doc->createElement('a', $crash['date_processed']));
+      $td->setAttribute('class', 'time');
+      $link = $td->appendChild($doc->createElement('a',
+          date('H:i:s', strtotime($crash['date_processed']))));
       $link->setAttribute('href', $url_replinkbase.$crash['uuid']);
     }
 
