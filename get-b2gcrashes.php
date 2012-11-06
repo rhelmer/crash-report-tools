@@ -101,7 +101,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       .'process_type,signature,date_processed,uuid '
       .'from reports '
       ."WHERE product='B2G' AND os_name='Android' AND utc_day_is(date_processed, '2012-11-05') "
-      .'ORDER BY version DESC, build DESC;';
+      .'ORDER BY version DESC, build DESC, date_processed DESC;';
 
     $rep_result = pg_query($db_conn, $rep_query);
     if (!$rep_result) {
@@ -136,7 +136,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $style = $head->appendChild($doc->createElement('style'));
     $style->setAttribute('type', 'text/css');
     $style->appendChild($doc->createCDATASection(
-        '.sig {'."\n"
+        '.sig, .time {'."\n"
         .'  font-size: small;'."\n"
         .'}'."\n"
         .'.buildid.timepart {'."\n"
@@ -171,10 +171,10 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $tr = $table->appendChild($doc->createElement('tr'));
     $th = $tr->appendChild($doc->createElement('th', 'Ver'));
     $th = $tr->appendChild($doc->createElement('th', 'Build ID'));
+    $th = $tr->appendChild($doc->createElement('th', 'Crash'));
     $th = $tr->appendChild($doc->createElement('th', 'Device'));
     $th = $tr->appendChild($doc->createElement('th', 'Process'));
     $th = $tr->appendChild($doc->createElement('th', 'Signature'));
-    $th = $tr->appendChild($doc->createElement('th', 'Time'));
 
     foreach ($bcd['list'] as $crash) {
       $tr = $table->appendChild($doc->createElement('tr'));
@@ -186,6 +186,11 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $span->setAttribute('class', 'datepart');
       $span = $td->appendChild($doc->createElement('span', substr($crash['build'], 8)));
       $span->setAttribute('class', 'timepart');
+      $td = $tr->appendChild($doc->createElement('td'));
+      $td->setAttribute('class', 'time');
+      $link = $td->appendChild($doc->createElement('a',
+          date('H:i:s', strtotime($crash['date_processed']))));
+      $link->setAttribute('href', $url_replinkbase.$crash['uuid']);
       $td = $tr->appendChild($doc->createElement('td', $crash['device']));
       $td->setAttribute('class', 'device '.$crash['device']);
       $ptype = strlen($crash['process_type'])?$crash['process_type']:'gecko';
@@ -207,11 +212,6 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             htmlentities($sigdisplay, ENT_COMPAT, 'UTF-8')));
         $link->setAttribute('href', $url_siglinkbase.rawurlencode($crash['signature']));
       }
-      $td = $tr->appendChild($doc->createElement('td'));
-      $td->setAttribute('class', 'time');
-      $link = $td->appendChild($doc->createElement('a',
-          date('H:i:s', strtotime($crash['date_processed']))));
-      $link->setAttribute('href', $url_replinkbase.$crash['uuid']);
     }
 
     $doc->saveHTMLFile($anafweb);
