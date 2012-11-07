@@ -100,7 +100,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       ."CASE WHEN os_version LIKE '%unagi%' THEN 'unagi' ELSE CASE WHEN os_version LIKE '%otoro%' THEN 'otoro' ELSE 'unknown' END END as device,"
       .'process_type,signature,date_processed,uuid '
       .'from reports '
-      ."WHERE product='B2G' AND os_name='Android' AND utc_day_is(date_processed, '2012-11-05') "
+      ."WHERE product='B2G' AND os_name='Android' AND utc_day_is(date_processed, '".$anadir."') "
       .'ORDER BY version DESC, build DESC, date_processed DESC;';
 
     $rep_result = pg_query($db_conn, $rep_query);
