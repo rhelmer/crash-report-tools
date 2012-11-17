@@ -515,7 +515,8 @@ foreach ($reports as $rep) {
         }
       }
 
-      $total_hang_pairs = $fd['total']['hang'] / 2;
+      $total_hang_pairs = ($date < '2012-11-16')?($fd['total']['hang'] / 2)
+                                                :$fd['total']['hang'];
       $hang_pct = $fd['total']['hang']
                   ? $fd['total_flash']['hang'] / $total_hang_pairs
                   : 0;
