@@ -37,10 +37,8 @@ ini_set('memory_limit', '512M');
 // Flash versions to gather reports for.
 
 $flash_versions = array('11.2.202.235',
-                        '11.3.300.271',
                         '11.4.402.287',
                         '11.5.502.110',
-                        '11.5.502.113',
                         '11.5.502.118');
 
 // for how many days back to get the data
