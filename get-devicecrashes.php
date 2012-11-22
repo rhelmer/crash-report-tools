@@ -35,13 +35,7 @@ date_default_timezone_set('America/Los_Angeles');
 //   product - product name
 //   version - empty is all versions
 
-$reports = array(array('product'=>'Fennec',
-                       'channel'=>'esr',
-                       'version'=>'10.0',
-                       'version_regex'=>'10\.0.*',
-                       'version_display'=>'10 ESR',
-                      ),
-                 array('product'=>'FennecAndroid',
+$reports = array(array('product'=>'FennecAndroid',
                        'channel'=>'release',
                        'version'=>'16.0',
                        'version_regex'=>'16\.0.*',
