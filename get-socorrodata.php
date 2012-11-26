@@ -144,7 +144,7 @@ foreach ($products as $product) {
     $day = $row['adu_date'];
     $crashes = intval($row['crashes']);
     $adu = intval($row['adu']);
-    if ($crashes && $adu) {
+    if ($crashes || $adu) {
       $proddata[$ver][$day] = array('crashes' => $crashes,
                                     'adu' => $adu);
     }
