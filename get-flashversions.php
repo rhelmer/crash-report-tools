@@ -39,7 +39,8 @@ ini_set('memory_limit', '512M');
 $flash_versions = array('11.2.202.235',
                         '11.4.402.287',
                         '11.5.502.110',
-                        '11.5.502.131');
+                        '11.5.502.131',
+                        '11.6.602.105');
 
 // for how many days back to get the data
 $backlog_days = 7;
