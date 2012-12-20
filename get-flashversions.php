@@ -32,6 +32,21 @@ date_default_timezone_set('America/Los_Angeles');
 ini_set('memory_limit', '512M');
 
 
+// *** deal with arguments ***
+$php_self = array_shift($argv);
+$force_dates = array();
+if (count($argv)) {
+  foreach ($argv as $date) {
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) &&
+        date('Y-m-d', strtotime($date)) == $date) {
+      $force_dates[] = $date;
+    }
+  }
+}
+if (count($force_dates)) {
+  print('Forcing update for the following dates: '.implode(', ', $force_dates)."\n\n");
+}
+
 // *** data gathering variables ***
 
 // Flash versions to gather reports for.
@@ -161,16 +176,24 @@ foreach ($flash_versions as $fver) {
     }
   }
 
+  $days_to_analyze = array();
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
-    $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
-    $anadir = date('Y-m-d', $anatime);
+    $days_to_analyze[] = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day'));
+  }
+  foreach ($force_dates as $anaday) {
+    if (!in_array($anaday, $days_to_analyze)) {
+      $days_to_analyze[] = $anaday;
+    }
+  }
+  foreach ($days_to_analyze as $anaday) {
+    $anadir = $anaday;
     print('Looking at Flash version data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fpages = 'pages.json';
     $fweb = $anadir.'.'.$prd.'.flash.'.$fvdash.'.html';
 
-    if (!array_key_exists($anadir, $flashverdata)) {
+    if (!array_key_exists($anadir, $flashverdata) || in_array($anadir, $force_dates)) {
       print('Fetch data for Flash '.$fver."\n");
 
       $rep_query =
