@@ -44,6 +44,7 @@ $fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
 $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
 $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
 $url_replinkbase = 'https://crash-stats.mozilla.com/report/index/';
+$url_buglinkbase = 'https://bugzilla.mozilla.org/show_bug.cgi?id=';
 
 
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
@@ -110,6 +111,24 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
     $bcd = array('list' => array(), 'total' => 0);
     while ($rep_row = pg_fetch_array($rep_result)) {
+      $bugs = array();
+      $bug_query =
+        'SELECT bug_id, status, resolution, short_desc '
+        .'FROM bug_associations LEFT JOIN bugs'
+        .' ON (bug_associations.bug_id=bugs.id) '
+        ."WHERE signature = '".pg_escape_string($rep_row['signature'])."';";
+
+      $bug_result = pg_query($db_conn, $bug_query);
+      if (!$bug_result) {
+        print('--- ERROR: Bug associations query failed!'."\n");
+      }
+      while ($bug_row = pg_fetch_array($bug_result)) {
+        $bugs[$bug_row['bug_id']] = array('status' => $bug_row['status'],
+                                          'resolution' => $bug_row['resolution'],
+                                          'short_desc' => $bug_row['short_desc']);
+      }
+      $rep_row['bugs'] = $bugs;
+
       $bcd['list'][] = $rep_row;
       $bcd['total']++;
     }
@@ -154,6 +173,13 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         .'.ptype.content {'."\n"
         .'  color: GrayText;'."\n"
         .'}'."\n"
+        .'.bug {'."\n"
+        .'  font-size: small;'."\n"
+        .'  empty-cells: show;'."\n"
+        .'}'."\n"
+        .'.resolved {'."\n"
+        .'  text-decoration: line-through;'."\n"
+        .'}'."\n"
     ));
 
     $body = $root->appendChild($doc->createElement('body'));
@@ -175,6 +201,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $th = $tr->appendChild($doc->createElement('th', 'Device'));
     $th = $tr->appendChild($doc->createElement('th', 'Process'));
     $th = $tr->appendChild($doc->createElement('th', 'Signature'));
+    $th = $tr->appendChild($doc->createElement('th', 'Bugs'));
 
     foreach ($bcd['list'] as $crash) {
       $tr = $table->appendChild($doc->createElement('tr'));
@@ -211,6 +238,28 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         $link = $td->appendChild($doc->createElement('a',
             htmlentities($sigdisplay, ENT_COMPAT, 'UTF-8')));
         $link->setAttribute('href', $url_siglinkbase.rawurlencode($crash['signature']));
+      }
+      $td = $tr->appendChild($doc->createElement('td'));
+      if (array_key_exists('bugs', $crash) && count($crash['bugs'])) {
+        foreach ($crash['bugs'] as $bug => $bugdata) {
+          if (strlen($td->textContent)) {
+            $td->appendChild($doc->createTextNode(', '));
+          }
+          $link = $td->appendChild($doc->createElement('a', $bug));
+          $link->setAttribute('href', $url_buglinkbase.$bug);
+          $link->setAttribute('title',
+              $bugdata['status'].' '.$bugdata['resolution'].' - '
+              .htmlentities($bugdata['short_desc'], ENT_COMPAT, 'UTF-8'));
+          if ($bugdata['status'] == 'RESOLVED' || $bugdata['status'] == 'VERIFIED') {
+            $link->setAttribute('class', 'bug resolved');
+          }
+          else {
+            $link->setAttribute('class', 'bug');
+          }
+        }
+      }
+      else {
+        $td->appendChild($doc->createTextNode('-'));
       }
     }
 

@@ -56,6 +56,7 @@ $fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
 
 $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
 $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
+$url_buglinkbase = 'https://bugzilla.mozilla.org/show_bug.cgi?id=';
 
 if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
 else { chdir('/mnt/mozilla/projects/socorro/'); }
@@ -209,9 +210,27 @@ foreach ($flash_versions as $fver) {
           $other_fv[] = $other_row['flash_version'];
         }
 
+        $bugs = array();
+        $bug_query =
+          'SELECT bug_id, status, resolution, short_desc '
+          .'FROM bug_associations LEFT JOIN bugs'
+          .' ON (bug_associations.bug_id=bugs.id) '
+          ."WHERE signature = '".pg_escape_string($rep_row['signature'])."';";
+
+        $bug_result = pg_query($db_conn, $bug_query);
+        if (!$bug_result) {
+          print('--- ERROR: Bug associations query failed!'."\n");
+        }
+        while ($bug_row = pg_fetch_array($bug_result)) {
+          $bugs[$bug_row['bug_id']] = array('status' => $bug_row['status'],
+                                            'resolution' => $bug_row['resolution'],
+                                            'short_desc' => $bug_row['short_desc']);
+        }
+
         $fvd['total'] += $rep_row['cnt'];
         $fvd['sigs'][] = array('sig' => $rep_row['signature'],
                                'cnt' => $rep_row['cnt'],
+                               'bugs' => $bugs,
                                'other_flash_ver' => $other_fv);
       }
       $flashverdata[$anadir] = $fvd;
@@ -242,6 +261,13 @@ foreach ($flash_versions as $fver) {
           .'}'."\n"
           .'.num, .pct {'."\n"
           .'  text-align: right;'."\n"
+          .'}'."\n"
+          .'.bug {'."\n"
+          .'  font-size: small;'."\n"
+          .'  empty-cells: show;'."\n"
+          .'}'."\n"
+          .'.resolved {'."\n"
+          .'  text-decoration: line-through;'."\n"
           .'}'."\n"
           .'.otherver.some {'."\n"
           .'  font-size: small;'."\n"
@@ -276,6 +302,7 @@ foreach ($flash_versions as $fver) {
       $th = $tr->appendChild($doc->createElement('th', 'Count'));
       $th = $tr->appendChild($doc->createElement('th', 'Pct'));
       $th->setAttribute('title', 'Percentage out of all crashes with this Flash version');
+      $th = $tr->appendChild($doc->createElement('th', 'Bugs'));
       $th = $tr->appendChild($doc->createElement('th', 'Other Versions'));
       $th->setAttribute('title', 'Other Flash versions this signatures appears in');
 
@@ -308,6 +335,28 @@ foreach ($flash_versions as $fver) {
         $td = $tr->appendChild($doc->createElement('td',
             sprintf('%.1f', 100 * $pct).'%'));
         $td->setAttribute('class', 'num');
+        $td = $tr->appendChild($doc->createElement('td'));
+        if (array_key_exists('bugs', $data) && count($data['bugs'])) {
+          foreach ($data['bugs'] as $bug => $bugdata) {
+            if (strlen($td->textContent)) {
+              $td->appendChild($doc->createTextNode(', '));
+            }
+            $link = $td->appendChild($doc->createElement('a', $bug));
+            $link->setAttribute('href', $url_buglinkbase.$bug);
+            $link->setAttribute('title',
+                $bugdata['status'].' '.$bugdata['resolution'].' - '
+                .htmlentities($bugdata['short_desc'], ENT_COMPAT, 'UTF-8'));
+            if ($bugdata['status'] == 'RESOLVED' || $bugdata['status'] == 'VERIFIED') {
+              $link->setAttribute('class', 'bug resolved');
+            }
+            else {
+              $link->setAttribute('class', 'bug');
+            }
+          }
+        }
+        else {
+          $td->appendChild($doc->createTextNode('-'));
+        }
         $td = $tr->appendChild($doc->createElement('td',
             count($data['other_flash_ver'])?implode(', ', $data['other_flash_ver']):'None'));
         $td->setAttribute('class', 'otherver '.(count($data['other_flash_ver'])?'some':'none'));
