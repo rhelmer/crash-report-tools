@@ -264,7 +264,7 @@ foreach ($flash_versions as $fver) {
     }
 
     $anafweb = $anadir.'/'.$fweb;
-    if (!file_exists($anafweb) &&
+    if ((!file_exists($anafweb) || in_array($anadir, $force_dates)) &&
         count($flashverdata[$anadir]) && $flashverdata[$anadir]['total']) {
       // create out an HTML page
       print('Writing HTML output'."\n");
