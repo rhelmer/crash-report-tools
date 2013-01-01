@@ -29,7 +29,7 @@ umask(022);
 date_default_timezone_set('America/Los_Angeles');
 
 // set higher memory limit so we can process large JSON files
-ini_set('memory_limit', '512M');
+ini_set('memory_limit', '1024M');
 
 
 // *** deal with arguments ***
