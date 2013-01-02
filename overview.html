@@ -80,6 +80,11 @@ window.onload = function() {
       }
     }
   );
+
+  document.getElementById("crashBugs").href =
+      "crash-bugs/" + anadate.getUTCFullYear() + ".weeklybugs.html";
+  document.getElementById("socorroBugs").href =
+      "socorro-bugs/" + anadate.getUTCFullYear() + ".weeklybugs.html"
 }
 
 function fetchFile(aURL, aFormat, aCallback) {
@@ -136,8 +141,8 @@ function fetchFile(aURL, aFormat, aCallback) {
 <h2 id="bugs">Bug Stats</h2>
 
 <ul id="bugsList">
-<li><a href="crash-bugs/2012.weeklybugs.html">Weekly crash bug stats</a></li>
-<li><a href="socorro-bugs/2012.weeklybugs.html">Weekly Socorro bug stats</a></li>
+<li><a id="crashBugs">Weekly crash bug stats</a></li>
+<li><a id="socorroBugs">Weekly Socorro bug stats</a></li>
 </ul>
 
 </body>
