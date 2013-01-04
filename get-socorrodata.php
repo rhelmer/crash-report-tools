@@ -119,8 +119,8 @@ foreach ($products as $product) {
           SUM(adjusted_crashes) as Crashes, SUM(adu_count) as ADU
     FROM product_os_crash_ratio
     WHERE product_name = 'Firefox'
-          and version_string = '11.0'
-          and adu_date between '2012-04-20' and '2012-04-26'
+          and version_string = '17.0'
+          and adu_date between '2012-12-24' and '2013-01-02'
           and os_name in ('Windows', 'Mac OS X', 'Linux')
     GROUP BY adu_date, Product, Version
     ORDER BY adu_date desc;
