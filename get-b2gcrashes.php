@@ -97,7 +97,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $anafbcdata = $anadir.'/'.$fbcdata;
   if (!file_exists($anafbcdata)) {
     $rep_query =
-      'SELECT version,build,'
+      'SELECT version,build,release_channel,'
       ."CASE WHEN os_version LIKE '%unagi%' THEN 'unagi' ELSE CASE WHEN os_version LIKE '%otoro%' THEN 'otoro' ELSE 'unknown' END END as device,"
       .'process_type,signature,date_processed,uuid '
       .'from reports '
@@ -197,6 +197,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $tr = $table->appendChild($doc->createElement('tr'));
     $th = $tr->appendChild($doc->createElement('th', 'Ver'));
     $th = $tr->appendChild($doc->createElement('th', 'Build ID'));
+    $th = $tr->appendChild($doc->createElement('th', 'Channel'));
     $th = $tr->appendChild($doc->createElement('th', 'Crash'));
     $th = $tr->appendChild($doc->createElement('th', 'Device'));
     $th = $tr->appendChild($doc->createElement('th', 'Process'));
@@ -213,6 +214,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $span->setAttribute('class', 'datepart');
       $span = $td->appendChild($doc->createElement('span', substr($crash['build'], 8)));
       $span->setAttribute('class', 'timepart');
+      $td = $tr->appendChild($doc->createElement('td', $crash['release_channel']));
+      $td->setAttribute('class', 'channel');
       $td = $tr->appendChild($doc->createElement('td'));
       $td->setAttribute('class', 'time');
       $link = $td->appendChild($doc->createElement('a',
