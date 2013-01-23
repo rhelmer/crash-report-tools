@@ -98,7 +98,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   if (!file_exists($anafbcdata)) {
     $rep_query =
       'SELECT version,build,release_channel,'
-      ."CASE WHEN os_version LIKE '%unagi%' THEN 'unagi' WHEN os_version LIKE '%otoro%' THEN 'otoro' WHEN os_version LIKE '%zero%' THEN 'zero' WHEN os_version LIKE '%twist%' THEN 'twist' ELSE 'unknown' END as device,"
+      ."CASE WHEN os_version LIKE '%unagi%' THEN 'unagi' WHEN os_version LIKE '%otoro%' THEN 'otoro' WHEN os_version LIKE '%keon%' THEN 'keon' WHEN os_version LIKE '%twist%' THEN 'twist' ELSE 'unknown' END as device,"
       .'process_type,signature,date_processed,uuid '
       .'FROM reports '
       ."WHERE product='B2G' AND os_name='Android' AND utc_day_is(date_processed, '".$anadir."') "
