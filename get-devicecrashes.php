@@ -230,11 +230,11 @@ foreach ($reports as $rep) {
           $devname = ucfirst($regs[2].' '.$regs[1]);
           $andver = null;
         }
-        elseif (preg_match("/([^\|]+ [^\|]+)\n[^:\s]+:(\d\.[^\/\s]+|AOSP)\/[^:\s]+:[^\s]*keys/", $appnotes, $regs)) {
+        elseif (preg_match("/([^\|\(\)]+ [^\|\(\)]+)\n[^:\s]+:(\d\.[^\/\s]+|AOSP)\/[^:\s]+:[^\s]*keys/", $appnotes, $regs)) {
           $devname = ucfirst($regs[1]);
           $andver = $regs[2];
         }
-        elseif (preg_match("/([^\|]+ [^\|]+)\n(unknown|xxxxxx)/", $appnotes, $regs)) {
+        elseif (preg_match("/([^\|\(\)]+ [^\|\(\)]+)\n(unknown|xxxxxx)/", $appnotes, $regs)) {
           $devname = ucfirst($regs[1]);
         }
         else {
