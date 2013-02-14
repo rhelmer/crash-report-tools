@@ -98,7 +98,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   if (!file_exists($anafbcdata)) {
     $rep_query =
       'SELECT version,build,release_channel,'
-      ."CASE WHEN os_version LIKE '%unagi%' THEN 'unagi' WHEN os_version LIKE '%otoro%' THEN 'otoro' WHEN os_version LIKE '%keon%' THEN 'keon' WHEN os_version LIKE '%twist%' THEN 'twist' ELSE 'unknown' END as device,"
+      ."SUBSTRING(os_version from '%#\"(otoro|unagi|keon|twist|buri|inari|ikura|hamachi)#\"%' for '#') as device,"
       .'process_type,signature,date_processed,uuid '
       .'FROM reports '
       ."WHERE product='B2G' AND os_name='Android' AND utc_day_is(date_processed, '".$anadir."') "
@@ -221,6 +221,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $link = $td->appendChild($doc->createElement('a',
           date('H:i:s', strtotime($crash['date_processed']))));
       $link->setAttribute('href', $url_replinkbase.$crash['uuid']);
+      $device = strlen($crash['device'])?$crash['device']:'unknown';
       $td = $tr->appendChild($doc->createElement('td', $crash['device']));
       $td->setAttribute('class', 'device '.$crash['device']);
       $ptype = strlen($crash['process_type'])?$crash['process_type']:'gecko';
