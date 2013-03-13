@@ -126,6 +126,8 @@ foreach ($products as $product) {
     ORDER BY adu_date desc;
   */
 
+  $maxday = null;
+
   $db_query = 'SELECT adu_date, version_string as version, '
               .'adjusted_crashes as crashes, adu_count as adu '
               .'FROM product_crash_ratio '
@@ -148,6 +150,10 @@ foreach ($products as $product) {
       $proddata[$ver][$day] = array('crashes' => $crashes,
                                     'adu' => $adu);
     }
+    if (is_null($maxday) || $maxday < $day) { $maxday = $day; }
+  }
+  if ($maxday < $day_end) {
+    print('--- ERROR: Last day retrieved is '.$maxday.' while yesterday was '.$day_end.'!'."\n");
   }
   file_put_contents($fproddata, json_encode($proddata));
 }
