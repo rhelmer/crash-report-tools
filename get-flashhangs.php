@@ -662,9 +662,9 @@ foreach ($reports as $rep) {
         $data_by_major = array();
         foreach ($allmajors as $fver) {
           $data_by_major[$fver] = array(
-              'count' => intval($fd['main'][$reptype][$fver]),
+              'count' => intval(@$fd['main'][$reptype][$fver]),
               'pct' => $fd['total_flash'][$reptype]
-                       ? intval($fd['main'][$reptype][$fver]) / $fd['total_flash'][$reptype]
+                       ? intval(@$fd['main'][$reptype][$fver]) / $fd['total_flash'][$reptype]
                        : 0);
         }
 
