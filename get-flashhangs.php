@@ -134,6 +134,7 @@ foreach ($reports as $rep) {
   $fdfile = $prdvershort.'.flashhang.json';
   $fsumpages = 'summarypages.json';
   $fwebsum = $prdverfile.'.flashsummary.html';
+  $fwebdata = $prdverfile.'.flashdata-permajorver.html';
 
   if (file_exists($fdfile)) {
     print('Read stored data'."\n");
@@ -279,7 +280,7 @@ foreach ($reports as $rep) {
 
     $anafweb = $anadir.'/'.$fweb;
     if (!file_exists($anafweb) && $flashdata[$anadir]['total_flash']['hang']) {
-      // create out an HTML page
+      // create a per-day HTML page
       print('Writing HTML output'."\n");
       $doc = new DOMDocument('1.0', 'utf-8');
       $doc->formatOutput = true; // we want a nice output
@@ -443,7 +444,7 @@ foreach ($reports as $rep) {
 
   if (count($flashdata) &&
       (!file_exists($fwebsum) || (filemtime($fwebsum) < filemtime($fdfile)))) {
-    // create out an HTML page
+    // create a summary HTML page
     print('Writing HTML output'."\n");
     $doc = new DOMDocument('1.0', 'utf-8');
     $doc->formatOutput = true; // we want a nice output
@@ -590,6 +591,114 @@ foreach ($reports as $rep) {
             'last_date' => $lastdate,
             'display_ver' => $prdverdisplay,
             'display_rep' => 'Flash Summary Report');
+    file_put_contents($fsumpages, json_encode($sumpages));
+  }
+
+  if (($ver == '4plus') && count($flashdata) &&
+      (!file_exists($fwebdata) || (filemtime($fwebdata) < filemtime($fdfile)))) {
+    // create an HTML summary data page
+    print('Writing HTML output'."\n");
+    $doc = new DOMDocument('1.0', 'utf-8');
+    $doc->formatOutput = true; // we want a nice output
+
+    $root = $doc->appendChild($doc->createElement('html'));
+    $head = $root->appendChild($doc->createElement('head'));
+    $title = $head->appendChild($doc->createElement('title',
+        $prdverdisplay.' Flash Main Version Data'));
+
+    $style = $head->appendChild($doc->createElement('style'));
+    $style->setAttribute('type', 'text/css');
+    $style->appendChild($doc->createCDATASection(
+        '.num, .pct {'."\n"
+        .'  text-align: right;'."\n"
+        .'}'."\n"
+    ));
+
+    $body = $root->appendChild($doc->createElement('body'));
+    $h1 = $body->appendChild($doc->createElement('h1',
+        $prdverdisplay.' Flash Main Version Data'));
+
+    // description
+    $para = $body->appendChild($doc->createElement('p',
+        'Daily data of crash and hang reports on '.$prdverdisplay.','
+        .' that contain a Flash version, grouped by main Flash versions.'));
+
+    $para = $body->appendChild($doc->createElement('p',
+        'The percentage values are shares of the total Flash hangs or crashes'
+        .' reported for that day. Actual counts appear in tooltips.'));
+
+    $allmajors = array();
+    foreach (array_reverse($flashdata) as $date=>$fd) {
+      foreach (array('hang', 'crash') as $reptype) {
+        foreach ($fd['main'][$reptype] as $fver=>$num) {
+          if (strlen($fver) && !in_array($fver, $allmajors)) {
+            $allmajors[] = $fver;
+          }
+        }
+      }
+    }
+    // Sort main Flash versions
+    sort($allmajors);
+
+    foreach (array('crash' => 'Crashes', 'hang' => 'Hangs') as $reptype=>$title) {
+      $h2 = $body->appendChild($doc->createElement('h2', $title));
+
+      $table = $body->appendChild($doc->createElement('table'));
+      $table->setAttribute('border', '1');
+
+      // table head
+      $tr = $table->appendChild($doc->createElement('tr'));
+      $th = $tr->appendChild($doc->createElement('th', 'Date'));
+      $th->setAttribute('rowspan', '2');
+      $th = $tr->appendChild($doc->createElement('th', 'Main Flash Version'));
+      foreach ($allmajors as $fver) {
+        $th = $tr->appendChild($doc->createElement('th', $fver));
+      }
+
+      $lastdate = null;
+      foreach (array_reverse($flashdata) as $date=>$fd) {
+        if (is_null($lastdate) || ($date > $lastdate)) { $lastdate = $date; }
+
+        $data_by_major = array();
+        foreach ($allmajors as $fver) {
+          $data_by_major[$fver] = array(
+              'count' => intval($fd['main'][$reptype][$fver]),
+              'pct' => $fd['total_flash'][$reptype]
+                       ? intval($fd['main'][$reptype][$fver]) / $fd['total_flash'][$reptype]
+                       : 0);
+        }
+
+        if ($total_rate) {
+          $tr = $table->appendChild($doc->createElement('tr'));
+          $td = $tr->appendChild($doc->createElement('td', $date));
+          foreach ($data_by_major as $fver=>$fvdata) {
+            $td = $tr->appendChild($doc->createElement('td',
+                      sprintf('%.1f', 100 * $fvdata['pct']).'%'));
+            $td->setAttribute('class', 'pct');
+            $td->setAttribute('title', $fvdata['count']);
+          }
+        }
+      }
+    }
+
+    $doc->saveHTMLFile($fwebdata);
+
+    // add the page to the summary pages index
+    if (file_exists($fsumpages)) {
+      $sumpages = json_decode(file_get_contents($fsumpages), true);
+    }
+    else {
+      $sumpages = array();
+    }
+    $sumpages[$fwebdata] =
+      array('product' => $rep['product'],
+            'channel' => $channel,
+            'version' => $ver,
+            'report' => 'flashmajorverdata',
+            'report_sub' => null,
+            'last_date' => $lastdate,
+            'display_ver' => $prdverdisplay,
+            'display_rep' => 'Flash Main Version Data');
     file_put_contents($fsumpages, json_encode($sumpages));
   }
 }
