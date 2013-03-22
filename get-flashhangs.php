@@ -676,7 +676,7 @@ foreach ($reports as $rep) {
         $td = $tr->appendChild($doc->createElement('td', $date));
         foreach ($data_by_major as $fver=>$fvdata) {
           $td = $tr->appendChild($doc->createElement('td',
-                    sprintf('%.1f', 100 * $fvdata['pct']).'%'));
+                    sprintf('%.2f', 100 * $fvdata['pct']).'%'));
           $td->setAttribute('class', 'pct');
           $td->setAttribute('title', $fvdata['count']);
         }
