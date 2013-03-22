@@ -631,7 +631,9 @@ foreach ($reports as $rep) {
     foreach (array_reverse($flashdata) as $date=>$fd) {
       foreach (array('hang', 'crash') as $reptype) {
         foreach ($fd['main'][$reptype] as $fver=>$num) {
-          if (strlen($fver) && !in_array($fver, $allmajors)) {
+          if (preg_match('/^(\d+)\.(\d+)$/', $fver, $regs) &&
+              ($regs[1] > 5) && ($regs[1] < 20) &&
+              !in_array($fver, $allmajors)) {
             $allmajors[] = $fver;
           }
         }
@@ -668,15 +670,13 @@ foreach ($reports as $rep) {
                        : 0);
         }
 
-        if ($total_rate) {
-          $tr = $table->appendChild($doc->createElement('tr'));
-          $td = $tr->appendChild($doc->createElement('td', $date));
-          foreach ($data_by_major as $fver=>$fvdata) {
-            $td = $tr->appendChild($doc->createElement('td',
-                      sprintf('%.1f', 100 * $fvdata['pct']).'%'));
-            $td->setAttribute('class', 'pct');
-            $td->setAttribute('title', $fvdata['count']);
-          }
+        $tr = $table->appendChild($doc->createElement('tr'));
+        $td = $tr->appendChild($doc->createElement('td', $date));
+        foreach ($data_by_major as $fver=>$fvdata) {
+          $td = $tr->appendChild($doc->createElement('td',
+                    sprintf('%.1f', 100 * $fvdata['pct']).'%'));
+          $td->setAttribute('class', 'pct');
+          $td->setAttribute('title', $fvdata['count']);
         }
       }
     }
