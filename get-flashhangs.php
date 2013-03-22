@@ -653,6 +653,7 @@ foreach ($reports as $rep) {
       $th = $tr->appendChild($doc->createElement('th', 'Date'));
       $th->setAttribute('rowspan', '2');
       $th = $tr->appendChild($doc->createElement('th', 'Main Flash Version'));
+      $th->setAttribute('colspan', count($allmajors));
       $tr = $table->appendChild($doc->createElement('tr'));
       foreach ($allmajors as $fver) {
         $th = $tr->appendChild($doc->createElement('th', $fver));
