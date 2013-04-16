@@ -98,7 +98,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   if (!file_exists($anafbcdata)) {
     $rep_query =
       'SELECT version,build,release_channel,'
-      ."SUBSTRING(os_version from '%#\"(otoro|unagi|keon|twist|buri|inari|ikura|hamachi|d300|leo)#\"%' for '#') as device,"
+      ."SUBSTRING(os_version from '(otoro|unagi|keon|twist|buri|inari|ikura|hamachi|d300|leo)') as device,"
       .'process_type,signature,date_processed,uuid '
       .'FROM reports '
       ."WHERE product='B2G' AND os_name='Android' AND utc_day_is(date_processed, '".$anadir."') "
