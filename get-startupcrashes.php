@@ -65,10 +65,6 @@ $reports = array(array('product'=>'Firefox',
                       ),
                  array('product'=>'Firefox',
                        'channel'=>'beta',
-                       'version'=>'20.0',
-                      ),
-                 array('product'=>'Firefox',
-                       'channel'=>'beta',
                        'version'=>'21.0',
                       ),
                  array('product'=>'Firefox',
@@ -79,20 +75,9 @@ $reports = array(array('product'=>'Firefox',
                       ),
                  array('product'=>'FennecAndroid',
                        'channel'=>'release',
-                       'version'=>'19.0',
-                       'version_regex'=>'19\.0.*',
-                       'version_display'=>'19',
-                      ),
-                 array('product'=>'FennecAndroid',
-                       'channel'=>'release',
                        'version'=>'20.0',
                        'version_regex'=>'20\.0.*',
                        'version_display'=>'20',
-                      ),
-                 array('product'=>'FennecAndroid',
-                       'channel'=>'beta',
-                       'version'=>'20.0',
-                      ),
                  array('product'=>'FennecAndroid',
                        'channel'=>'beta',
                        'version'=>'21.0',
@@ -391,8 +376,6 @@ foreach ($reports as $rep) {
               'display_rep' => 'Startup Crash Report');
       file_put_contents($anafpages, json_encode($pages));
     }
-
-    print("\n");
   }
   // debug only line
   // print_r($anacrashes);
@@ -498,6 +481,7 @@ foreach ($reports as $rep) {
             'display_rep' => 'Startup Summary Report');
     file_put_contents($fsumpages, json_encode($sumpages));
   }
+  print("\n");
 }
 
 // *** helper functions ***

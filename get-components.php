@@ -55,10 +55,6 @@ $reports = array(array('product'=>'Firefox',
                       ),
                  array('product'=>'Firefox',
                        'channel'=>'beta',
-                       'version'=>'20.0',
-                      ),
-                 array('product'=>'Firefox',
-                       'channel'=>'beta',
                        'version'=>'21.0',
                       ),
                  array('product'=>'Firefox',
@@ -69,19 +65,9 @@ $reports = array(array('product'=>'Firefox',
                       ),
                  array('product'=>'FennecAndroid',
                        'channel'=>'release',
-                       'version'=>'19.0',
-                       'version_regex'=>'19\.0.*',
-                       'version_display'=>'19',
-                      ),
-                 array('product'=>'FennecAndroid',
-                       'channel'=>'release',
                        'version'=>'20.0',
                        'version_regex'=>'20\.0.*',
                        'version_display'=>'20',
-                      ),
-                 array('product'=>'FennecAndroid',
-                       'channel'=>'beta',
-                       'version'=>'20.0',
                       ),
                  array('product'=>'FennecAndroid',
                        'channel'=>'beta',
@@ -190,7 +176,7 @@ foreach ($reports as $rep) {
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
-    print('Looking at data for '.$anadir."\n");
+    print('Looking at '.$prdverdisplay.' data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fcompdata = $prdvershort.'-components.json';
@@ -642,9 +628,9 @@ foreach ($reports as $rep) {
         file_put_contents($anafpages, json_encode($pages));
       }
     }
-
-    print("\n");
   }
+
+  print("\n");
 }
 
 // *** helper functions ***

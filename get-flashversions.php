@@ -408,11 +408,11 @@ foreach ($flash_versions as $fver) {
               'display_rep' => 'Flash '.$fver.' Report');
       file_put_contents($anafpages, json_encode($pages));
     }
-
-    print("\n");
   }
   // debug only line
   // print_r($flashverdata);
+
+  print("\n");
 }
 
 // *** helper functions ***

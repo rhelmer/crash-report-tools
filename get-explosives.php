@@ -87,12 +87,6 @@ $reports = array(array('product'=>'Firefox',
                        'mincount'=>10,
                       ),
                  array('product'=>'FennecAndroid',
-                       'version'=>'19',
-                       'version_regex'=>'19\..*',
-                       'fake_adu'=>false,
-                       'mincount'=>20,
-                      ),
-                 array('product'=>'FennecAndroid',
                        'version'=>'20',
                        'version_regex'=>'20\..*',
                        'fake_adu'=>false,
@@ -571,8 +565,8 @@ foreach ($reports as $rep) {
     elseif (!intval(@$virtual_adu[$anadir])) {
       print('--- ERROR: No ADU data found for '.$anadir.' and '.$prdverdisplay.'!'."\n");
     }
-    print("\n");
   }
+  print("\n");
 }
 
 // *** helper functions ***

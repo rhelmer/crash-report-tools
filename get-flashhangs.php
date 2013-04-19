@@ -68,12 +68,6 @@ $reports = array(array('product'=>'Firefox',
                        'version'=>'21.0',
                       ),
                  array('product'=>'Firefox',
-                       'version'=>'21.0a2',
-                      ),
-                 array('product'=>'Firefox',
-                       'version'=>'22.0a1',
-                      ),
-                 array('product'=>'Firefox',
                        'version'=>'22.0a2',
                       ),
                  array('product'=>'Firefox',
@@ -446,8 +440,6 @@ foreach ($reports as $rep) {
               'display_rep' => 'Flash Hang Report');
       file_put_contents($anafpages, json_encode($pages));
     }
-
-    print("\n");
   }
   // debug only line
   // print_r($flashdata);
@@ -713,6 +705,7 @@ foreach ($reports as $rep) {
             'display_rep' => 'Flash Main Version Data');
     file_put_contents($fsumpages, json_encode($sumpages));
   }
+  print("\n");
 }
 
 // *** helper functions ***

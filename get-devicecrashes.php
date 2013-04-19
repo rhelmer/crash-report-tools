@@ -37,19 +37,9 @@ date_default_timezone_set('America/Los_Angeles');
 
 $reports = array(array('product'=>'FennecAndroid',
                        'channel'=>'release',
-                       'version'=>'19.0',
-                       'version_regex'=>'19\.0.*',
-                       'version_display'=>'19',
-                      ),
-                 array('product'=>'FennecAndroid',
-                       'channel'=>'release',
                        'version'=>'20.0',
                        'version_regex'=>'20\.0.*',
                        'version_display'=>'20',
-                      ),
-                 array('product'=>'FennecAndroid',
-                       'channel'=>'beta',
-                       'version'=>'20.0',
                       ),
                  array('product'=>'FennecAndroid',
                        'channel'=>'beta',
@@ -584,9 +574,8 @@ foreach ($reports as $rep) {
         file_put_contents($anafpages, json_encode($pages));
       }
     }
-
-    print("\n");
   }
+  print("\n");
 }
 
 // *** helper functions ***
