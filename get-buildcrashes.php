@@ -435,8 +435,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             'display_rep' => 'Crashes / Build');
     file_put_contents($anafpages, json_encode($pages));
   }
-  print("\n");
 }
+print("\n");
 
 // *** helper functions ***
 
