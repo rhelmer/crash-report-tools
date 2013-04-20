@@ -167,7 +167,7 @@ foreach ($reports as $rname=>$rep) {
         if ($min_date > $anadir) {
           continue;
         }
-        print('Looking at '.$prdverdisplay.' on '.$rep['display_name'].' data for '.$anadir."\n");
+        print('TCBS: Looking at '.$prdverdisplay.' on '.$rep['display_name'].' data for '.$anadir."\n");
         if (!file_exists($anadir)) { mkdir($anadir); }
 
         $ftcdata = $prdvershort.'-'.$rname.'-topcrash.json';
@@ -380,9 +380,8 @@ foreach ($reports as $rname=>$rep) {
                   'display_rep' => $rep['display_name'].' Top Crash Report');
           file_put_contents($anafpages, json_encode($pages));
         }
-
-        print("\n");
       }
+      print("\n");
     }
   }
 }

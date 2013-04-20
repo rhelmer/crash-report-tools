@@ -170,7 +170,7 @@ foreach ($reports as $rep) {
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
-    print('Looking at data for '.$anadir."\n");
+    print('Devices: Looking at '.$prdverdisplay.' data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fdevdata = $prdvershort.'-devices.json';

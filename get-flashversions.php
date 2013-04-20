@@ -188,7 +188,7 @@ foreach ($flash_versions as $fver) {
   }
   foreach ($days_to_analyze as $anaday) {
     $anadir = $anaday;
-    print('Looking at Flash version data for '.$anadir."\n");
+    print('Flash versions: Looking at Flash '.$fver.' data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fpages = 'pages.json';

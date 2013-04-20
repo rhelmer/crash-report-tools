@@ -88,7 +88,7 @@ else {
 for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
   $anadir = date('Y-m-d', $anatime);
-  print('Looking at per-build crash data for '.$anadir."\n");
+  print('Builds: Looking at per-build crash data for '.$anadir."\n");
   if (!file_exists($anadir)) { mkdir($anadir); }
 
   $fpages = 'pages.json';
@@ -97,7 +97,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $anafweb = $anadir.'/'.$fweb;
   if (!file_exists($anafweb)) {
     // create out an HTML page
-    print('Write HTML output'."\n");
+    print('Writing HTML output'."\n");
 
     $doc = new DOMDocument('1.0', 'utf-8');
     $doc->formatOutput = true; // we want a nice output

@@ -87,7 +87,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
   $anadir = date('Y-m-d', $anatime);
 
-  print('Looking at B2G data for '.$anadir."\n");
+  print('B2G: Looking at on-device crash data for '.$anadir."\n");
   if (!file_exists($anadir)) { mkdir($anadir); }
 
   $fbcdata = 'b2g-crashdata.json';
@@ -287,9 +287,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             'display_rep' => 'Crashes Report');
     file_put_contents($anafpages, json_encode($pages));
   }
-
-  print("\n");
 }
+print("\n");
 
 // *** helper functions ***
 

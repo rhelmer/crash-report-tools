@@ -57,7 +57,7 @@ $bdfile = $outdir.'/crash.bugdata.json';
 $fweb = '%s.weeklybugs.html';
 
 if (file_exists($bdfile)) {
-  print('Read stored data'."\n");
+  print('Reading stored crash bug data'."\n");
   $bugdata = json_decode(file_get_contents($bdfile), true);
 }
 else {

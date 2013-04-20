@@ -264,7 +264,7 @@ foreach ($reports as $rep) {
   for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
-    print('Looking at '.$prdverdisplay.' data for '.$anadir."\n");
+    print('Explosiveness: Looking at '.$prdverdisplay.' data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fsigcnt = $prdvershort.'-sigcount.csv';
@@ -335,7 +335,7 @@ foreach ($reports as $rep) {
       $anafexpdata = $anadir.'/'.$fexpdata;
       if (!file_exists($anafexpdata)) {
         // get topcrasher list with counts per signature
-        print('Calculate explosiveness'."\n");
+        print('Calculating explosiveness'."\n");
 
         $exp = array();
         $dayset = array($anadir);
@@ -386,7 +386,7 @@ foreach ($reports as $rep) {
                                             'dayset'=> $dayset)));
       }
       else {
-        print('Read stored explosiveness'."\n");
+        print('Reading stored explosiveness'."\n");
         $edata = json_decode(file_get_contents($anafexpdata), true);
         $exp = $edata['exp'];
         $exp_total = $edata['exp_total'];
@@ -396,7 +396,7 @@ foreach ($reports as $rep) {
       $anafweb = $anadir.'/'.$fweb;
       if (!file_exists($anafweb)) {
         // create out an HTML page
-        print('Write HTML output'."\n");
+        print('Writing HTML output'."\n");
         $doc = new DOMDocument('1.0', 'utf-8');
         $doc->formatOutput = true; // we want a nice output
 

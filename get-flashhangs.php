@@ -141,7 +141,7 @@ foreach ($reports as $rep) {
   $fwebdata = $prdverfile.'.flashdata-permajorver.html';
 
   if (file_exists($fdfile)) {
-    print('Read stored data'."\n");
+    print('Reading stored '.$prdverdisplay.' Flash/hang data'."\n");
     $flashdata = json_decode(file_get_contents($fdfile), true);
   }
   else {
@@ -205,14 +205,14 @@ foreach ($reports as $rep) {
   }
   foreach ($days_to_analyze as $anaday) {
     $anadir = $anaday;
-    print('Looking at data for '.$anadir."\n");
+    print('Flash/hangs: Looking at '.$prdverdisplay.' data for '.$anadir."\n");
     if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fpages = 'pages.json';
     $fweb = $anadir.'.'.$prdverfile.'.flashhangs.html';
 
     if (!array_key_exists($anadir, $flashdata) || in_array($anadir, $force_dates)) {
-      print('Fetch Flash/hang data for '.$prdverdisplay."\n");
+      print('Fetching Flash/hang data for '.$prdverdisplay."\n");
 
       $rep_query =
         'SELECT COUNT(*) as cnt, flash_version, LENGTH(hang_id)>0 as is_hang '

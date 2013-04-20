@@ -157,4 +157,5 @@ foreach ($products as $product) {
   }
   file_put_contents($fproddata, json_encode($proddata));
 }
+print("\n");
 ?>
