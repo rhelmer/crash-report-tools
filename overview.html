@@ -15,7 +15,7 @@ window.onload = function() {
   fetchFile("latestdate.txt", "",
     function(aData) {
       if (aData) {
-        gDay = aData;
+        gDay = aData.trim();
         document.getElementById("repDay").textContent = gDay;
         loadLists();
       }
