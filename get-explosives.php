@@ -361,9 +361,28 @@ foreach ($reports as $rep) {
               $rawcountset[] = intval(@$crdata[$sigidx][$dayset[$i]]);
             }
 
+            // Fetch bugs associated with that signature.
+            $bugs = array();
+            $bug_query =
+              'SELECT bug_id, status, resolution, short_desc '
+              .'FROM bug_associations LEFT JOIN bugs'
+              .' ON (bug_associations.bug_id=bugs.id) '
+              ."WHERE signature = '".pg_escape_string($sig)."';";
+
+            $bug_result = pg_query($db_conn, $bug_query);
+            if (!$bug_result) {
+              print('--- ERROR: Bug associations query failed!'."\n");
+            }
+            while ($bug_row = pg_fetch_array($bug_result)) {
+              $bugs[$bug_row['bug_id']] = array('status' => $bug_row['status'],
+                                                'resolution' => $bug_row['resolution'],
+                                                'short_desc' => $bug_row['short_desc']);
+            }
+
             // Now that we have the data, calculate explosiveness!
             $exp[$sigidx] = get_explosiveness($dataset, $aduset, $exp_vars);
             $exp[$sigidx]['sig'] = $sig;
+            $exp[$sigidx]['bugs'] = $bugs;
             $exp[$sigidx]['dataset'] = $dataset;
             $exp[$sigidx]['rawcountset'] = $rawcountset;
             $exp[$sigidx]['tcrank'] = $tcranks[$sigidx];
@@ -409,6 +428,13 @@ foreach ($reports as $rep) {
             .'.sig {'."\n"
             .'  font-size: small;'."\n"
             .'}'."\n"
+            .'.bug {'."\n"
+            .'  font-size: small;'."\n"
+            .'  empty-cells: show;'."\n"
+            .'}'."\n"
+            .'.resolved {'."\n"
+            .'  text-decoration: line-through;'."\n"
+            .'}'."\n"
             .'.explosive1 > .totallabel,'."\n"
             .'.explosive3 > .totallabel,'."\n"
             .'.explosive1 > .sig,'."\n"
@@ -450,6 +476,8 @@ foreach ($reports as $rep) {
         $th->setAttribute('rowspan', '2');
         $th = $tr->appendChild($doc->createElement('th', 'Signature'));
         $th->setAttribute('rowspan', '2');
+        $th = $tr->appendChild($doc->createElement('th', 'Bug(s)'));
+        $th->setAttribute('rowspan', '2');
         $th = $tr->appendChild($doc->createElement('th', 'Explosiveness'));
         $th->setAttribute('colspan', '2');
         $th = $tr->appendChild($doc->createElement('th',
@@ -472,7 +500,7 @@ foreach ($reports as $rep) {
           $tr->setAttribute('class', implode(' ', $classes));
         }
         $td = $tr->appendChild($doc->createElement('td', 'Total crashes'));
-        $td->setAttribute('colspan', '2');
+        $td->setAttribute('colspan', '3');
         $td->setAttribute('class', 'totallabel');
         $td = $tr->appendChild($doc->createElement('td',
             sprintf('%.1f', $exp_total['explosiveness_1'])));
@@ -517,6 +545,28 @@ foreach ($reports as $rep) {
             $link = $td->appendChild($doc->createElement('a',
                 htmlentities($expdata['sig'], ENT_COMPAT, 'UTF-8')));
             $link->setAttribute('href', $url_siglinkbase.rawurlencode($expdata['sig']));
+          }
+          $td = $tr->appendChild($doc->createElement('td'));
+          if (array_key_exists('bugs', $expdata) && count($expdata['bugs'])) {
+            foreach ($expdata['bugs'] as $bug => $bugdata) {
+              if (strlen($td->textContent)) {
+                $td->appendChild($doc->createTextNode(', '));
+              }
+              $link = $td->appendChild($doc->createElement('a', $bug));
+              $link->setAttribute('href', $url_buglinkbase.$bug);
+              $link->setAttribute('title',
+                  $bugdata['status'].' '.$bugdata['resolution'].' - '
+                  .htmlentities($bugdata['short_desc'], ENT_COMPAT, 'UTF-8'));
+              if ($bugdata['status'] == 'RESOLVED' || $bugdata['status'] == 'VERIFIED') {
+                $link->setAttribute('class', 'bug resolved');
+              }
+              else {
+                $link->setAttribute('class', 'bug');
+              }
+            }
+          }
+          else {
+            $td->appendChild($doc->createTextNode('-'));
           }
           $td = $tr->appendChild($doc->createElement('td',
               sprintf('%.1f', $expdata['explosiveness_1'])));
