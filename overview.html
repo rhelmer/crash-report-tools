@@ -12,7 +12,7 @@ var gDay;
 
 window.onload = function() {
   // Get date to analyze.
-  fetchFile("latestdate.txt", "json",
+  fetchFile("latestdate.txt", "",
     function(aData) {
       if (aData) {
         gDay = aData;

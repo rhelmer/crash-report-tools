@@ -19,4 +19,4 @@ cd `dirname $_`
 ./get-crashbugsweekly.php
 
 # indicate the latest processed date
-date +"%F" > latestdate.txt
+date -d "yesterday" +"%F" > latestdate.txt
