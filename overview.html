@@ -83,6 +83,7 @@ function loadLists() {
     }
   );
 
+  var anadate = new Date(gDay);
   document.getElementById("crashBugs").href =
       "crash-bugs/" + anadate.getUTCFullYear() + ".weeklybugs.html";
   document.getElementById("socorroBugs").href =
