@@ -124,6 +124,7 @@ $on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
 $url_algolink = 'https://wiki.mozilla.org/CrashKill/Plan/Explosive';
 $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
 $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
+$url_buglinkbase = 'https://bugzilla.mozilla.org/show_bug.cgi?id=';
 
 // File storing the DB access data - including password!
 $fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
