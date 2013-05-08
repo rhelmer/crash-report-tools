@@ -37,7 +37,8 @@ $prodchan = array('Firefox' => array('release', 'beta', 'aurora', 'nightly', 'es
                   'FennecAndroid' => array('release', 'beta', 'aurora', 'nightly'),
                   'B2G' => array('beta', 'aurora', 'nightly'),
                   'WebappRuntime' => array('release', 'beta', 'aurora', 'nightly'),
-                  'WebappRuntimeMobile' => array('beta', 'aurora', 'nightly'));
+                  'WebappRuntimeMobile' => array('beta', 'aurora', 'nightly'),
+                  'MetroFirefox' => array('aurora', 'nightly'));
 
 // how many days back to look at
 $backlog_days = 7;
