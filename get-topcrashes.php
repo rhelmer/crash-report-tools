@@ -51,8 +51,8 @@ $reports = array(
                      'wherex' => " AND reports.os_version ~ ' armv6l'",
                      'products' => array('FennecAndroid')),
     'x86' => array('display_name' => 'x86',
-                   'include_reports_table' => true,
-                   'wherex' => " AND reports.cpu_info LIKE 'x86 %'",
+                   'include_reports_table' => false,
+                   'wherex' => " AND reports_clean.architecture='x86'",
                    'products' => array('FennecAndroid')));
 
 // for how many days back to get the data
