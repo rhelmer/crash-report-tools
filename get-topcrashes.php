@@ -52,7 +52,7 @@ $reports = array(
                      'products' => array('FennecAndroid')),
     'x86' => array('display_name' => 'x86',
                    'include_reports_table' => true,
-                   'wherex' => " AND reports.cpuinfo LIKE 'x86 %'",
+                   'wherex' => " AND reports.cpu_info LIKE 'x86 %'",
                    'products' => array('FennecAndroid')));
 
 // for how many days back to get the data
