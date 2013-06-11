@@ -188,7 +188,9 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
     // description
     $para = $body->appendChild($doc->createElement('p',
-        'List of all '.$bcd['total'].' crashes for B2G on actual devices.'));
+        'List of all '.$bcd['total'].' crashes for B2G on actual devices.'
+        .' (Times in the "Crash" column are UTC and link to the detailed crash'
+        .' reports on Socorro.)'));
 
     $table = $body->appendChild($doc->createElement('table'));
     $table->setAttribute('border', '1');
@@ -219,7 +221,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $td = $tr->appendChild($doc->createElement('td'));
       $td->setAttribute('class', 'time');
       $link = $td->appendChild($doc->createElement('a',
-          date('H:i:s', strtotime($crash['date_processed']))));
+          gmdate('H:i:s', strtotime($crash['date_processed']))));
       $link->setAttribute('href', $url_replinkbase.$crash['uuid']);
       $device = strlen($crash['device'])?$crash['device']:'unknown';
       $td = $tr->appendChild($doc->createElement('td', $device));
