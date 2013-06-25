@@ -46,12 +46,17 @@ $reports = array(
                       'minor_version' => 8,
                       'show_other_os' => true,
                       'products' => array('Firefox')),
+    'mavericks' => array('display_name' => 'Mavericks',
+                         'os_name' => 'Mac OS X',
+                         'major_version' => 10,
+                         'minor_version' => 9,
+                         'show_other_os' => true,
+                         'products' => array('Firefox')),
     'armv6' => array('display_name' => 'ARMv6',
                      'include_reports_table' => true,
                      'wherex' => " AND reports.os_version ~ ' armv6l'",
                      'products' => array('FennecAndroid')),
     'x86' => array('display_name' => 'x86',
-                   'include_reports_table' => false,
                    'wherex' => " AND reports_clean.architecture='x86'",
                    'products' => array('FennecAndroid')));
 
