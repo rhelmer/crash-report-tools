@@ -137,9 +137,14 @@ foreach ($reports as $rname=>$rep) {
     $os_result = pg_query($db_conn, $os_query);
     if (!$os_result) {
       print('--- ERROR: OS version query failed!'."\n");
+      continue;
     }
     while ($os_row = pg_fetch_array($os_result)) {
       $os_ids[] = $os_row['os_version_id'];
+    }
+    if (!count($os_ids)) {
+      print('--- ERROR: No matching OS version found!'."\n");
+      continue;
     }
     $rep_wherex .= ' AND reports_clean.os_version_id IN ('.implode(',', $os_ids).')';
   }
