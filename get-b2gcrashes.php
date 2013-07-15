@@ -153,29 +153,29 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         $btc[$report]['.sigs'] = array();
       }
       addCount($btc[$report]['.sigs'], $crash['signature']);
-      if (array_key_exists('devices', $btc[$report][$crash['signature']])) {
-        if (!in_array($device, $btc[$report][$crash['signature']]['devices'])) {
-          $btc[$report][$crash['signature']]['devices'][] = $device;
+      if (array_key_exists('devices', $btc[$report]['.sigs'][$crash['signature']])) {
+        if (!in_array($device, $btc[$report]['.sigs'][$crash['signature']]['devices'])) {
+          $btc[$report]['.sigs'][$crash['signature']]['devices'][] = $device;
         }
       }
       else {
-        $btc[$report][$crash['signature']]['devices'] = array($device);
+        $btc[$report]['.sigs'][$crash['signature']]['devices'] = array($device);
       }
-      if (array_key_exists('bdates', $btc[$report][$crash['signature']])) {
-        if (!in_array($buildday, $btc[$report][$crash['signature']]['bdates'])) {
-          $btc[$report][$crash['signature']]['bdates'][] = $buildday;
+      if (array_key_exists('bdates', $btc[$report]['.sigs'][$crash['signature']])) {
+        if (!in_array($buildday, $btc[$report]['.sigs'][$crash['signature']]['bdates'])) {
+          $btc[$report]['.sigs'][$crash['signature']]['bdates'][] = $buildday;
         }
       }
       else {
-        $btc[$report][$crash['signature']]['bdates'] = array($buildday);
+        $btc[$report]['.sigs'][$crash['signature']]['bdates'] = array($buildday);
       }
-      if (array_key_exists('proctypes', $btc[$report][$crash['signature']])) {
-        if (!in_array($ptype, $btc[$report][$crash['signature']]['proctypes'])) {
-          $btc[$report][$crash['signature']]['proctypes'][] = $ptype;
+      if (array_key_exists('proctypes', $btc[$report]['.sigs'][$crash['signature']])) {
+        if (!in_array($ptype, $btc[$report]['.sigs'][$crash['signature']]['proctypes'])) {
+          $btc[$report]['.sigs'][$crash['signature']]['proctypes'][] = $ptype;
         }
       }
       else {
-        $btc[$report][$crash['signature']]['proctypes'] = array($ptype);
+        $btc[$report]['.sigs'][$crash['signature']]['proctypes'] = array($ptype);
       }
     }
 
