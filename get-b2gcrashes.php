@@ -181,6 +181,13 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       }
     }
 
+    krsort($btc); // sort by key (version::channel) in reverse order
+    foreach ($btc as $report=>$rdata) {
+      if (array_key_exists('.sigs', $rdata)) {
+        uasort($btc[$report]['.sigs'], 'count_compare'); // sort by count, highest-first
+      }
+    }
+
     file_put_contents($anafbtc, json_encode($btc));
   }
   else {
@@ -341,6 +348,12 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 print("\n");
 
 // *** helper functions ***
+
+// Comparison function using .count member (reverse sort!)
+function count_compare($a, $b) {
+  if ($a['.count'] == $b['.count']) { return 0; }
+  return ($a['.count'] > $b['.count']) ? -1 : 1;
+}
 
 // Function to bump the counter of an element or initialize it
 function addCount(&$basevar, $sub, $addnum = 1) {
