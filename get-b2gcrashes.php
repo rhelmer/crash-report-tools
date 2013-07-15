@@ -91,6 +91,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   if (!file_exists($anadir)) { mkdir($anadir); }
 
   $fbcdata = 'b2g-crashdata.json';
+  $fbtc = 'b2g-topcrashes.json';
   $fpages = 'pages.json';
   $fweb = $anadir.'.b2g.crashes.html';
 
@@ -137,6 +138,51 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   }
   else {
     $bcd = json_decode(file_get_contents($anafbcdata), true);
+  }
+
+  $anafbtc = $anadir.'/'.$fbtc;
+  if (!file_exists($anafbtc)) {
+    $device = strlen($crash['device'])?$crash['device']:'unknown';
+    $buildday = substr($crash['build'], 0, 8);
+    $ptype = strlen($crash['process_type'])?$crash['process_type']:'gecko';
+    $btc = array();
+    foreach ($bcd['list'] as $crash) {
+      $report = $crash['version'].'::'.$crash['release_channel'];
+      addCount($btc, $report);
+      if ($btc[$report]['.count'] == 1) {
+        $btc[$report]['.sigs'] = array();
+      }
+      addCount($btc[$report]['.sigs'], $crash['signature']);
+      if (array_key_exists($btc[$report][$crash['signature']], 'devices')) {
+        if (!in_array($device, $btc[$report][$crash['signature']]['devices'])) {
+          $btc[$report][$crash['signature']]['devices'][] = $device;
+        }
+      }
+      else {
+        $btc[$report][$crash['signature']]['devices'] = array($device);
+      }
+      if (array_key_exists($btc[$report][$crash['signature']], 'bdates')) {
+        if (!in_array($buildday, $btc[$report][$crash['signature']]['bdates'])) {
+          $btc[$report][$crash['signature']]['bdates'][] = $buildday;
+        }
+      }
+      else {
+        $btc[$report][$crash['signature']]['bdates'] = array($buildday);
+      }
+      if (array_key_exists($btc[$report][$crash['signature']], 'proctypes')) {
+        if (!in_array($ptype, $btc[$report][$crash['signature']]['proctypes'])) {
+          $btc[$report][$crash['signature']]['proctypes'][] = $ptype;
+        }
+      }
+      else {
+        $btc[$report][$crash['signature']]['proctypes'] = array($ptype);
+      }
+    }
+
+    file_put_contents($anafbtc, json_encode($bcd));
+  }
+  else {
+    $btc = json_decode(file_get_contents($anafbtc), true);
   }
 
   $anafweb = $anadir.'/'.$fweb;
@@ -294,4 +340,13 @@ print("\n");
 
 // *** helper functions ***
 
+// Function to bump the counter of an element or initialize it
+function addCount(&$basevar, $sub, $addnum = 1) {
+  if (array_key_exists($sub, $basevar)) {
+    $basevar[$sub]['.count'] += $addnum;
+  }
+  else {
+    $basevar[$sub]['.count'] = $addnum;
+  }
+}
 ?>
