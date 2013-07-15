@@ -148,10 +148,10 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $device = strlen($crash['device'])?$crash['device']:'unknown';
       $buildday = substr($crash['build'], 0, 8);
       $ptype = strlen($crash['process_type'])?$crash['process_type']:'gecko';
-      $btc[$report]['version'] = $crash['version'];
-      $btc[$report]['release_channel'] = $crash['release_channel'];
       addCount($btc, $report);
       if ($btc[$report]['.count'] == 1) {
+        $btc[$report]['version'] = $crash['version'];
+        $btc[$report]['release_channel'] = $crash['release_channel'];
         $btc[$report]['.sigs'] = array();
       }
       addCount($btc[$report]['.sigs'], $crash['signature']);
