@@ -185,6 +185,11 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     foreach ($btc as $report=>$rdata) {
       if (array_key_exists('.sigs', $rdata)) {
         uasort($btc[$report]['.sigs'], 'count_compare'); // sort by count, highest-first
+        foreach ($rdata['.sigs'] as $sig=>$sdata) {
+          sort($sdata['devices']);
+          sort($sdata['bdates']);
+          sort($sdata['proctypes']);
+        }
       }
     }
 
