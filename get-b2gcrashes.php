@@ -179,7 +179,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       }
     }
 
-    file_put_contents($anafbtc, json_encode($bcd));
+    file_put_contents($anafbtc, json_encode($btc));
   }
   else {
     $btc = json_decode(file_get_contents($anafbtc), true);
