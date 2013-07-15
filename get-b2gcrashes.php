@@ -292,7 +292,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $th = $tr->appendChild($doc->createElement('th', 'Pct'));
       $th = $tr->appendChild($doc->createElement('th', 'Bugs'));
 
-      foreach ($rdata['.sigs'] as $sig->$sdata) {
+      foreach ($rdata['.sigs'] as $sig=>$sdata) {
         $pct = $rdata['.count'] ?
                $sdata['.count'] / $rdata['.count'] : 0;
 
