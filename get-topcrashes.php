@@ -348,7 +348,7 @@ foreach ($reports as $rname=>$rep) {
             $td->setAttribute('class', 'num');
             $td = $tr->appendChild($doc->createElement('td',
                 sprintf('%.1f', 100 * $pct).'%'));
-            $td->setAttribute('class', 'num');
+            $td->setAttribute('class', 'pct');
             $td = $tr->appendChild($doc->createElement('td'));
             if (array_key_exists('bugs', $data) && count($data['bugs'])) {
               foreach ($data['bugs'] as $bug => $bugdata) {

@@ -155,6 +155,9 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         $btc[$report]['.sigs'] = array();
       }
       addCount($btc[$report]['.sigs'], $crash['signature']);
+      if ($btc[$report]['.sigs'][$crash['signature']]['.count'] == 1) {
+        $btc[$report]['.sigs'][$crash['signature']]['bugs'] = $crash['bugs'];
+      }
       if (array_key_exists('devices', $btc[$report]['.sigs'][$crash['signature']])) {
         if (!in_array($device, $btc[$report]['.sigs'][$crash['signature']]['devices'])) {
           $btc[$report]['.sigs'][$crash['signature']]['devices'][] = $device;
@@ -240,11 +243,112 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         .'.resolved {'."\n"
         .'  text-decoration: line-through;'."\n"
         .'}'."\n"
+        .'.num, .pct {'."\n"
+        .'  text-align: right;'."\n"
+        .'}'."\n"
     ));
 
     $body = $root->appendChild($doc->createElement('body'));
     $h1 = $body->appendChild($doc->createElement('h1',
         $anadir.' B2G Crashes Report'));
+
+    $list = $body->appendChild($doc->createElement('ul'));
+    $item = $list->appendChild($doc->createElement('li'));
+    $link = $item->appendChild($doc->createElement('a',
+        'Top Crashes By Signature'));
+    $link->setAttribute('href', '#tcbs');
+    $tlist = $item->appendChild($doc->createElement('ul'));
+    foreach ($btc as $report=>$rdata) {
+      $titem = $tlist->appendChild($doc->createElement('li'));
+      $tlink = $titem->appendChild($doc->createElement('a',
+          $rdata['version'].' '.$rdata['release_channel']));
+      $tlink->setAttribute('href', '#'.$rdata['version'].$rdata['release_channel']);
+    }
+    $list = $body->appendChild($doc->createElement('ul'));
+    $item = $list->appendChild($doc->createElement('li'));
+    $link = $item->appendChild($doc->createElement('a',
+        'Raw Crash List'));
+    $link->setAttribute('href', '#crashlist');
+
+    $h2 = $body->appendChild($doc->createElement('h2',
+        'Top Crashes By Signature'));
+    $link->setAttribute('id', 'tcbs');
+
+    foreach ($btc as $report=>$rdata) {
+      $h3 = $body->appendChild($doc->createElement('h3',
+          $rdata['version'].' '.$rdata['release_channel']));
+      $link->setAttribute('id', $rdata['version'].$rdata['release_channel']);
+
+      $table = $body->appendChild($doc->createElement('table'));
+      $table->setAttribute('border', '1');
+
+      // table head
+      $tr = $table->appendChild($doc->createElement('tr'));
+      $th = $tr->appendChild($doc->createElement('th', 'Signature'));
+      $th = $tr->appendChild($doc->createElement('th', 'Devices'));
+      $th = $tr->appendChild($doc->createElement('th', 'Builds'));
+      $th = $tr->appendChild($doc->createElement('th', 'Process'));
+      $th = $tr->appendChild($doc->createElement('th', 'Count'));
+      $th = $tr->appendChild($doc->createElement('th', 'Pct'));
+      $th = $tr->appendChild($doc->createElement('th', 'Bugs'));
+
+      foreach ($rdata['.sigs'] as $sig->$sdata) {
+        $pct = $rdata['.count'] ?
+               $sdata['.count'] / $rdata['.count'] : 0;
+
+        $tr = $table->appendChild($doc->createElement('tr'));
+        $td = $tr->appendChild($doc->createElement('td'));
+        $td->setAttribute('class', 'sig');
+        if (!strlen($sig)) {
+          $link = $td->appendChild($doc->createElement('a', '(empty signature)'));
+          $link->setAttribute('href', $url_nullsiglink);
+        }
+        elseif ($sig == '\N') {
+          $td->appendChild($doc->createTextNode('(processing failure - "'.$sig.'")'));
+        }
+        else {
+          // common case, useful signature
+          $sigdisplay = preg_replace('/_+\.*$/', '', $sig);
+          $link = $td->appendChild($doc->createElement('a',
+              htmlentities($sigdisplay, ENT_COMPAT, 'UTF-8')));
+          $link->setAttribute('href', $url_siglinkbase.rawurlencode($sig));
+        }
+        $td = $tr->appendChild($doc->createElement('td', implode(', ', $sdata['devices'])));
+        $td = $tr->appendChild($doc->createElement('td', implode(', ', $sdata['bdates'])));
+        $td = $tr->appendChild($doc->createElement('td', implode(', ', $sdata['proctypes'])));
+        $td = $tr->appendChild($doc->createElement('td', $sdata['.count']));
+        $td->setAttribute('class', 'num');
+        $td = $tr->appendChild($doc->createElement('td',
+            sprintf('%.1f', 100 * $pct).'%'));
+        $td->setAttribute('class', 'pct');
+        $td = $tr->appendChild($doc->createElement('td'));
+        if (array_key_exists('bugs', $sdata) && count($sdata['bugs'])) {
+          foreach ($sdata['bugs'] as $bug => $bugdata) {
+            if (strlen($td->textContent)) {
+              $td->appendChild($doc->createTextNode(', '));
+            }
+            $link = $td->appendChild($doc->createElement('a', $bug));
+            $link->setAttribute('href', $url_buglinkbase.$bug);
+            $link->setAttribute('title',
+                $bugdata['status'].' '.$bugdata['resolution'].' - '
+                .htmlentities($bugdata['short_desc'], ENT_COMPAT, 'UTF-8'));
+            if ($bugdata['status'] == 'RESOLVED' || $bugdata['status'] == 'VERIFIED') {
+              $link->setAttribute('class', 'bug resolved');
+            }
+            else {
+              $link->setAttribute('class', 'bug');
+            }
+          }
+        }
+        else {
+          $td->appendChild($doc->createTextNode('-'));
+        }
+      }
+    }
+
+    $h2 = $body->appendChild($doc->createElement('h2',
+        'Raw Crash List'));
+    $link->setAttribute('id', 'crashlist');
 
     // description
     $para = $body->appendChild($doc->createElement('p',
@@ -285,7 +389,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $link->setAttribute('href', $url_replinkbase.$crash['uuid']);
       $device = strlen($crash['device'])?$crash['device']:'unknown';
       $td = $tr->appendChild($doc->createElement('td', $device));
-      $td->setAttribute('class', 'device '.$crash['device']);
+      $td->setAttribute('class', 'device '.$device);
       $ptype = strlen($crash['process_type'])?$crash['process_type']:'gecko';
       $td = $tr->appendChild($doc->createElement('td', $ptype));
       $td->setAttribute('class', 'ptype '.$ptype);
