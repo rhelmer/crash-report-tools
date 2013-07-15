@@ -153,7 +153,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         $btc[$report]['.sigs'] = array();
       }
       addCount($btc[$report]['.sigs'], $crash['signature']);
-      if (array_key_exists($btc[$report][$crash['signature']], 'devices')) {
+      if (array_key_exists('devices', $btc[$report][$crash['signature']])) {
         if (!in_array($device, $btc[$report][$crash['signature']]['devices'])) {
           $btc[$report][$crash['signature']]['devices'][] = $device;
         }
@@ -161,7 +161,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       else {
         $btc[$report][$crash['signature']]['devices'] = array($device);
       }
-      if (array_key_exists($btc[$report][$crash['signature']], 'bdates')) {
+      if (array_key_exists('bdates', $btc[$report][$crash['signature']])) {
         if (!in_array($buildday, $btc[$report][$crash['signature']]['bdates'])) {
           $btc[$report][$crash['signature']]['bdates'][] = $buildday;
         }
@@ -169,7 +169,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       else {
         $btc[$report][$crash['signature']]['bdates'] = array($buildday);
       }
-      if (array_key_exists($btc[$report][$crash['signature']], 'proctypes')) {
+      if (array_key_exists('proctypes', $btc[$report][$crash['signature']])) {
         if (!in_array($ptype, $btc[$report][$crash['signature']]['proctypes'])) {
           $btc[$report][$crash['signature']]['proctypes'][] = $ptype;
         }
