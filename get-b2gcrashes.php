@@ -32,7 +32,7 @@ date_default_timezone_set('America/Los_Angeles');
 // *** data gathering variables ***
 
 // for how many days back to get the data
-$backlog_days = 7;
+$backlog_days = 14;
 
 // *** URLs ***
 
@@ -286,8 +286,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $tr = $table->appendChild($doc->createElement('tr'));
       $th = $tr->appendChild($doc->createElement('th', 'Signature'));
       $th = $tr->appendChild($doc->createElement('th', 'Devices'));
-      $th = $tr->appendChild($doc->createElement('th', 'Builds'));
-      $th = $tr->appendChild($doc->createElement('th', 'Process'));
+      $th = $tr->appendChild($doc->createElement('th', 'Build Dates'));
+      $th = $tr->appendChild($doc->createElement('th', 'Process Types'));
       $th = $tr->appendChild($doc->createElement('th', 'Count'));
       $th = $tr->appendChild($doc->createElement('th', 'Pct'));
       $th = $tr->appendChild($doc->createElement('th', 'Bugs'));
