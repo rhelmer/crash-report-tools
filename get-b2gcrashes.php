@@ -142,12 +142,14 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
   $anafbtc = $anadir.'/'.$fbtc;
   if (!file_exists($anafbtc)) {
-    $device = strlen($crash['device'])?$crash['device']:'unknown';
-    $buildday = substr($crash['build'], 0, 8);
-    $ptype = strlen($crash['process_type'])?$crash['process_type']:'gecko';
     $btc = array();
     foreach ($bcd['list'] as $crash) {
       $report = $crash['version'].'::'.$crash['release_channel'];
+      $device = strlen($crash['device'])?$crash['device']:'unknown';
+      $buildday = substr($crash['build'], 0, 8);
+      $ptype = strlen($crash['process_type'])?$crash['process_type']:'gecko';
+      $btc[$report]['version'] = $crash['version'];
+      $btc[$report]['release_channel'] = $crash['release_channel'];
       addCount($btc, $report);
       if ($btc[$report]['.count'] == 1) {
         $btc[$report]['.sigs'] = array();
