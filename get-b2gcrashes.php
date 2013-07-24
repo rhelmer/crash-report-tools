@@ -565,14 +565,15 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       else {
         $pages = array();
       }
-      $pages[$fweb] =
+      $pages[$fwebcur] =
         array('product' => 'B2G',
               'channel' => null,
               'version' => null,
               'report' => 'b2gcrash',
               'report_sub' => $type,
               'display_ver' => 'B2G',
-              'display_rep' => 'Crashes Report');
+              'display_rep' => ($type == 'week'?'Weekly Topcrash':'Crashes')
+                               .' Report');
       file_put_contents($anafpages, json_encode($pages));
     }
   }
