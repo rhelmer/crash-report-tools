@@ -112,9 +112,9 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $bcd = array('list' => array(), 'total' => 0);
     while ($rep_row = pg_fetch_array($rep_result)) {
       $raw_query =
-        "SELECT raw_crash->'Android_Manufacturer' as manufacturer, "
-        ."raw_crash->'Android_Model' as device, "
-        ."raw_crash->'B2G_OS_Version' as fxos_ver "
+        "SELECT raw_crash->>'Android_Manufacturer' as manufacturer, "
+        ."raw_crash->>'Android_Model' as model, "
+        ."raw_crash->>'B2G_OS_Version' as b2g_ver "
         .'FROM raw_crashes '
         ."WHERE uuid='".$rep_row['uuid']."';";
 
@@ -123,6 +123,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         print('--- ERROR: Raw crash query failed!'."\n");
       }
       $rep_row += pg_fetch_array($raw_result);
+      $rep_row['device'] = $rep_row['manufacturer'].' '.$rep_row['model'];
 
       $bugs = array();
       $bug_query =
@@ -376,6 +377,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $th = $tr->appendChild($doc->createElement('th', 'Ver'));
     $th = $tr->appendChild($doc->createElement('th', 'Build ID'));
     $th = $tr->appendChild($doc->createElement('th', 'Channel'));
+    $th = $tr->appendChild($doc->createElement('th', 'B2G-Ver'));
     $th = $tr->appendChild($doc->createElement('th', 'Crash'));
     $th = $tr->appendChild($doc->createElement('th', 'Device'));
     $th = $tr->appendChild($doc->createElement('th', 'Process'));
@@ -394,6 +396,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $span->setAttribute('class', 'timepart');
       $td = $tr->appendChild($doc->createElement('td', $crash['release_channel']));
       $td->setAttribute('class', 'channel');
+      $td = $tr->appendChild($doc->createElement('td', $crash['b2g_ver']));
+      $td->setAttribute('class', 'version');
       $td = $tr->appendChild($doc->createElement('td'));
       $td->setAttribute('class', 'time');
       $link = $td->appendChild($doc->createElement('a',
