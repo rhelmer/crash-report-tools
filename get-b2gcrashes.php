@@ -231,23 +231,40 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $style = $head->appendChild($doc->createElement('style'));
     $style->setAttribute('type', 'text/css');
     $style->appendChild($doc->createCDATASection(
-        '.sig, .time {'."\n"
+        'body {'."\n"
+        .'  color: #000000;'."\n"
+        .'  background-color: #FFFFFF;'."\n"
+        .'}'."\n"
+        .'.sig, .time {'."\n"
         .'  font-size: small;'."\n"
         .'}'."\n"
         .'.buildid > .timepart {'."\n"
-        .'  color: GrayText;'."\n"
+        .'  color: #808080;'."\n"
         .'}'."\n"
-        .'.device.unagi {'."\n"
+        .'.device {'."\n"
+        .'  color: #808080;'."\n"
         .'}'."\n"
-        .'.device.otoro {'."\n"
+        .'/* Shipped devices */'."\n"
+        .'.device.zte_roamer2,'."\n"
+        .'.device.unknown_alcatel_one_touch_fire {'."\n"
+        .'  color: #000000;'."\n"
+        .'  font-weight: bold;'."\n"
         .'}'."\n"
-        .'.device.unknown {'."\n"
-        .'  color: GrayText;'."\n"
+        .'/* Internal testing devices */'."\n"
+        .'.device.toro_unagi1,'."\n"
+        .'.device.toro_otoro1 {'."\n"
+        .'  color: #000000;'."\n"
+        .'  font-style: italic;'."\n"
+        .'}'."\n"
+        .'/* Developer devices */'."\n"
+        .'.device.geeksphone_gp_peak,'."\n"
+        .'.device.geeksphone_gp_keon {'."\n"
+        .'  color: #000000;'."\n"
         .'}'."\n"
         .'.ptype.gecko {'."\n"
         .'}'."\n"
         .'.ptype.content {'."\n"
-        .'  color: GrayText;'."\n"
+        .'  color: #808080;'."\n"
         .'}'."\n"
         .'.bug {'."\n"
         .'  font-size: small;'."\n"
@@ -326,9 +343,23 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               htmlentities($sigdisplay, ENT_COMPAT, 'UTF-8')));
           $link->setAttribute('href', $url_siglinkbase.rawurlencode($sig));
         }
-        $td = $tr->appendChild($doc->createElement('td', implode(', ', $sdata['devices'])));
+        $td = $tr->appendChild($doc->createElement('td'));
+        foreach ($sdata['devices'] as $device) {
+          if (strlen($td->textContent)) {
+            $td->appendChild($doc->createTextNode(', '));
+          }
+          $span = $td->appendChild($doc->createElement('span', $device));
+          $span->setAttribute('class', 'device '.deviceClass($device));
+        }
         $td = $tr->appendChild($doc->createElement('td', implode(', ', $sdata['bdates'])));
         $td = $tr->appendChild($doc->createElement('td', implode(', ', $sdata['proctypes'])));
+        foreach ($sdata['proctypes'] as $ptype) {
+          if (strlen($td->textContent)) {
+            $td->appendChild($doc->createTextNode(', '));
+          }
+          $span = $td->appendChild($doc->createElement('span', $ptype));
+          $span->setAttribute('class', 'ptype '.$ptype);
+        }
         $td = $tr->appendChild($doc->createElement('td', $sdata['.count']));
         $td->setAttribute('class', 'num');
         $td = $tr->appendChild($doc->createElement('td',
@@ -405,7 +436,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $link->setAttribute('href', $url_replinkbase.$crash['uuid']);
       $device = strlen($crash['device'])?$crash['device']:'unknown';
       $td = $tr->appendChild($doc->createElement('td', $device));
-      $td->setAttribute('class', 'device '.$device);
+      $td->setAttribute('class', 'device '.deviceClass($device));
       $ptype = strlen($crash['process_type'])?$crash['process_type']:'gecko';
       $td = $tr->appendChild($doc->createElement('td', $ptype));
       $td->setAttribute('class', 'ptype '.$ptype);
@@ -480,7 +511,7 @@ function count_compare($a, $b) {
   return ($a['.count'] > $b['.count']) ? -1 : 1;
 }
 
-// Function to bump the counter of an element or initialize it
+// Bump the counter of an element or initialize it.
 function addCount(&$basevar, $sub, $addnum = 1) {
   if (array_key_exists($sub, $basevar)) {
     $basevar[$sub]['.count'] += $addnum;
@@ -489,4 +520,24 @@ function addCount(&$basevar, $sub, $addnum = 1) {
     $basevar[$sub]['.count'] = $addnum;
   }
 }
+
+// Convert a device name to a CSS class
+function deviceClass($devicename) {
+  $classraw = strtr($devicename, array(chr(128)=>'EUR',chr(164)=>'EUR',"'"=>'','"'=>''));
+  $classraw = strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $classraw));
+  $devclass = ''; $i = 0;
+  while (($i < strlen($classraw)) && (strlen($devclass) < $maxlength)) {
+    if (((ord($classraw{$i}) >= 48) && (ord($classraw{$i}) <= 57)) ||
+        ((ord($classraw{$i}) >= 97) && (ord($classraw{$i}) <= 122))) {
+      $devclass .= $classraw{$i};
+    }
+    elseif ($devclass{strlen($devclass)-1} != '_') {
+      $devclass .= '_';
+    }
+    $i++;
+  }
+  $devclass = trim($devclass, '_');
+  return $devclass;
+}
+
 ?>
