@@ -531,7 +531,7 @@ function deviceClass($devicename) {
         ((ord($classraw{$i}) >= 97) && (ord($classraw{$i}) <= 122))) {
       $devclass .= $classraw{$i};
     }
-    elseif ($devclass{strlen($devclass)-1} != '_') {
+    elseif (strlen($devclass) && ($devclass{strlen($devclass)-1} != '_')) {
       $devclass .= '_';
     }
     $i++;
