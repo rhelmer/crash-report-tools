@@ -352,7 +352,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           $span->setAttribute('class', 'device '.deviceClass($device));
         }
         $td = $tr->appendChild($doc->createElement('td', implode(', ', $sdata['bdates'])));
-        $td = $tr->appendChild($doc->createElement('td', implode(', ', $sdata['proctypes'])));
+        $td = $tr->appendChild($doc->createElement('td'));
         foreach ($sdata['proctypes'] as $ptype) {
           if (strlen($td->textContent)) {
             $td->appendChild($doc->createTextNode(', '));
