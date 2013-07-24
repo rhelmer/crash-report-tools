@@ -160,7 +160,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   if (!file_exists($anafbtc)) {
     $btc = array();
     foreach ($bcd['list'] as $crash) {
-      $b2g_ver = strlen($crash['b2g_ver'])?$crash['b2g_ver']:'unknown';
+      $b2g_ver = strlen(@$crash['b2g_ver'])?$crash['b2g_ver']:'unknown';
       $report = $b2g_ver;
       $device = strlen($crash['device'])?$crash['device']:'unknown';
       $buildday = substr($crash['build'], 0, 8);
