@@ -99,7 +99,6 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   if (!file_exists($anafbcdata)) {
     $rep_query =
       'SELECT version,build,release_channel,'
-      ."SUBSTRING(os_version from '(otoro|unagi|keon|peak|buri|inari|ikura|hamachi|d300|leo|roamer2)') as device,"
       .'process_type,signature,date_processed,uuid '
       .'FROM reports '
       ."WHERE product='B2G' AND os_name='Android' AND utc_day_is(date_processed, '".$anadir."') "
@@ -112,6 +111,19 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
     $bcd = array('list' => array(), 'total' => 0);
     while ($rep_row = pg_fetch_array($rep_result)) {
+      $raw_query =
+        "SELECT raw_crash->'Android_Manufacturer' as manufacturer, "
+        ."raw_crash->'Android_Model' as device, "
+        ."raw_crash->'B2G_OS_Version' as fxos_ver "
+        .'FROM raw_crashes '
+        ."WHERE uuid='".$rep_row['uuid']."';";
+
+      $raw_result = pg_query($db_conn, $raw_query);
+      if (!$raw_result) {
+        print('--- ERROR: Raw crash query failed!'."\n");
+      }
+      $rep_row += pg_fetch_array($raw_result);
+
       $bugs = array();
       $bug_query =
         'SELECT bug_id, status, resolution, short_desc '
