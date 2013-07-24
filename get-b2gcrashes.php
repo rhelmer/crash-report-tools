@@ -157,7 +157,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   if (!file_exists($anafbtc)) {
     $btc = array();
     foreach ($bcd['list'] as $crash) {
-      $report = $crash['version'].'::'.$crash['release_channel'];
+      $report = $crash['version'].'::'.$crash['release_channel'].'::'.$crash['b2g_ver'];
       $device = strlen($crash['device'])?$crash['device']:'unknown';
       $buildday = substr($crash['build'], 0, 8);
       $ptype = strlen($crash['process_type'])?$crash['process_type']:'gecko';
@@ -165,6 +165,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       if ($btc[$report]['.count'] == 1) {
         $btc[$report]['version'] = $crash['version'];
         $btc[$report]['release_channel'] = $crash['release_channel'];
+        $btc[$report]['b2g_ver'] = $crash['b2g_ver'];
         $btc[$report]['.sigs'] = array();
       }
       addCount($btc[$report]['.sigs'], $crash['signature']);
@@ -291,8 +292,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     foreach ($btc as $report=>$rdata) {
       $titem = $tlist->appendChild($doc->createElement('li'));
       $tlink = $titem->appendChild($doc->createElement('a',
-          $rdata['version'].' '.$rdata['release_channel']));
-      $tlink->setAttribute('href', '#'.$rdata['version'].$rdata['release_channel']);
+          $rdata['version'].' '.$rdata['release_channel'].' ('.$rdata['b2g_ver'].')'));
+      $tlink->setAttribute('href', '#'.$rdata['version'].$rdata['release_channel'].'-'.$rdata['b2g_ver']);
     }
     $list = $body->appendChild($doc->createElement('ul'));
     $item = $list->appendChild($doc->createElement('li'));
@@ -306,8 +307,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
     foreach ($btc as $report=>$rdata) {
       $h3 = $body->appendChild($doc->createElement('h3',
-          $rdata['version'].' '.$rdata['release_channel']));
-      $link->setAttribute('id', $rdata['version'].$rdata['release_channel']);
+          $rdata['version'].' '.$rdata['release_channel'].' ('.$rdata['b2g_ver'].')'));
+      $link->setAttribute('id', $rdata['version'].$rdata['release_channel'].'-'.$rdata['b2g_ver']);
 
       $table = $body->appendChild($doc->createElement('table'));
       $table->setAttribute('border', '1');
