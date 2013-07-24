@@ -526,7 +526,7 @@ function deviceClass($devicename) {
   $classraw = strtr($devicename, array(chr(128)=>'EUR',chr(164)=>'EUR',"'"=>'','"'=>''));
   $classraw = strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $classraw));
   $devclass = ''; $i = 0;
-  while (($i < strlen($classraw)) && (strlen($devclass) < $maxlength)) {
+  while ($i < strlen($classraw)) {
     if (((ord($classraw{$i}) >= 48) && (ord($classraw{$i}) <= 57)) ||
         ((ord($classraw{$i}) >= 97) && (ord($classraw{$i}) <= 122))) {
       $devclass .= $classraw{$i};
