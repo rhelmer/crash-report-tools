@@ -241,7 +241,7 @@ foreach ($reports as $rep) {
       }
 
       // sort devices alphabetically, signatures by count
-      ksort($dd['devices'], SORT_LOCALE_STRING);
+      ksort($dd['devices']);
       foreach ($dd['devices'] as $devname=>$devdata) {
         sort($dd['devices'][$devname]['android_versions']);
         arsort($dd['devices'][$devname]['signatures']);
