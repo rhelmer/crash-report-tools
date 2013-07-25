@@ -216,7 +216,7 @@ foreach ($reports as $rep) {
         if ($rep_row['manufacturer'] == 'Sony Corporation') { $rep_row['manufacturer'] = 'Sony'; }
         if ($rep_row['manufacturer'] == 'zte') { $rep_row['manufacturer'] = 'ZTE'; }
         // Some devices double the manufacturer name needlessly as the start of the model name, remove that.
-        preg_replace('/^'.preg_quote($rep_row['manufacturer'], '/').'[ -]$/i', '', $rep_row['model']);
+        preg_replace('/^'.preg_quote($rep_row['manufacturer'], '/').'[ -]/i', '', $rep_row['model']);
 
         $devname = trim($rep_row['manufacturer'].' '.$rep_row['model']);
         if (!strlen($devname)) { $devname = 'unknown'; }
