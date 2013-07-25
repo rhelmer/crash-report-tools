@@ -211,55 +211,26 @@ foreach ($reports as $rep) {
         $sig = $rep_row['signature'];
         $crash_id = $rep_row['uuid'];
 
-        // get app notes for this crash ID (using day for performance)
-        $notes_query =
-          'SELECT app_notes '
-          .'FROM reports '
-          ."WHERE uuid='".$crash_id."'"
-          ." AND utc_day_is(date_processed, '".$anadir."');";
+        $raw_query =
+          "SELECT raw_crash->>'Android_Manufacturer' as manufacturer, "
+          ."raw_crash->>'Android_Model' as model, "
+          ."raw_crash->>'Android_Version' as android_ver "
+          .'FROM raw_crashes '
+          ."WHERE uuid='".$rep_row['uuid']."';";
 
-        $notes_result = pg_query($db_conn, $notes_query);
-        if (!$notes_result) {
-          print('--- ERROR: app_notes query failed!'."\n");
-          $appnotes = '';
+        $raw_result = pg_query($db_conn, $raw_query);
+        if (!$raw_result) {
+          print('--- ERROR: Raw crash query failed!'."\n");
         }
-        else {
-          $notes_row = pg_fetch_array($notes_result);
-          $appnotes = $notes_row['app_notes'];
-        }
+        $rep_row += pg_fetch_array($raw_result);
+        $devname = $rep_row['manufacturer'].' '.$rep_row['model'];
 
-        if (preg_match("/Model: '(.*)', Product: '.*', Manufacturer: '(.*)', Hardware: '.*'.*\n[^:\s]+:(\d\.[^\/\s]+|AOSP)\/[^:\s]+:[^\s]*keys/", $appnotes, $regs)) {
-          $devname = ucfirst($regs[2].' '.$regs[1]);
-          $andver = $regs[3];
-        }
-        elseif (preg_match("/Model: '(.*)', Product: '.*', Manufacturer: '(.*)', Hardware: '.*'/", $appnotes, $regs)) {
-          $devname = ucfirst($regs[2].' '.$regs[1]);
-          $andver = null;
-        }
-        elseif (preg_match("/ -- Model: (.*), Product: .*, Manufacturer: (.*), Hardware: .*'/", $appnotes, $regs)) {
-          $devname = ucfirst($regs[2].' '.$regs[1]);
-          $andver = null;
-        }
-        elseif (preg_match("/([^\|\n]+ [^\|\n]+)\n[^:\s]+:(\d\.[^\/\s]+|AOSP)\/[^:\s]+:[^\s]*keys/", $appnotes, $regs)) {
-          $devname = ucfirst($regs[1]);
-          $andver = $regs[2];
-        }
-        elseif (preg_match("/([^\|\n]+ [^\|\n]+)\n(unknown|xxxxxx)/", $appnotes, $regs)) {
-          $devname = ucfirst($regs[1]);
-        }
-        else {
-          $devname = 'unknown';
-          $andver = null;
-          if (!in_array($appnotes, $ignore_unknown_notes)) {
-            print('*** unknown device - notes: '.$appnotes."\n");
-          }
-        }
         // reduce dubled vendor names in device names
         $devname = str_replace('HTC HTC', 'HTC', $devname);
         $devname = str_replace('Samsung SAMSUNG-', 'Samsung ', $devname);
         $devname = str_replace('SAMSUNG SAMSUNG-', 'Samsung ', $devname);
-        $devname = str_replace('Acer Acer', 'Acer ', $devname);
-        $devname = str_replace('Asus ASUS', 'ASUS ', $devname);
+        $devname = str_replace('Acer Acer', 'Acer', $devname);
+        $devname = str_replace('Asus ASUS', 'ASUS', $devname);
         $devname = str_replace('Sony Sony', 'Sony', $devname);
         $devname = str_replace('HUAWEI HUAWEI', 'HUAWEI', $devname);
         $devname = str_replace('Hp HP', 'HP', $devname);
@@ -274,8 +245,8 @@ foreach ($reports as $rep) {
                                            'signatures' => array(),
                                            'crashes' => 0);
         }
-        if ($andver && !in_array($andver, $dd['devices'][$devname]['android_versions'])) {
-          $dd['devices'][$devname]['android_versions'][] = $andver;
+        if ($rep_row['android_ver'] && !in_array($rep_row['android_ver'], $dd['devices'][$devname]['android_versions'])) {
+          $dd['devices'][$devname]['android_versions'][] = $rep_row['android_ver'];
         }
         if (in_array($sig, array_keys($dd['devices'][$devname]['signatures']))) {
           $dd['devices'][$devname]['signatures'][$sig]++;
