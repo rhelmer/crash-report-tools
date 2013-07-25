@@ -182,9 +182,7 @@ foreach ($reports as $rep) {
         $crash_id = $rep_row['uuid'];
 
         $raw_query =
-          "SELECT raw_crash->>'Android_Manufacturer' as manufacturer, "
-          ."raw_crash->>'Android_Model' as model, "
-          ."raw_crash->>'Android_Version' as android_ver "
+          "SELECT raw_crash "
           .'FROM raw_crashes '
           ."WHERE uuid='".$rep_row['uuid']."';";
 
@@ -192,7 +190,10 @@ foreach ($reports as $rep) {
         if (!$raw_result) {
           print('--- ERROR: Raw crash query failed for bp-'.$crash_id.'!'."\n");
         }
-        $rep_row += pg_fetch_array($raw_result);
+        $raw_crash_data = json_decode(pg_fetch_array($raw_result));
+        $rep_row['manufacturer'] = $raw_crash_data['Android_Manufacturer'];
+        $rep_row['model'] = $raw_crash_data['Android_Model'];
+        $rep_row['android_ver'] = $raw_crash_data['Android_Version'];
 
         $devname = trim($rep_row['manufacturer'].' '.$rep_row['model']);
         if (!strlen($devname)) { $devname = 'unknown'; }
