@@ -210,7 +210,7 @@ foreach ($reports as $rep) {
 
         $fname_result = pg_query($db_conn, $fname_query);
         if (!$fname_result) {
-          print('--- ERROR: topmost_filenames query failed!'."\n");
+          print('--- ERROR: topmost_filenames query failed for bp-'.$crash_id.'!'."\n");
           $topmost_filenames = '';
         }
         else {
