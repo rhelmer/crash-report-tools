@@ -65,26 +65,6 @@ $reports = array(array('product'=>'FennecAndroid',
                       ),
                 );
 
-// ignorable (as not actionable) app note fields that result in unknown devices
-$ignore_unknown_notes = array(
-  '\\N',
-  "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Android'.",
-  "EGL? EGL+ AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Android'.",
-  "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Android'. | xpcom_runtime_abort(###",
-  "EGL? EGL+ AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Android'. | xpcom_runtime_abort(###",
-  "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Android'. | WebGL? GL Context? GL Context+ | WebGL+",
-  "EGL? EGL+ AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Android'. | WebGL? GL Context? GL Context+ WebGL+",
-  "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Imagination Technologies'.",
-  "EGL? EGL+ AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Imagination Technologies'.",
-  "EGL? EGL+ AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'Imagination Technologies'. | xpcom_runtime_abort(###",
-  "EGL? EGL+ | AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'NVIDIA'.",
-  "EGL? EGL+ AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'NVIDIA'.",
-  "EGL? EGL+ AdapterVendorID: , AdapterDeviceID: . | AdapterDescription: 'NVIDIA'. | xpcom_runtime_abort(###",
-  "WebGL? EGL? EGL+ | GL Context? GL Context+ | WebGL+",
-  "WebGL? EGL? EGL+ | GL Context? GL Context+ | WebGL+ | xpcom_runtime_abort(###",
-  "xpcom_runtime_abort(###",
-);
-
 // maximum uptime that is counted as startup (seconds)
 $max_uptime = 60;
 
@@ -223,7 +203,9 @@ foreach ($reports as $rep) {
           print('--- ERROR: Raw crash query failed!'."\n");
         }
         $rep_row += pg_fetch_array($raw_result);
-        $devname = $rep_row['manufacturer'].' '.$rep_row['model'];
+
+        $devname = trim($rep_row['manufacturer'].' '.$rep_row['model']);
+        if (!strlen($devname)) { $devname = 'unknown'; }
 
         // reduce dubled vendor names in device names
         $devname = str_replace('HTC HTC', 'HTC', $devname);

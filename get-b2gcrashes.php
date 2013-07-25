@@ -124,7 +124,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         print('--- ERROR: Raw crash query failed!'."\n");
       }
       $rep_row += pg_fetch_array($raw_result);
-      $rep_row['device'] = $rep_row['manufacturer'].' '.$rep_row['model'];
+      $rep_row['device'] = trim($rep_row['manufacturer'].' '.$rep_row['model']);
 
       $bugs = array();
       $bug_query =
