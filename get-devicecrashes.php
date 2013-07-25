@@ -190,7 +190,7 @@ foreach ($reports as $rep) {
         if (!$raw_result) {
           print('--- ERROR: Raw crash query failed for bp-'.$crash_id.'!'."\n");
         }
-        $raw_crash_data = json_decode(pg_fetch_array($raw_result));
+        $raw_crash_data = json_decode(pg_fetch_array($raw_result)['raw_crash']);
         $rep_row['manufacturer'] = $raw_crash_data['Android_Manufacturer'];
         $rep_row['model'] = $raw_crash_data['Android_Model'];
         $rep_row['android_ver'] = $raw_crash_data['Android_Version'];
