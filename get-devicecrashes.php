@@ -196,24 +196,32 @@ foreach ($reports as $rep) {
         $rep_row['model'] = $raw_crash_data['Android_Model'];
         $rep_row['android_ver'] = $raw_crash_data['Android_Version'];
 
+        // Fix up some manufacturor and device names.
+        if ($rep_row['manufacturer'] == 'archos') { $rep_row['manufacturer'] = 'Archos'; }
+        if ($rep_row['manufacturer'] == 'asus') { $rep_row['manufacturer'] = 'ASUS'; }
+        if ($rep_row['manufacturer'] == 'bn' || $rep_row['manufacturer'] == 'Barnes&Noble' ||
+            $rep_row['manufacturer'] == 'BarnesAndNoble') { $rep_row['manufacturer'] = 'Barnes & Noble'; }
+        if ($rep_row['manufacturer'] == 'FUJITSU MOBILE COMMUNICATIONS LIMITED') { $rep_row['manufacturer'] = 'FUJITSU'; }
+        if ($rep_row['manufacturer'] == 'FUJITSU TOSHIBA MOBILE COMMUNICATIONS LIMITED') { $rep_row['manufacturer'] = 'FUJITSU TOSHIBA'; }
+        if ($rep_row['manufacturer'] == 'hp') { $rep_row['manufacturer'] = 'HP'; }
+        if ($rep_row['manufacturer'] == 'htc') { $rep_row['manufacturer'] = 'HTC'; }
+        if ($rep_row['manufacturer'] == 'HUAWEI' || $rep_row['manufacturer'] == 'huawei') { $rep_row['manufacturer'] = 'Huawei'; }
+        if ($rep_row['manufacturer'] == 'kyocera' || $rep_row['manufacturer'] == 'KYOCERA Corporation' ||
+            $rep_row['manufacturer'] == 'KYOCERA') { $rep_row['manufacturer'] = 'Kyocera'; }
+        if ($rep_row['manufacturer'] == 'LENOVO' || $rep_row['manufacturer'] == 'lenovo') { $rep_row['manufacturer'] = 'Lenovo'; }
+        if ($rep_row['manufacturer'] == 'lge') { $rep_row['manufacturer'] = 'LGE'; }
+        if ($rep_row['manufacturer'] == 'motorola') { $rep_row['manufacturer'] = 'Motorola'; }
+        if ($rep_row['manufacturer'] == 'rockchip') { $rep_row['manufacturer'] = 'Rockchip'; }
+        if ($rep_row['manufacturer'] == 'samsung' || $rep_row['manufacturer'] == 'SAMSUNG Electronics Co.') { $rep_row['manufacturer'] = 'Samsung'; }
+        if ($rep_row['manufacturer'] == 'Sony Corporation') { $rep_row['manufacturer'] = 'Sony'; }
+        if ($rep_row['manufacturer'] == 'zte') { $rep_row['manufacturer'] = 'ZTE'; }
+        // Some devices double the manufacturer name needlessly as the start of the model name, remove that.
+        preg_replace('/^'.preg_quote($rep_row['manufacturer'], '/').'[ -]$/i', '', $rep_row['model']);
+
         $devname = trim($rep_row['manufacturer'].' '.$rep_row['model']);
         if (!strlen($devname)) { $devname = 'unknown'; }
 
-        // reduce dubled vendor names in device names
-        $devname = str_replace('HTC HTC', 'HTC', $devname);
-        $devname = str_replace('Samsung SAMSUNG-', 'Samsung ', $devname);
-        $devname = str_replace('SAMSUNG SAMSUNG-', 'Samsung ', $devname);
-        $devname = str_replace('Acer Acer', 'Acer', $devname);
-        $devname = str_replace('Asus ASUS', 'ASUS', $devname);
-        $devname = str_replace('Sony Sony', 'Sony', $devname);
-        $devname = str_replace('HUAWEI HUAWEI', 'HUAWEI', $devname);
-        $devname = str_replace('Hp HP', 'HP', $devname);
-        $devname = str_replace('Dell Inc. Dell', 'Dell', $devname);
-        $devname = str_replace('Archos ARCHOS', 'Archos', $devname);
-        $devname = str_replace('MID MID', 'MID', $devname);
-        $devname = str_replace('MEDION MEDION', 'Medion', $devname);
-        $devname = str_replace('Amazon Amazon ', 'Amazon ', $devname);
-        $devname = str_replace('Unknown Amazon ', 'Amazon ', $devname);
+        // Add data to our device data array.
         if (!array_key_exists($devname, $dd['devices'])) {
           $dd['devices'][$devname] = array('android_versions' => array(),
                                            'signatures' => array(),
@@ -233,7 +241,7 @@ foreach ($reports as $rep) {
       }
 
       // sort devices alphabetically, signatures by count
-      ksort($dd['devices']);
+      ksort($dd['devices'], SORT_STRING);
       foreach ($dd['devices'] as $devname=>$devdata) {
         sort($dd['devices'][$devname]['android_versions']);
         arsort($dd['devices'][$devname]['signatures']);
