@@ -190,7 +190,7 @@ foreach ($reports as $rep) {
 
         $raw_result = pg_query($db_conn, $raw_query);
         if (!$raw_result) {
-          print('--- ERROR: Raw crash query failed!'."\n");
+          print('--- ERROR: Raw crash query failed for bp-'.$crash_id.'!'."\n");
         }
         $rep_row += pg_fetch_array($raw_result);
 

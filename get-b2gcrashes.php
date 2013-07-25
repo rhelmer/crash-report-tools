@@ -121,7 +121,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
       $raw_result = pg_query($db_conn, $raw_query);
       if (!$raw_result) {
-        print('--- ERROR: Raw crash query failed!'."\n");
+        print('--- ERROR: Raw crash query failed for bp-'.$crash_id.'!'."\n");
       }
       $rep_row += pg_fetch_array($raw_result);
       $rep_row['device'] = trim($rep_row['manufacturer'].' '.$rep_row['model']);
@@ -135,7 +135,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
       $bug_result = pg_query($db_conn, $bug_query);
       if (!$bug_result) {
-        print('--- ERROR: Bug associations query failed!'."\n");
+        print('--- ERROR: Bug associations query failed for "'.$rep_row['signature'].'"!'."\n");
       }
       while ($bug_row = pg_fetch_array($bug_result)) {
         $bugs[$bug_row['bug_id']] = array('status' => $bug_row['status'],
