@@ -380,7 +380,6 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               $link = $td->appendChild($doc->createElement('a', intval(@$builddata['cnt'][$fld])));
               $link->setAttribute('href',
                   'https://crash-stats.mozilla.com/query/query?product='.$product
-                  .'&version=All'
                   .'&version='.$product.'%3A'.$pvdata[$builddata['pvid']]['version_string']
                   .'&range_value=1&range_unit=days&&date='.$anadir.'+23%3A59%3A59'
                   .'&query_type=contains&query=&reason='
