@@ -131,11 +131,11 @@ if (count($bugdata)) {
 
     $cgraph = array('scale_x'=>10, 'height'=>300,
                     'offset_x'=>2, 'offset_y'=>2,
-                    'rows'=>array(array('tblcolumn'=>2, 'scale'=>75, 'stack'=>false, 'fill'=>true,
+                    'rows'=>array(array('tblcolumn'=>2, 'scale'=>100, 'stack'=>false, 'fill'=>true,
                                         'color'=>'rgba(255, 127, 0, .5)'),
-                                  array('tblcolumn'=>3, 'scale'=>75, 'stack'=>false, 'fill'=>true,
+                                  array('tblcolumn'=>3, 'scale'=>100, 'stack'=>false, 'fill'=>true,
                                         'color'=>'rgba(0, 204, 0, .5)'),
-                                  array('tblcolumn'=>4, 'scale'=>75, 'stack'=>true, 'fill'=>true,
+                                  array('tblcolumn'=>4, 'scale'=>100, 'stack'=>true, 'fill'=>true,
                                         'color'=>'rgba(0, 0, 255, .5)')));
 
     $root = $doc->appendChild($doc->createElement('html'));
