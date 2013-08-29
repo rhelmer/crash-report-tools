@@ -314,6 +314,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           .'}'."\n"
           .'/* Shipped devices */'."\n"
           .'.device.zte_roamer2,'."\n"
+          .'.device.zte_p752d04,'."\n"
           .'.device.unknown_alcatel_one_touch_fire {'."\n"
           .'  color: #000000;'."\n"
           .'  font-weight: bold;'."\n"
