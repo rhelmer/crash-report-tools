@@ -151,7 +151,8 @@ foreach ($reports as $rname=>$rep) {
 
   foreach ($rep['products'] as $product) {
     $ver_query =
-      'SELECT build_date, version_string, product_version_id '
+      'SELECT build_date, version_string, product_version_id,'
+      .' major_version, is_rapid_beta '
       .'FROM product_versions '
       ."WHERE product_name = '".$product."'"
       ." AND featured_version = 't';";
@@ -196,6 +197,27 @@ foreach ($reports as $rname=>$rep) {
 
         $anaftcdata = $anadir.'/'.$ftcdata;
         if (!file_exists($anaftcdata)) {
+          $all_pv_ids = $pv_ids;
+          if ($ver_row['is_rapid_beta'] == 't') {
+            // Rapid beta rolls up 2 weeks of builds since the current date.
+            $rpbeta_stdate = date('Y-m-d', strtotime($anadir.' -14 day');
+            $beta_query =
+            'SELECT product_version_id '
+            .'FROM product_versions WHERE '
+            ."product_name = 'Firefox' AND build_type = 'beta'"
+            ." AND major_version = '".$ver_row['major_version']."'"
+            ." AND build_date BETWEEN '".$rpbeta_stdate."' AND '".$anadir."';";
+
+            $beta_result = pg_query($db_conn, $beta_query);
+            if (!$beta_result) {
+              print('--- ERROR: rapid beta version query failed!'."\n");
+              continue;
+            }
+            while ($beta_row = pg_fetch_array($beta_result)) {
+              $all_pv_ids[] = $beta_row['product_version_id'];
+            }
+          }
+
           $rep_query =
             'SELECT COUNT(*) as cnt, signatures.signature, signatures.signature_id '
             .'FROM '
@@ -205,13 +227,13 @@ foreach ($reports as $rname=>$rep) {
               :'reports_clean')
             .' LEFT JOIN signatures'
             .' ON (reports_clean.signature_id=signatures.signature_id) '
-            .' WHERE reports_clean.product_version_id IN ('.implode(',', $pv_ids).') '
+            .' WHERE reports_clean.product_version_id IN ('.implode(',', $all_pv_ids).') '
             .$rep_wherex
             ." AND utc_day_is(reports_clean.date_processed, '".$anadir."')"
             .((array_key_exists('include_reports_table', $rep) && $rep['include_reports_table'])?
                 " AND utc_day_is(reports.date_processed, '".$anadir."')"
               :'')
-            .'GROUP BY signatures.signature_id, signatures.signature '
+            .' GROUP BY signatures.signature_id, signatures.signature '
             .'ORDER BY cnt DESC;';
 
           $rep_result = pg_query($db_conn, $rep_query);
