@@ -200,7 +200,7 @@ foreach ($reports as $rname=>$rep) {
           $all_pv_ids = $pv_ids;
           if ($ver_row['is_rapid_beta'] == 't') {
             // Rapid beta rolls up 2 weeks of builds since the current date.
-            $rpbeta_stdate = date('Y-m-d', strtotime($anadir.' -14 day');
+            $rpbeta_stdate = date('Y-m-d', strtotime($anadir.' -14 day'));
             $beta_query =
             'SELECT product_version_id '
             .'FROM product_versions WHERE '
