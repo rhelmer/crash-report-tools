@@ -194,7 +194,8 @@ foreach ($reports as $rep) {
         $raw_query =
           "SELECT raw_crash "
           .'FROM raw_crashes '
-          ."WHERE uuid='".$rep_row['uuid']."';";
+          ."WHERE uuid='".$rep_row['uuid']."'"
+          ." AND utc_day_is(date_processed, '".$anadir."');";
 
         $raw_result = pg_query($db_conn, $raw_query);
         if (!$raw_result) {

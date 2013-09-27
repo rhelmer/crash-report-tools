@@ -117,7 +117,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         ."raw_crash->>'Android_Model' as model, "
         ."raw_crash->>'B2G_OS_Version' as b2g_ver "
         .'FROM raw_crashes '
-        ."WHERE uuid='".$rep_row['uuid']."';";
+        ."WHERE uuid='".$rep_row['uuid']."'"
+        ." AND utc_day_is(date_processed, '".$anadir."');";
 
       $raw_result = pg_query($db_conn, $raw_query);
       if (!$raw_result) {
