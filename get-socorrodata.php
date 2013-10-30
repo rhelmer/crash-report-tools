@@ -207,12 +207,12 @@ foreach ($prodchannels as $product=>$channels) {
       $crashes = intval($row['crashes']);
       $adi = intval($row['adi']);
       if ($crashes || $adi) {
-        $proddata[$day]['adi'] = $adi;
-        if (!in_array('crashes', $proddata[$day])) {
-          $proddata[$day]['crashes'] = array();
+        $prodtypedata[$day]['adi'] = $adi;
+        if (!in_array('crashes', $prodtypedata[$day])) {
+          $prodtypedata[$day]['crashes'] = array();
         }
         if ($crashes) {
-          $proddata[$day]['crashes'][$type] = $crashes;
+          $prodtypedata[$day]['crashes'][$type] = $crashes;
         }
       }
       if (is_null($maxday) || $maxday < $day) { $maxday = $day; }
