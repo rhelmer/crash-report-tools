@@ -208,7 +208,7 @@ foreach ($prodchannels as $product=>$channels) {
       $adi = intval($row['adi']);
       if ($crashes || $adi) {
         $prodtypedata[$day]['adi'] = $adi;
-        if (!in_array('crashes', $prodtypedata[$day])) {
+        if (!array_key_exists('crashes', $prodtypedata[$day])) {
           $prodtypedata[$day]['crashes'] = array();
         }
         if ($crashes) {
