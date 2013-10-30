@@ -34,6 +34,9 @@ date_default_timezone_set('America/Los_Angeles');
 // products to gather data from
 $products = array('Firefox', 'MetroFirefox', 'Fennec', 'FennecAndroid');
 
+// products and channels to gather data per-type from
+$prodchannels = array('Firefox' => array('Release'));
+
 // for how many days back to get the data
 $backlog_days = 15;
 
@@ -126,14 +129,6 @@ foreach ($products as $product) {
     ORDER BY adu_date desc;
   */
 
-  /* Query for numbers per crash type for "recent releases":
-    SELECT product_versions.product_name,product_versions.version_string,crashes_by_user.report_date,crash_types.crash_type,SUM(report_count) AS crashes, SUM(adu) AS adi
-    FROM crashes_by_user JOIN product_versions ON (crashes_by_user.product_version_id=product_versions.product_version_id) JOIN crash_types ON (crashes_by_user.crash_type_id=crash_types.crash_type_id)
-    WHERE product_versions.product_name = 'Firefox' AND product_versions.build_type='Release' AND crashes_by_user.report_date<(product_versions.build_date + interval '9 weeks') AND crashes_by_user.report_date BETWEEN '2013-10-22' AND '2013-10-30'
-    GROUP BY product_versions.product_name,product_versions.version_string,crashes_by_user.report_date,crash_types.crash_type
-    ORDER BY report_date DESC;
-  */
-
   $maxday = null;
 
   $db_query = 'SELECT adu_date, version_string as version, '
@@ -164,6 +159,69 @@ foreach ($products as $product) {
     print('--- ERROR: Last day retrieved is '.$maxday.' while yesterday was '.$day_end.'!'."\n");
   }
   file_put_contents($fproddata, json_encode($proddata));
+}
+
+foreach ($prodchannels as $product=>$channels) {
+  foreach ($channels as $channel) {
+    $fprodtypedata = $product.'-'.strtolower($channel).'-bytype.json';
+
+    if (file_exists($fprodtypedata)) {
+      print('Read stored '.$product.' '.$channel.' per-type data'."\n");
+      $prodtypedata = json_decode(file_get_contents($fprodtypedata), true);
+    }
+    else {
+      $prodtypedata = array();
+    }
+
+    print('Fetch per-type daily data for '.$product.' '.$channel."\n");
+    /* Query for numbers per crash type for "recent releases":
+      SELECT product_versions.product_name,product_versions.version_string,crashes_by_user.report_date,crash_types.crash_type,SUM(report_count) AS crashes, SUM(adu) AS adi
+      FROM crashes_by_user JOIN product_versions ON (crashes_by_user.product_version_id=product_versions.product_version_id) JOIN crash_types ON (crashes_by_user.crash_type_id=crash_types.crash_type_id)
+      WHERE product_versions.product_name = 'Firefox' AND product_versions.build_type='Release' AND crashes_by_user.report_date<(product_versions.build_date + interval '9 weeks') AND crashes_by_user.report_date BETWEEN '2013-10-22' AND '2013-10-30'
+      GROUP BY product_versions.product_name,product_versions.version_string,crashes_by_user.report_date,crash_types.crash_type
+      ORDER BY report_date DESC;
+    */
+
+    $maxday = null;
+
+    $db_query = 'SELECT crashes_by_user.report_date, crash_types.crash_type, '
+                .'SUM(crashes_by_user.report_count) AS crashes, SUM(crashes_by_user.adu) AS adi '
+                .'FROM crashes_by_user JOIN product_versions'
+                .' ON (crashes_by_user.product_version_id=product_versions.product_version_id)'
+                .' JOIN crash_types ON (crashes_by_user.crash_type_id=crash_types.crash_type_id) '
+                ."WHERE product_versions.product_name = '".$product."'"
+                ." AND product_versions.build_type='".$channel."'"
+                ." AND crashes_by_user.report_date < (product_versions.build_date + interval '9 weeks')"
+                ." AND crashes_by_user.report_date BETWEEN '".$day_start."' AND '".$day_end."' "
+                .'GROUP BY crashes_by_user.report_date, crash_types.crash_type '
+                .'ORDER BY crashes_by_user.report_date DESC;';
+
+    $result = pg_query($db_conn, $db_query);
+    if (!$result) {
+      print('--- ERROR: query failed!'."\n");
+    }
+
+    while ($row = pg_fetch_array($result)) {
+      $day = $row['report_date'];
+      $type = $row['crash_type'];
+      $crashes = intval($row['crashes']);
+      $adi = intval($row['adi']);
+      if ($crashes || $adi) {
+        $proddata[$day]['adi'] = $adi;
+        if (!in_array('crashes', $proddata[$day])) {
+          $proddata[$day]['crashes'] = array();
+        }
+        if ($crashes) {
+          $proddata[$day]['crashes'][$type] = $crashes;
+        }
+      }
+      if (is_null($maxday) || $maxday < $day) { $maxday = $day; }
+    }
+    if ($maxday < $day_end) {
+      print('--- ERROR: Last day retrieved is '.$maxday.' while yesterday was '.$day_end.'!'."\n");
+    }
+    file_put_contents($fprodtypedata, json_encode($prodtypedata));
+  }
 }
 print("\n");
 ?>
