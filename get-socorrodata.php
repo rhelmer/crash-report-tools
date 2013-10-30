@@ -161,8 +161,6 @@ foreach ($products as $product) {
   file_put_contents($fproddata, json_encode($proddata));
 }
 
-$day_start = date('2012-08-01');
-
 foreach ($prodchannels as $product=>$channels) {
   foreach ($channels as $channel) {
     $fprodtypedata = $product.'-'.strtolower($channel).'-bytype.json';
