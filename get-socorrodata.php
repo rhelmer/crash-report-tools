@@ -161,6 +161,8 @@ foreach ($products as $product) {
   file_put_contents($fproddata, json_encode($proddata));
 }
 
+$day_start = date('2012-08-01');
+
 foreach ($prodchannels as $product=>$channels) {
   foreach ($channels as $channel) {
     $fprodtypedata = $product.'-'.strtolower($channel).'-bytype.json';
@@ -204,14 +206,14 @@ foreach ($prodchannels as $product=>$channels) {
     while ($row = pg_fetch_array($result)) {
       $day = $row['report_date'];
       $type = $row['crash_type'];
-      $crashes = intval($row['crashes']);
+      $crashes = intval($row['crashes']) * (($product == 'Firefox' && $channel == 'Release') ? 10 : 1);
       $adi = intval($row['adi']);
       if ($crashes || $adi) {
         $prodtypedata[$day]['adi'] = $adi;
         if (!array_key_exists('crashes', $prodtypedata[$day])) {
           $prodtypedata[$day]['crashes'] = array();
         }
-        if ($crashes) {
+        if ($crashes && ($type != 'Hang Browser')) {
           $prodtypedata[$day]['crashes'][$type] = $crashes;
         }
       }
