@@ -32,7 +32,7 @@ date_default_timezone_set('America/Los_Angeles');
 // *** data gathering variables ***
 
 // products to gather data from
-$products = array('Firefox', 'Fennec', 'FennecAndroid');
+$products = array('Firefox', 'MetroFirefox', 'Fennec', 'FennecAndroid');
 
 // for how many days back to get the data
 $backlog_days = 15;
@@ -124,6 +124,14 @@ foreach ($products as $product) {
           and os_name in ('Windows', 'Mac OS X', 'Linux')
     GROUP BY adu_date, Product, Version
     ORDER BY adu_date desc;
+  */
+
+  /* Query for numbers per crash type for "recent releases":
+    SELECT product_versions.product_name,product_versions.version_string,crashes_by_user.report_date,crash_types.crash_type,SUM(report_count) AS crashes, SUM(adu) AS adi
+    FROM crashes_by_user JOIN product_versions ON (crashes_by_user.product_version_id=product_versions.product_version_id) JOIN crash_types ON (crashes_by_user.crash_type_id=crash_types.crash_type_id)
+    WHERE product_versions.product_name = 'Firefox' AND product_versions.build_type='Release' AND crashes_by_user.report_date<(product_versions.build_date + interval '9 weeks') AND crashes_by_user.report_date BETWEEN '2013-10-22' AND '2013-10-30'
+    GROUP BY product_versions.product_name,product_versions.version_string,crashes_by_user.report_date,crash_types.crash_type
+    ORDER BY report_date DESC;
   */
 
   $maxday = null;
