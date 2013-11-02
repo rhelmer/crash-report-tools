@@ -161,6 +161,9 @@ foreach ($products as $product) {
   file_put_contents($fproddata, json_encode($proddata));
 }
 
+// uncomment for backfilling
+// $day_start = '2011-01-01';
+
 foreach ($prodchannels as $product=>$channels) {
   foreach ($channels as $channel) {
     $fprodtypedata = $product.'-'.strtolower($channel).'-bytype.json';
