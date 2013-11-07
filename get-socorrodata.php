@@ -35,7 +35,8 @@ date_default_timezone_set('America/Los_Angeles');
 $products = array('Firefox', 'MetroFirefox', 'Fennec', 'FennecAndroid');
 
 // products and channels to gather data per-type from
-$prodchannels = array('Firefox' => array('Release'));
+$prodchannels = array('Firefox' => array('Release'),
+                      'FennecAndroid' => array('Release'));
 
 // for how many days back to get the data
 $backlog_days = 15;
