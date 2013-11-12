@@ -35,8 +35,8 @@ date_default_timezone_set('America/Los_Angeles');
 $products = array('Firefox', 'MetroFirefox', 'Fennec', 'FennecAndroid');
 
 // products and channels to gather data per-type from
-$prodchannels = array('Firefox' => array('Release'),
-                      'FennecAndroid' => array('Release'));
+$prodchannels = array('Firefox' => array('Release', 'Beta'),
+                      'FennecAndroid' => array('Release', 'Beta'));
 
 // for how many days back to get the data
 $backlog_days = 15;
@@ -188,6 +188,8 @@ foreach ($prodchannels as $product=>$channels) {
 
     $maxday = null;
 
+    $max_build_age = ($channel == 'Release')?'9 weeks':'3 weeks';
+
     $db_query = 'SELECT crashes_by_user.report_date, crash_types.crash_type, '
                 .'SUM(crashes_by_user.report_count) AS crashes, SUM(crashes_by_user.adu) AS adi '
                 .'FROM crashes_by_user JOIN product_versions'
@@ -196,7 +198,7 @@ foreach ($prodchannels as $product=>$channels) {
                 ."WHERE product_versions.product_name = '".$product."'"
                 ." AND product_versions.build_type='".$channel."'"
                 .(($product == 'Firefox')?" AND major_version!='3.6'":'')  // 3.6 has ADI but no crashes and disturbs the stats.
-                ." AND crashes_by_user.report_date < (product_versions.build_date + interval '9 weeks')"
+                ." AND crashes_by_user.report_date < (product_versions.build_date + interval '".$max_build_age."')"
                 ." AND crashes_by_user.report_date BETWEEN '".$day_start."' AND '".$day_end."' "
                 .'GROUP BY crashes_by_user.report_date, crash_types.crash_type '
                 .'ORDER BY crashes_by_user.report_date DESC;';
