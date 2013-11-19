@@ -126,9 +126,12 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       }
       $raw_row = pg_fetch_array($raw_result);
       $raw_crash_data = json_decode($raw_row['raw_crash'], true);
-      $rep_row['manufacturer'] = $raw_crash_data['Android_Manufacturer'];
-      $rep_row['model'] = $raw_crash_data['Android_Model'];
-      $rep_row['b2g_ver'] = $raw_crash_data['B2G_OS_Version'];
+      $rep_row['manufacturer'] = array_key_exists('Android_Manufacturer', $raw_crash_data)
+                                 ? $raw_crash_data['Android_Manufacturer'] : '';
+      $rep_row['model'] = array_key_exists('Android_Model', $raw_crash_data)
+                          ? $raw_crash_data['Android_Model'] : 'unknown';
+      $rep_row['b2g_ver'] = array_key_exists('B2G_OS_Version', $raw_crash_data)
+                            ? $raw_crash_data['B2G_OS_Version'] : 'unknown';
       $rep_row['device'] = trim($rep_row['manufacturer'].' '.$rep_row['model']);
 
       $bugs = array();
