@@ -112,19 +112,23 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
     $bcd = array('list' => array(), 'total' => 0);
     while ($rep_row = pg_fetch_array($rep_result)) {
+      // Need to fetch whole JSON object becasue of bug 898072.
+      // Look into history to find nicer code to use when that is fixed.
       $raw_query =
-        "SELECT raw_crash->>'Android_Manufacturer' as manufacturer, "
-        ."raw_crash->>'Android_Model' as model, "
-        ."raw_crash->>'B2G_OS_Version' as b2g_ver "
+        "SELECT raw_crash "
         .'FROM raw_crashes '
         ."WHERE uuid='".$rep_row['uuid']."'"
         ." AND utc_day_is(date_processed, '".$anadir."');";
 
       $raw_result = pg_query($db_conn, $raw_query);
       if (!$raw_result) {
-        print('--- ERROR: Raw crash query failed for bp-'.$crash_id.'!'."\n");
+        print('--- ERROR: Raw crash query failed for bp-'.$rep_row['uuid'].'!'."\n");
       }
-      $rep_row += pg_fetch_array($raw_result);
+      $raw_row = pg_fetch_array($raw_result);
+      $raw_crash_data = json_decode($raw_row['raw_crash'], true);
+      $rep_row['manufacturer'] = $raw_crash_data['Android_Manufacturer'];
+      $rep_row['model'] = $raw_crash_data['Android_Model'];
+      $rep_row['b2g_ver'] = $raw_crash_data['B2G_OS_Version'];
       $rep_row['device'] = trim($rep_row['manufacturer'].' '.$rep_row['model']);
 
       $bugs = array();

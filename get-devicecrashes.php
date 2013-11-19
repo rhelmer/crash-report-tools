@@ -181,6 +181,8 @@ foreach ($reports as $rep) {
         $sig = $rep_row['signature'];
         $crash_id = $rep_row['uuid'];
 
+        // Need to fetch whole JSON object becasue of bug 898072.
+        // Look into history to find nicer code to use when that is fixed.
         $raw_query =
           "SELECT raw_crash "
           .'FROM raw_crashes '
@@ -189,7 +191,7 @@ foreach ($reports as $rep) {
 
         $raw_result = pg_query($db_conn, $raw_query);
         if (!$raw_result) {
-          print('--- ERROR: Raw crash query failed for bp-'.$crash_id.'!'."\n");
+          print('--- ERROR: Raw crash query failed for bp-'.$rep_row['uuid'].'!'."\n");
         }
         $raw_row = pg_fetch_array($raw_result);
         $raw_crash_data = json_decode($raw_row['raw_crash'], true);
