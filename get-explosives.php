@@ -41,12 +41,6 @@ ini_set('memory_limit', '512M');
 //   mincount - minimum count of crashes per day to analyze
 
 $reports = array(array('product'=>'Firefox',
-                       'version'=>'17',
-                       'version_regex'=>'17\..*', // keep around for ESR
-                       'fake_adu'=>false,
-                       'mincount'=>20,
-                      ),
-                 array('product'=>'Firefox',
                        'version'=>'24',
                        'version_regex'=>'24\..*', // keep around for ESR
                        'fake_adu'=>false,
