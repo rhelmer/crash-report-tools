@@ -191,7 +191,8 @@ foreach ($prodchannels as $product=>$channels) {
     $max_build_age = ($channel == 'Release')?'9 weeks':'3 weeks';
 
     $db_query = 'SELECT crashes_by_user.report_date, crash_types.crash_type, '
-                .'SUM(crashes_by_user.report_count) AS crashes, SUM(crashes_by_user.adu) AS adi '
+                .'SUM(crashes_by_user.report_count) AS crashes, SUM(crashes_by_user.adu) AS adi, '
+                ."string_agg(product_versions.version_string,',') as versions "
                 .'FROM crashes_by_user JOIN product_versions'
                 .' ON (crashes_by_user.product_version_id=product_versions.product_version_id)'
                 .' JOIN crash_types ON (crashes_by_user.crash_type_id=crash_types.crash_type_id) '
@@ -213,6 +214,7 @@ foreach ($prodchannels as $product=>$channels) {
       $type = $row['crash_type'];
       $crashes = intval($row['crashes']) * (($product == 'Firefox' && $channel == 'Release') ? 10 : 1);
       $adi = intval($row['adi']);
+      $versions = array_unique(explode($row['versions']));
       if ($crashes || $adi) {
         $prodtypedata[$day]['adi'] = $adi;
         if (!array_key_exists('crashes', $prodtypedata[$day])) {
