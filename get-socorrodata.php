@@ -214,7 +214,7 @@ foreach ($prodchannels as $product=>$channels) {
       $type = $row['crash_type'];
       $crashes = intval($row['crashes']) * (($product == 'Firefox' && $channel == 'Release') ? 10 : 1);
       $adi = intval($row['adi']);
-      $versions = array_unique(explode($row['versions']));
+      $versions = array_unique(explode(',', $row['versions']));
       if ($crashes || $adi) {
         $prodtypedata[$day]['adi'] = $adi;
         if (!array_key_exists('crashes', $prodtypedata[$day])) {
