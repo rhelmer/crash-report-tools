@@ -214,9 +214,13 @@ foreach ($prodchannels as $product=>$channels) {
       $type = $row['crash_type'];
       $crashes = intval($row['crashes']) * (($product == 'Firefox' && $channel == 'Release') ? 10 : 1);
       $adi = intval($row['adi']);
+      // The SQL query can give us the same version multiple times, so we take
+      // out redundant elements with array_unique and then do a primitive sort
+      // for re-setting array indexes and giving a consistent output.
       $versions = array_unique(explode(',', $row['versions']));
+      sort($versions);
       if ($crashes || $adi) {
-        $prodtypedata[$day]['versions'] = $versions;
+        $prodtypedata[$day]['versions'] = array_values($versions);
         $prodtypedata[$day]['adi'] = $adi;
         if (!array_key_exists('crashes', $prodtypedata[$day])) {
           $prodtypedata[$day]['crashes'] = array();
