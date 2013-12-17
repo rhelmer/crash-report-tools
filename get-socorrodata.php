@@ -216,6 +216,7 @@ foreach ($prodchannels as $product=>$channels) {
       $adi = intval($row['adi']);
       $versions = array_unique(explode(',', $row['versions']));
       if ($crashes || $adi) {
+        $prodtypedata[$day]['versions'] = $versions;
         $prodtypedata[$day]['adi'] = $adi;
         if (!array_key_exists('crashes', $prodtypedata[$day])) {
           $prodtypedata[$day]['crashes'] = array();
