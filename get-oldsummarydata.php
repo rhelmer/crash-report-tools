@@ -96,7 +96,7 @@ foreach ($channels as $channel) {
       // $7 is product, $8 is version, $9 is build, $23 is hang id, $25 is process_type, $29 is release_channel
       $cmd = 'awk \'-F\t\' \'$7 ~ /^Firefox$/'
 //             .' && $29 ~ /^'.awk_quote($channel, '/')
-            .' {printf ",%s,%s,%s,%s,%s\n",$7,$8,$9,$25,($23!="\\\\N")}\'';
+            .' {printf ",%s,%s,%s,%s,%s,%s\n",$7,$8,$9,$25,($23!="\\\\N"),$29}\'';
       if ($on_moz_server) {
         $return = shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' | sort | uniq -c');
       }
@@ -114,8 +114,10 @@ foreach ($channels as $channel) {
           $builddate = strtotime(substr(trim($fields[3]), 0, 4).'-'.substr(trim($fields[3]), 4, 2).'-'.substr(trim($fields[3]), 6, 2));
           $ptype = trim($fields[4]);
           $is_hang = strlen($ptype)?(!!intval($fields[5])):false;
+          $release_channel = trim($fields[6]);
           if ($ptype == '\\N' || $ptype =='') { $ptype = 'browser'; }
-          if (preg_match($ver_regex, $version) && $builddate > $min_builddate && (!$is_hang || $ptype == 'plugin')) {
+          if ((strlen($release_channel)?($release_channel == strtolower($channel)):preg_match($ver_regex, $version)) &&
+              $builddate > $min_builddate && (!$is_hang || $ptype == 'plugin')) {
             $type = ucfirst($ptype);
             // Create a type that matches what Socorro has internally nowadays.
             if ($ptype == 'plugin') { $type = ($is_hang?'Hang ':'OOP ').$type; }
