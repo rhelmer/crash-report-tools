@@ -73,7 +73,7 @@ foreach ($channels as $channel) {
     if ($on_moz_server) {
       $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
       if (!file_exists($anafcsvgz)) {
-        print($anafcsvgz.' does not exist!')
+        print($anafcsvgz.' does not exist!');
         continue;
       }
     }
@@ -85,7 +85,7 @@ foreach ($channels as $channel) {
         if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
       }
       if (!file_exists($anafcsv)) {
-        print($anafcsv.' does not exist!')
+        print($anafcsv.' does not exist!');
         continue;
       }
     }
