@@ -32,10 +32,10 @@ date_default_timezone_set('America/Los_Angeles');
 // *** data gathering variables ***
 
 $startdate = strtotime('2010-02-01');
-$enddate = strtotime('2010-02-01');
+$enddate = strtotime('2012-01-01');
 
 // We only support Release and Beta!
-$channels = array('Release');
+$channels = array('Release','Beta');
 
 // *** URLs and paths ***
 
@@ -73,7 +73,7 @@ foreach ($channels as $channel) {
     if ($on_moz_server) {
       $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
       if (!file_exists($anafcsvgz)) {
-        print($anafcsvgz.' does not exist!');
+        print($anafcsvgz.' does not exist!'."\n");
         continue;
       }
     }
@@ -85,7 +85,7 @@ foreach ($channels as $channel) {
         if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
       }
       if (!file_exists($anafcsv)) {
-        print($anafcsv.' does not exist!');
+        print($anafcsv.' does not exist!'."\n");
         continue;
       }
     }
