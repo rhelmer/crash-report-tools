@@ -72,7 +72,10 @@ foreach ($channels as $channel) {
     // Make sure we have the crashdata csv.
     if ($on_moz_server) {
       $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-      if (!file_exists($anafcsvgz)) { break; }
+      if (!file_exists($anafcsvgz)) {
+        print($anafcsvgz.' does not exist!')
+        continue;
+      }
     }
     else {
       $anafcsv = $fcsv;
@@ -81,7 +84,10 @@ foreach ($channels as $channel) {
         $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
         if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
       }
-      if (!file_exists($anafcsv)) { break; }
+      if (!file_exists($anafcsv)) {
+        print($anafcsv.' does not exist!')
+        continue;
+      }
     }
 
     $min_builddate = strtotime(date('Y-m-d', $anatime).' -'.$max_build_age);
