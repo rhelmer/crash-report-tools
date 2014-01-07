@@ -188,7 +188,7 @@ foreach ($prodchannels as $product=>$channels) {
 
     $maxday = null;
 
-    $max_build_age = ($channel == 'Release')?'9 weeks':'3 weeks';
+    $max_build_age = ($channel == 'Release')?'9 weeks':'4 weeks';
 
     $db_query = 'SELECT crashes_by_user.report_date, crash_types.crash_type, '
                 .'SUM(crashes_by_user.report_count) AS crashes, SUM(crashes_by_user.adu) AS adi, '
