@@ -1,0 +1,35 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+body {
+  font-family: sans-serif;
+  background-color: #FFFFFF;
+  color: #000000;
+}
+
+h1 {
+  margin-bottom: 0;
+}
+
+#bzLine {
+  margin-top: 0;
+}
+
+#none, .hidden {
+  display: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0 0;
+}
+
+th, td {
+  padding: 1px 3px;
+}
+
+/* temporary */
+#debugLog {
+  display: none;
+}
