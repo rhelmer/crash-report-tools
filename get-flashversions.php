@@ -52,7 +52,7 @@ if (count($force_dates)) {
 // Flash versions to gather reports for.
 
 $flash_versions = array('11.9.900.170',
-                        '12.0.0.39',
+                        '12.0.0.43',
                         '12.0.0.47');
 
 // for how many days back to get the data
