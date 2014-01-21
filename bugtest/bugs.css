@@ -16,6 +16,10 @@ h1 {
   margin-top: 0;
 }
 
+#totalNum {
+  font-weight: bold;
+}
+
 #none, .hidden {
   display: none;
 }
