@@ -12,9 +12,20 @@
 </head>
 <body>
 <h1>Buglist Dashboard Test</h1>
-<p id="bzLine">Analyzed bug list: <span id="bzURL"></span></p>
+<p id="bzLine">Analyzed bug list: <a href="" id="bzURL"></a></p>
 
 <div id="dashboard">
+<p id="progressLine"></p>
+<p id="totalLine" class="hidden">Total bugs: <span id="totalNum"></span> - <span id="totalOpen"></span>% open, <span id="totalFixed"></span>% fixed.</p>
+
+<table id="compTbl" border="1" class="hidden">
+<thead>
+<tr><th>Component</th><th>Pct</th><th>Open</th><th>Fixed</th></tr>
+</thead>
+<tbody id="compTblBody">
+</tbody>
+</table>
+
 </div>
 
 <p id="debug"></p>

@@ -29,6 +29,10 @@ th, td {
   padding: 1px 3px;
 }
 
+.pct, .num {
+  text-align: right;
+}
+
 /* temporary */
 #debugLog {
   display: none;
