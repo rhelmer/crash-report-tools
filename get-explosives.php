@@ -216,64 +216,30 @@ foreach ($reports as $rep) {
   $total = array();
   $sigcnt = array();
 
-  $pv_ids = array();
-  $pv_query =
-    'SELECT product_version_id '
-    .'FROM product_versions '
-    ."WHERE product_name = '".$rep['product']."'"
-    .(strlen($ver)
-      ?' AND release_version '.(isset($rep['version_regex'])
-                                ?"~ '^".$rep['version_regex']."$'"
-                                :"= '".$ver."'")
-      :'')
-    .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
-    .';';
-  $pv_result = pg_query($db_conn, $pv_query);
-  if (!$pv_result) {
-    print('--- ERROR: product version query failed!'."\n");
-  }
-  while ($pv_row = pg_fetch_array($pv_result)) {
-    $pv_ids[] = $pv_row['product_version_id'];
-  }
-
-  if (!count($pv_ids)) {
-    print('--- ERROR: no versions found in DB for '.$prdverdisplay.'!'."\n");
-    continue;
-  }
-
-  $throttle_ids = array();
-  if ($rep['product'] == 'Firefox') {
-    $throttle_query =
-      'SELECT product_version_id '
-      .'FROM product_versions '
-      ."WHERE build_type = 'Release' AND product_name = '".$rep['product']."'"
+  $max_build_age = getMaxBuildAge($channel);
+  if (!$rep['fake_adu']) {
+    $adu_query =
+      "SELECT SUM(CASE
+                  WHEN product_versions.build_type = 'Release' AND product_versions.product_name = 'Firefox'
+                  THEN product_adu.adu_count / 10 ELSE product_adu.adu_count END) as v_adu,
+              SUM(adu_count) as adu, adu_date "
+      .'FROM product_adu JOIN product_versions'
+      .' ON (product_adu.product_version_id=product_versions.product_version_id)'
+      ."WHERE product_versions.product_name = '".$rep['product']."'"
       .(strlen($ver)
-        ?' AND release_version '.(isset($rep['version_regex'])
+        ?' AND product_versions.release_version '.(isset($rep['version_regex'])
                                   ?"~ '^".$rep['version_regex']."$'"
                                   :"= '".$ver."'")
         :'')
-      .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
-      .';';
-    $throttle_result = pg_query($db_conn, $throttle_query);
-    if ($throttle_result) {
-      while ($throttle_row = pg_fetch_array($throttle_result)) {
-        $throttle_ids[] = $throttle_row['product_version_id'];
-      }
-    }
-  }
-
-  if (!$rep['fake_adu']) {
-    $first_day = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -'.($backlog_days + 1).' day'));
-    $adu_query =
-      'SELECT SUM('.(count($throttle_ids)?'CASE
-                  WHEN product_version_id IN ('.implode(',', $throttle_ids).')
-                  THEN adu_count / 10 ELSE adu_count END':'adu_count').') as v_adu,
-              SUM(adu_count) as adu, adu_date '
-      .'FROM product_adu '
-      .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
-      ." AND adu_date >= '".$first_day."' "
-      .'GROUP BY adu_date '
-      .'ORDER BY adu_date ASC;';
+      .(strlen($channel)
+        ?" AND product_versions.build_type='".$channel."'"
+          ." AND product_versions.is_rapid_beta='f'"
+          .(($rep['product'] == 'Firefox')?" AND major_version!='3.6'":'')  // 3.6 has ADI but no crashes and disturbs the stats.
+          ." AND product_adu.adu_date < (product_versions.build_date + interval '".$max_build_age."')"
+        :'')
+      ." AND product_adu.adu_date >= '".$first_day."' "
+      .'GROUP BY product_adu.adu_date '
+      .'ORDER BY product_adu.adu_date ASC;';
 
     $adu_result = pg_query($db_conn, $adu_query);
     if (!$adu_result) {
@@ -305,12 +271,25 @@ foreach ($reports as $rep) {
     }
 
     $rep_query =
-      'SELECT COUNT(*) as cnt, signature '
-      .'FROM reports_clean LEFT JOIN signatures'
-      .' ON (reports_clean.signature_id=signatures.signature_id) '
-      .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
-      ." AND utc_day_is(date_processed, '".$anadir."')"
-      .'GROUP BY signature '
+      'SELECT COUNT(*) as cnt, signatures.signature '
+      .'FROM reports_clean LEFT JOIN product_versions'
+      .' ON (reports_clean.product_version_id=product_versions.product_version_id) '
+      .' LEFT JOIN signatures'
+      .' ON (reports_clean.signature_id=signatures.signature_id)'
+      ."WHERE product_versions.product_name = '".$rep['product']."'"
+      .(strlen($ver)
+        ?' AND product_versions.release_version '.(isset($rep['version_regex'])
+                                  ?"~ '^".$rep['version_regex']."$'"
+                                  :"= '".$ver."'")
+        :'')
+      .(strlen($channel)
+        ?" AND product_versions.build_type='".$channel."'"
+          ." AND product_versions.is_rapid_beta='f'"
+          .(($rep['product'] == 'Firefox')?" AND major_version!='3.6'":'')  // 3.6 has ADI but no crashes and disturbs the stats.
+          ." AND reports_clean.date_processed < (product_versions.build_date + interval '".$max_build_age."')"
+        :'')
+      ." AND utc_day_is(reports_clean.date_processed, '".$anadir."')"
+      .'GROUP BY signatures.signature '
       .'ORDER BY cnt DESC;';
 
     $rep_result = pg_query($db_conn, $rep_query);
