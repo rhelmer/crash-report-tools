@@ -31,7 +31,7 @@ window.onload = function() {
   document.getElementById("bzLink").href = gBzInput.value;
   document.getElementById("permaLink").href = query_string;
 
-  document.getElementById("bzAnalyze").onclick = runAnalysis;
+  document.getElementById("analyzeForm").onsubmit = runAnalysis;
   gBzInput.oninput = function() {
     document.getElementById("bzAnalyze").disabled = false;
     document.getElementById("repLinks").classList.add("hidden");
@@ -70,6 +70,7 @@ function runAnalysis() {
       }
     }
   );
+  return false;
 }
 
 function processData(aBugData) {
