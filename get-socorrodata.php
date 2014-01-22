@@ -197,7 +197,7 @@ foreach ($prodchannels as $product=>$channels) {
                 .' ON (crashes_by_user.product_version_id=product_versions.product_version_id)'
                 .' JOIN crash_types ON (crashes_by_user.crash_type_id=crash_types.crash_type_id) '
                 ."WHERE product_versions.product_name = '".$product."'"
-                ." AND product_versions.build_typ='".$channel."'"
+                ." AND product_versions.build_type='".$channel."'"
                 ." AND product_versions.is_rapid_beta='f'"
                 .(($product == 'Firefox')?" AND major_version!='3.6'":'')  // 3.6 has ADI but no crashes and disturbs the stats.
                 ." AND crashes_by_user.report_date < (product_versions.build_date + interval '".$max_build_age."')"
