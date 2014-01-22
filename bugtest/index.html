@@ -6,20 +6,25 @@
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <title>Buglist Report Test</title>
+  <title>Buglist Report</title>
   <script src="bugs.js"></script>
   <link rel="stylesheet" href="bugs.css">
 </head>
 <body>
-<h1>Buglist Report Test</h1>
+<h1>Buglist Report</h1>
 <p id="bzLine">Bug list (Bugzilla URL):
 <input type="url" id="bzURL">
 <br><input type="submit" id="bzAnalyze" value="Analyze">
+<span id="repLinks">
+- <a href="" id="bzLink">Open in Bugzilla</a>
+- <a href="" id="permaLink">Permalink to this report</a>
+</span>
 </p>
 
 <div id="dashboard">
 <p id="progressLine"></p>
-<p id="totalLine" class="hidden">Total bugs: <span id="totalNum"></span> - <span id="totalOpen"></span>% open, <span id="totalFixed"></span>% fixed.</p>
+<p id="totalLine" class="hidden">Total bugs: <span id="totalNum"></span>
+- <span id="totalOpen"></span>% open, <span id="totalFixed"></span>% fixed.</p>
 
 <table id="compTbl" border="1" class="hidden">
 <thead>

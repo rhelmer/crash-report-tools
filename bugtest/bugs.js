@@ -28,21 +28,35 @@ window.onload = function() {
     query_string = "?keywords=crash&chfield=%5BBug%20creation%5D&chfieldfrom=" + makeISODate(lastWeek) + "&chfieldto=" + makeISODate(curDate);
   }
   gBzInput.value = gBzBase + "buglist.cgi" + query_string;
+  document.getElementById("bzLink").href = gBzInput.value;
+  document.getElementById("permaLink").href = query_string;
 
   document.getElementById("bzAnalyze").onclick = runAnalysis;
+  gBzInput.oninput = function() {
+    document.getElementById("bzAnalyze").disabled = false;
+    document.getElementById("repLinks").classList.add("hidden");
+  };
+  // If people have linked to a specific report, run it directly.
+  if (location.search) { runAnalysis(); }
 }
 
 function runAnalysis() {
+  document.getElementById("bzAnalyze").disabled = true;
   var bz_strip_regex = new RegExp("^" + gBzBase + "buglist.cgi\\?");
   var list_query = gBzInput.value.replace(bz_strip_regex, "");
   // Causes us to reload this pag: location.search = list_query;
   var list_url = gBzAPIBase + "bug?" + list_query + "&include_fields=id,product,component,status,resolution,creator,assigned_to,creation_time";
 
   gBzListURL = gBzBase + "buglist.cgi?" + list_query;
-  /*
-  bzLink.href = gBzListURL;
-  bzLink.textContent = list_query;
-  */
+  document.getElementById("bzLink").href = gBzListURL;
+  if (location.host) {
+    document.getElementById("permaLink").href = location.protocol + "//" + location.host + location.path + "?" + list_query;
+  }
+  else { // In this case, we know the browser also has no working search string but let's give them something.
+    document.getElementById("permaLink").href = "?" + list_query;
+  }
+  document.getElementById("repLinks").classList.remove("hidden");
+
   gProgLine.textContent = "Fetching bug list...";
 
   // Get bug list.
