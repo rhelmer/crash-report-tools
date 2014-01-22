@@ -216,7 +216,7 @@ foreach ($reports as $rep) {
   $total = array();
   $sigcnt = array();
 
-  $max_build_age = getMaxBuildAge($channel);
+  $max_build_age = getMaxBuildAge($channel, true);
   if (!$rep['fake_adu']) {
     $first_day = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -'.($backlog_days + 1).' day'));
     $adu_query =
@@ -234,9 +234,9 @@ foreach ($reports as $rep) {
         :'')
       .(strlen($channel)
         ?" AND product_versions.build_type='".$channel."'"
-          ." AND product_versions.is_rapid_beta='f'"
-          .(($rep['product'] == 'Firefox')?" AND major_version!='3.6'":'')  // 3.6 has ADI but no crashes and disturbs the stats.
-          ." AND product_adu.adu_date < (product_versions.build_date + interval '".$max_build_age."')"
+         ." AND product_versions.is_rapid_beta='f'"
+         .(($rep['product'] == 'Firefox')?" AND major_version!='3.6'":'')  // 3.6 has ADI but no crashes and disturbs the stats.
+         ." AND product_adu.adu_date < (product_versions.build_date + interval '".$max_build_age."')"
         :'')
       ." AND product_adu.adu_date >= '".$first_day."' "
       .'GROUP BY product_adu.adu_date '
