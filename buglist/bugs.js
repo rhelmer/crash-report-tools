@@ -50,7 +50,7 @@ function runAnalysis() {
   gBzListURL = gBzBase + "buglist.cgi?" + list_query;
   document.getElementById("bzLink").href = gBzListURL;
   if (location.host) {
-    document.getElementById("permaLink").href = location.protocol + "//" + location.host + location.path + "?" + list_query;
+    document.getElementById("permaLink").href = location.protocol + "//" + location.host + location.pathname + "?" + list_query;
   }
   else { // In this case, we know the browser also has no working search string but let's give them something.
     document.getElementById("permaLink").href = "?" + list_query;
