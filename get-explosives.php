@@ -218,6 +218,7 @@ foreach ($reports as $rep) {
 
   $max_build_age = getMaxBuildAge($channel);
   if (!$rep['fake_adu']) {
+    $first_day = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -'.($backlog_days + 1).' day'));
     $adu_query =
       "SELECT SUM(CASE
                   WHEN product_versions.build_type = 'Release' AND product_versions.product_name = 'Firefox'
