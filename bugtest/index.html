@@ -12,7 +12,10 @@
 </head>
 <body>
 <h1>Buglist Report Test</h1>
-<p id="bzLine">Analyzed bug list: <a href="" id="bzURL"></a></p>
+<p id="bzLine">Bug list (Bugzilla URL):
+<input type="url" id="bzURL">
+<br><input type="submit" id="bzAnalyze" value="Analyze">
+</p>
 
 <div id="dashboard">
 <p id="progressLine"></p>
@@ -20,7 +23,12 @@
 
 <table id="compTbl" border="1" class="hidden">
 <thead>
-<tr><th>Component</th><th>Pct</th><th>Open</th><th>Fixed</th></tr>
+<tr>
+<th>Component</th>
+<th title="Percentage of total bugs">Pct</th>
+<th title="Open within component">Open</th>
+<th title="Fixed within component">Fixed</th>
+</tr>
 </thead>
 <tbody id="compTblBody">
 </tbody>

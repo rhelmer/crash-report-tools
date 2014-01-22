@@ -16,6 +16,10 @@ h1 {
   margin-top: 0;
 }
 
+#bzURL {
+  width: calc(100% - 40ch);
+}
+
 #totalNum {
   font-weight: bold;
 }

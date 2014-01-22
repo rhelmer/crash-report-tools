@@ -2,9 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-//var gListQuery = "keywords=crash&chfield=%5BBug%20creation%5D&chfieldfrom=2013-01-01&chfieldto=2013-01-08";
-var gListQuery = "keywords=crash&chfield=%5BBug%20creation%5D&chfieldfrom=2013-01-01&chfieldto=2013-12-31";
-
 var gBzAPIBase = "https://api-dev.bugzilla.mozilla.org/latest/";
 var gBzBase = "https://bugzilla.mozilla.org/";
 
@@ -15,20 +12,37 @@ var gStats = {
   fixed: 0,
 };
 
-var gDebug, gLog, gProgLine, gBzListURL;
-
+var gDebug, gLog, gProgLine, gBzListURL, gBzInput;
 
 window.onload = function() {
   gDebug = document.getElementById("debug");
   gLog = document.getElementById("debugLog");
   gProgLine = document.getElementById("progressLine");
 
-  var list_url = gBzAPIBase + "bug?" + gListQuery + "&include_fields=id,product,component,status,resolution,creator,assigned_to,creation_time";
+  gBzInput = document.getElementById("bzURL");
 
-  gBzListURL = gBzBase + "buglist.cgi?" + gListQuery;
-  var bzLink = document.getElementById("bzURL");
+  var query_string = location.search;
+  if (!query_string) {
+    var curDate = new Date();
+    var lastWeek = new Date(); lastWeek.setDate(lastWeek.getDate() - 7);
+    query_string = "?keywords=crash&chfield=%5BBug%20creation%5D&chfieldfrom=" + makeISODate(lastWeek) + "&chfieldto=" + makeISODate(curDate);
+  }
+  gBzInput.value = gBzBase + "buglist.cgi" + query_string;
+
+  document.getElementById("bzAnalyze").onclick = runAnalysis;
+}
+
+function runAnalysis() {
+  var bz_strip_regex = new RegExp("^" + gBzBase + "buglist.cgi\\?");
+  var list_query = gBzInput.value.replace(bz_strip_regex, "");
+  // Causes us to reload this pag: location.search = list_query;
+  var list_url = gBzAPIBase + "bug?" + list_query + "&include_fields=id,product,component,status,resolution,creator,assigned_to,creation_time";
+
+  gBzListURL = gBzBase + "buglist.cgi?" + list_query;
+  /*
   bzLink.href = gBzListURL;
-  bzLink.textContent = gListQuery;
+  bzLink.textContent = list_query;
+  */
   gProgLine.textContent = "Fetching bug list...";
 
   // Get bug list.
@@ -101,14 +115,17 @@ function processData(aBugData) {
       cell = document.createElement("td");
       cell.classList.add("pct");
       cell.appendChild(document.createTextNode((100 * comp.count / gStats.count).toFixed(1) + "%"));
+      cell.setAttribute("title", comp.count + " bugs in component");
       trow.appendChild(cell);
       cell = document.createElement("td");
       cell.classList.add("pct");
       cell.appendChild(document.createTextNode((100 * comp.open / comp.count).toFixed(0) + "%"));
+      cell.setAttribute("title", comp.open + " open bugs");
       trow.appendChild(cell);
       cell = document.createElement("td");
       cell.classList.add("pct");
       cell.appendChild(document.createTextNode((100 * comp.fixed / comp.count).toFixed(0) + "%"));
+      cell.setAttribute("title", comp.fixed + " fixed bugs");
       trow.appendChild(cell);
       tbody.appendChild(trow);
     }
@@ -138,4 +155,12 @@ function fetchList(aURL, aCallback) {
   catch (e) {
     aCallback(null);
   }
+}
+
+function makeISODate(aDate) {
+  // ISO date in format YYYY-MM-DD
+  // Note that .getUTCMonth() returns a number between 0 and 11 (0 for January)!
+  return aDate.getUTCFullYear() + "-" +
+         (aDate.getUTCMonth() < 9 ? "0" : "") + (aDate.getUTCMonth() + 1 ) + "-" +
+         (aDate.getUTCDate() < 10 ? "0" : "") + aDate.getUTCDate();
 }
