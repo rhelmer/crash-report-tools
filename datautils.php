@@ -95,4 +95,18 @@ function formatValue($aValue, $aPrecision, $aUnit) {
   return $formatted;
 }
 
+function getMaxBuildAge($channel);
+  switch ($channel) {
+    case 'release':
+      return '9 weeks';
+    case 'beta':
+      return '4 weeks';
+    case 'aurora':
+      return '2 weeks';
+    case 'nightly':
+      return '1 weeks';
+  }
+  return '1 year'; // almost forever
+}
+
 ?>
