@@ -368,7 +368,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             if (@$buildadu[$idx]) {
               if (@$notes[$idx]) { $td->appendChild($doc->createElement('br')); }
               $small = $td->appendChild($doc->createElement('small',
-                  formatValue($buildadu[$idx], null, 'kMG').' ADU'));
+                  formatValue($buildadu[$idx], null, 'kMG').' ADI'));
               $small->setAttribute('class', 'buildadu');
             }
             foreach ($fields as $fld) {
@@ -392,7 +392,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                     print_rate(intval(@$builddata['cnt'][$fld]), $buildadu[$idx],
                                strtolower($pvdata[$builddata['pvid']]['build_type']),
                                $product)));
-                $small->setAttribute('title', 'per 100 ADU');
+                $small->setAttribute('title', 'per 100 ADI');
                 $small->setAttribute('class', 'buildrate');
               }
             }
@@ -404,7 +404,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                   print_rate($builddata['cnt']['norm_total'], $buildadu[$idx],
                              strtolower($pvdata[$builddata['pvid']]['build_type']),
                              $product)));
-              $small->setAttribute('title', 'per 100 ADU');
+              $small->setAttribute('title', 'per 100 ADI');
               $small->setAttribute('class', 'buildrate');
             }
           }
