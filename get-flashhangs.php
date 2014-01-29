@@ -487,7 +487,6 @@ foreach ($reports as $rep) {
     $th->setAttribute('colspan', '3');
     $th = $tr->appendChild($doc->createElement('th', 'Sum'));
     $th->setAttribute('colspan', '2');
-    $th = $tr->appendChild($doc->createElement('th', 'Non-Flash'));
     $tr = $table->appendChild($doc->createElement('tr'));
     $th = $tr->appendChild($doc->createElement('th', 'absoute'));
     $th = $tr->appendChild($doc->createElement('th', '% of hangs'));
@@ -496,7 +495,6 @@ foreach ($reports as $rep) {
     $th = $tr->appendChild($doc->createElement('th', '% of crashes'));
     $th = $tr->appendChild($doc->createElement('th', 'rate'));
     $th = $tr->appendChild($doc->createElement('th', '% of total'));
-    $th = $tr->appendChild($doc->createElement('th', 'rate'));
     $th = $tr->appendChild($doc->createElement('th', 'rate'));
 
     $lastdate = null;
@@ -532,11 +530,6 @@ foreach ($reports as $rep) {
                     ?($fd['total_flash']['crash'] + $fd['total_flash']['hang'])
                     * 100 / $adu
                     : 0;
-      $total_rev_rate = $adu
-                        ? ($fd['total']['crash'] + $total_hang_pairs -
-                           $fd['total_flash']['crash'] - $fd['total_flash']['hang'])
-                        * 100 / $adu
-                        : 0;
       if ($total_rate) {
         $tr = $table->appendChild($doc->createElement('tr'));
         $td = $tr->appendChild($doc->createElement('td', $date));
@@ -564,10 +557,6 @@ foreach ($reports as $rep) {
         $td = $tr->appendChild($doc->createElement('td',
                   sprintf('%.2f', $total_rate)));
         $td->setAttribute('class', 'num');
-        $td = $tr->appendChild($doc->createElement('td',
-                  sprintf('%.2f', $total_rev_rate)));
-        $td->setAttribute('class', 'num');
-        $td->setAttribute('title', $adu.' (adjusted) ADU');
       }
     }
 
