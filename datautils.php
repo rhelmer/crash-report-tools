@@ -98,7 +98,7 @@ function formatValue($aValue, $aPrecision, $aUnit) {
 function getMaxBuildAge($channel, $version_overall = false) {
   switch ($channel) {
     case 'release':
-      return '9 weeks';
+      return '12 weeks';
     case 'beta':
       return '4 weeks';
     case 'aurora':

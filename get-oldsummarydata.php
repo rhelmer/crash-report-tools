@@ -53,7 +53,7 @@ foreach ($channels as $channel) {
 
   // We only support Release and Beta!
   $ver_regex = ($channel == 'Release')?'/^\d+(\.\d+)+$/':'/^\d+(\.\d+)+b\d+$/';
-  $max_build_age = ($channel == 'Release')?'9 weeks':'4 weeks';
+  $max_build_age = getMaxBuildAge(strtolower($channel), true);
 
   if (file_exists($fprodtypedata)) {
     print('Read stored Firefox '.$channel.' summary data'."\n");
