@@ -203,7 +203,7 @@ foreach ($prodchannels as $product=>$channels) {
                 ." AND crashes_by_user.report_date < (product_versions.build_date + interval '".$max_build_age."')"
                 ." AND crashes_by_user.report_date BETWEEN '".$day_start."' AND '".$day_end."' "
                 .'GROUP BY crashes_by_user.report_date, crash_types.crash_type '
-                .'ORDER BY crashes_by_user.report_date DESC;';
+                .'ORDER BY crashes_by_user.report_date ASC;';
 
     $result = pg_query($db_conn, $db_query);
     if (!$result) {
