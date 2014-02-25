@@ -37,12 +37,6 @@ date_default_timezone_set('America/Los_Angeles');
 
 $reports = array(array('product'=>'FennecAndroid',
                        'channel'=>'release',
-                       'version'=>'26.0',
-                       'version_regex'=>'26\.0.*',
-                       'version_display'=>'26',
-                      ),
-                 array('product'=>'FennecAndroid',
-                       'channel'=>'release',
                        'version'=>'27.0',
                        'version_regex'=>'27\.0.*',
                        'version_display'=>'27',
