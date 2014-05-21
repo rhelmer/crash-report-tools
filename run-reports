@@ -11,7 +11,7 @@ cd `dirname $_`
 ./get-flashversions.php $@
 #./get-components.php
 ./get-startupcrashes.php
-./get-devicecrashes.php
+#./get-devicecrashes.php
 ./get-topcrashes.php
 ./get-b2gcrashes.php
 ./get-socorrodata.php
