@@ -362,11 +362,11 @@ if (count($bugdata)) {
 
 // *** helper functions ***
 function getPeriodBugURL($scheme, $date_start, $date_end = null) {
-  $ymd_start = date('Y-m-d', $date_start);
+  $ymd_start = date('Y-m-d H:m:s', $date_start);
   if (is_null($date_end)) {
     $date_end = strtotime($ymd_start.' +7 day');
   }
-  $ymd_end = date('Y-m-d', $date_end);
+  $ymd_end = date('Y-m-d H:m:s', $date_end);
 
   $bugzilla_url = 'https://bugzilla.mozilla.org/buglist.cgi?';
   $bugzilla_url .= 'field0-0-0=longdesc&type0-0-0=equals&value0-0-0=Socorro';
@@ -374,22 +374,22 @@ function getPeriodBugURL($scheme, $date_start, $date_end = null) {
   switch ($scheme) {
     case 'new':
       // new bugs
-      $bugzilla_url .= '&chfieldfrom='.$ymd_start;
-      $bugzilla_url .= '&chfieldto='.$ymd_end.'&chfield=%5BBug%20creation%5D';
+      $bugzilla_url .= '&chfieldfrom='.rawurlencode($ymd_start);
+      $bugzilla_url .= '&chfieldto='.rawurlencode($ymd_end).'&chfield=%5BBug%20creation%5D';
       break;
     case 'fixed':
       // fixed bugs
       $bugzilla_url .= '&resolution=FIXED';
-      $bugzilla_url .= '&chfieldfrom='.$ymd_start;
-      $bugzilla_url .= '&chfieldto='.$ymd_end.'&chfield=resolution';
+      $bugzilla_url .= '&chfieldfrom='.rawurlencode($ymd_start);
+      $bugzilla_url .= '&chfieldto='.rawurlencode($ymd_end).'&chfield=resolution';
       break;
     case 'triaged':
       // triaged (resolved non-fixed) bugs
       $bugzilla_url .= '&resolution=INVALID&resolution=WONTFIX&resolution=DUPLICATE';
       $bugzilla_url .= '&resolution=WORKSFORME&resolution=INCOMPLETE&resolution=EXPIRED';
       $bugzilla_url .= '&resolution=MOVED';
-      $bugzilla_url .= '&chfieldfrom='.$ymd_start;
-      $bugzilla_url .= '&chfieldto='.$ymd_end.'&chfield=resolution';
+      $bugzilla_url .= '&chfieldfrom='.rawurlencode($ymd_start);
+      $bugzilla_url .= '&chfieldto='.rawurlencode($ymd_end).'&chfield=resolution';
       break;
     case 'default':
       $bugzilla_url = '';
