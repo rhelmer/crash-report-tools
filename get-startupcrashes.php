@@ -154,6 +154,8 @@ foreach ($reports as $rep) {
   $fsumpages = 'summarypages.json';
   $fwebsum = $prdverfile.'.startupsummary.html';
 
+  $max_build_age = getMaxBuildAge($channel, true);
+
   if (file_exists($sdfile)) {
     print('Read stored data'."\n");
     $startupdata = json_decode(file_get_contents($sdfile), true);
@@ -178,8 +180,6 @@ foreach ($reports as $rep) {
     if (!file_exists($anafdata)) {
       print('Getting '.$prdverdisplay.' startup data'."\n");
 
-      $max_build_age = getMaxBuildAge($channel, true);
-
       $rep_query =
         'SELECT COUNT(*) as cnt, process_type, signature '
         .'FROM reports_clean LEFT JOIN signatures'
@@ -194,7 +194,7 @@ foreach ($reports as $rep) {
                                       :"= '".$ver."'")
             :" AND (product_versions.build_date + interval '".$max_build_age."') > '".$anadir."'")
           .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
-          .') '
+        .') '
         ." AND utc_day_is(date_processed, '".$anadir."')"
         .' AND EXTRACT(EPOCH FROM uptime) <= '.$max_uptime.' '
         .'GROUP BY process_type, signature '
@@ -238,7 +238,17 @@ foreach ($reports as $rep) {
         $total_query =
           'SELECT COUNT(*) as cnt '
           .'FROM reports_clean '
-          .'WHERE product_version_id IN ('.implode(',', $pv_ids).') '
+          .'WHERE product_version_id IN ('.
+            .'SELECT product_version_id '
+            .'FROM product_versions '
+            ."WHERE product_name = '".$rep['product']."'"
+            .(strlen($ver)
+              ?' AND release_version '.(isset($rep['version_regex'])
+                                        ?"~ '^".$rep['version_regex']."$'"
+                                        :"= '".$ver."'")
+              :" AND (product_versions.build_date + interval '".$max_build_age."') > '".$anadir."'")
+            .(strlen($channel)?" AND build_type = '".ucfirst($channel)."'":'')
+          .') '
           ." AND utc_day_is(date_processed, '".$anadir."');";
 
         $total_result = pg_query($db_conn, $total_query);
