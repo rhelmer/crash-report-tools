@@ -238,7 +238,7 @@ foreach ($reports as $rep) {
         $total_query =
           'SELECT COUNT(*) as cnt '
           .'FROM reports_clean '
-          .'WHERE product_version_id IN ('.
+          .'WHERE product_version_id IN ('
             .'SELECT product_version_id '
             .'FROM product_versions '
             ."WHERE product_name = '".$rep['product']."'"
