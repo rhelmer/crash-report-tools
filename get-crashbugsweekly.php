@@ -432,7 +432,7 @@ function getPeriodBugURL($scheme, $date_start, $date_end = null) {
 
 function getBugCount($listurl) {
   if (preg_match('/buglist\.cgi(\?.*)$/', $listurl, $regs)) {
-    $list_json = file_get_contents('https://api-dev.bugzilla.mozilla.org/latest/count'.$regs[1]);
+    $list_json = file_get_contents('https://bugzilla.mozilla.org/bzapi/count'.$regs[1]);
     if ($list_json) {
       $list_info = json_decode($list_json, true);
       return $list_info['data'];
