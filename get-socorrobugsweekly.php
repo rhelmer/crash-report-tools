@@ -358,7 +358,7 @@ if (count($bugdata)) {
   print("\n");
 }
 // debug only line
-// print_r($flashdata);
+// print_r($bugdata);
 
 // *** helper functions ***
 function getPeriodBugURL($scheme, $date_start, $date_end = null) {

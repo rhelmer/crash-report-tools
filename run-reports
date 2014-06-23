@@ -17,6 +17,7 @@ cd `dirname $_`
 ./get-socorrodata.php
 ./get-socorrobugsweekly.php
 ./get-crashbugsweekly.php
+./get-qabugstats.php
 
 # indicate the latest processed date
 date -d "yesterday" +"%F" > ../latestdate.txt
