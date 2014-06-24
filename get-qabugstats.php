@@ -77,6 +77,8 @@ else {
   $bugdata = array();
 }
 
+$buggroups = array('FxIteration', 'FirefoxNonIter', 'CoreNonIter', 'ToolkitNonIter');
+
 $queryinfo = array('fixed' =>    array('title' => 'Fixed',
                                        'desc' => 'Bugs marked as FIXED',
                                        'color' => 'rgba(0, 204, 0, .5)'),
@@ -87,10 +89,18 @@ $queryinfo = array('fixed' =>    array('title' => 'Fixed',
                                        'desc' => 'Bugs marked as REOPENED',
                                        'color' => ''),
                   );
-
 $bugqueries = array_keys($queryinfo);
 
-$buggroups = array('FxIteration', 'FirefoxNonIter', 'CoreNonIter', 'ToolkitNonIter');
+$iterations =
+    array('33.2' => array('start' => '2014-06-24',
+                          'end' => '2014-07-09'),
+          '33.3' => array('start' => '2014-07-08',
+                          'end' => '2014-07-23'),
+          '34.1' => array('start' => '2014-07-22',
+                          'end' => '2014-08-05'),
+    );
+
+$iterqueries = array('total', 'verifyneeded', 'verifydone', 'contactneeded', 'verifytriage');
 
 $days_to_analyze = array();
 for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
@@ -102,7 +112,7 @@ foreach ($force_dates as $anaday) {
   }
 }
 foreach ($days_to_analyze as $anaday) {
-  print('Fetching crash bug data for '.$anaday);
+  print('Fetching QA bug data for '.$anaday);
 
   $daydata = array();
   foreach ($bugqueries as $querytype) {
@@ -126,11 +136,29 @@ foreach ($days_to_analyze as $anaday) {
   else {
     print('ERROR: No data!'."\n");
   }
-
-  ksort($bugdata); // sort by date (key), ascending
-
-  file_put_contents($bdfile, json_encode($bugdata));
 }
+
+$anaday = date('Y-m-d', $curtime);
+print('Fetching Firefox iteration bug counts for today, '.$anaday);
+foreach ($iterations as $iteration=>$iterdata) {
+  if (($iterdata['start'] <= $anaday) && ($iterdata['end'] >= $anaday)) {
+    foreach ($iterqueries as $iqtype) {
+      $bugquery = getIterQuery($iqtype, $iteration);
+      //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
+      //print($buglist_url."\n");
+      $bugcount = getBugCount($bugquery);
+      if ($bugcount !== false) {
+        $bugdata[$anaday]['fxiter'][$iteration][$iqtype] = $bugcount;
+      }
+      print('.');
+    }
+  }
+}
+print("\n");
+
+ksort($bugdata); // sort by date (key), ascending
+
+file_put_contents($bdfile, json_encode($bugdata));
 // debug only line
 //print_r($bugdata);
 
@@ -189,6 +217,48 @@ function getBugQuery($type, $group, $date) {
       $query .= '&product=Toolkit';
       $query .= '&status_whiteboard_type=notregexp';
       $query .= '&status_whiteboard='.rawurlencode('s=(it|[0-9][0-9]\.[1-3])');
+      break;
+    default:
+      break;
+  }
+  return $query;
+}
+
+function getIterQuery($type, $iteration) {
+  $query = 'f1=cf_fx_iteration&o1=equals&v1='.rawurlencode($iteration);
+  switch ($type) {
+    case 'total':
+      // total bugs
+      break;
+    case 'verifyneeded':
+      // fixed, needing verification
+      $query .= '&resolution=FIXED';
+      $query .= '&bug_status=RESOLVED';
+      $query .= '&f2=OP&j2=OR';
+      $query .= '&f3=status_whiteboard&o3=substring&v3=[qa%2B]';
+      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4=[qa%2B]';
+      break;
+    case 'verifydone':
+      // verification done
+      $query .= '&resolution=FIXED';
+      $query .= '&bug_status=VERIFIED';
+      break;
+    case 'contactneeded':
+      // QA contact is empty but the bug needs verification, so contact is needed
+      $query .= '&f2=qa_contact&o2=isempty';
+      $query .= '&f3=OP&j3=OR';
+      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4=[qa%2B]';
+      $query .= '&f5=status_whiteboard&o5=substring&v5=[qa%2B]';
+      break;
+    case 'verifytriage':
+      // verification assessment missing, needs triage
+      $query .= '&f2=OP&j2=OR';
+      $query .= '&f3=status_whiteboard&o3=substring&v3=[qa%3F]';
+      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4=[qa%3F]';
+      $query .= '&f5=OP';
+      $query .= '&f6=status_whiteboard&o6=notsubstring&v6=[qa';
+      $query .= '&f7=cf_qa_whiteboard&o7=notsubstring&v7=[qa';
+      $query .= '&f8=CP';
       break;
     default:
       break;
