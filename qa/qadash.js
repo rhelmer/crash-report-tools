@@ -34,8 +34,8 @@ function listCurrentData(aData) {
       var dtStart = new Date(aData[iteration].start);
       var dtEnd = new Date(aData[iteration].end);
       if (aData[iteration].start <= today && aData[iteration].end >= today) {
-        var iterDuration = ((dtEnd - dtStart) / 86400000).toFixed(0);
-        var iterDone = ((Date.now() - dtStart) / 86400000).toFixed(0);
+        var iterDuration = Math.round((dtEnd - dtStart) / 86400000);
+        var iterDay = Math.ceil((Date.now() - dtStart) / 86400000);
         // Create main line for iteration description.
         var iterElement = document.createElement("li");
         curData.appendChild(iterElement);
@@ -46,7 +46,7 @@ function listCurrentData(aData) {
         iterElement.appendChild(document.createTextNode(" "));
         var completed = document.createElement("span");
         completed.classList.add("itercompleted");
-        completed.textContent = "(day " + iterDone + " of " + iterDuration + ")";
+        completed.textContent = "(day " + iterDay + " of " + iterDuration + ")";
         iterElement.appendChild(completed);
         // List queries for that iteration.
         var iterList = document.createElement("ul");
