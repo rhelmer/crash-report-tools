@@ -140,11 +140,15 @@ $bugqueries = array_keys($queryinfo);
 
 $iterations =
     array('33.2' => array('start' => '2014-06-24',
-                          'end' => '2014-07-09'),
+                          'end' => '2014-07-08'),
           '33.3' => array('start' => '2014-07-08',
-                          'end' => '2014-07-23'),
+                          'end' => '2014-07-22'),
           '34.1' => array('start' => '2014-07-22',
                           'end' => '2014-08-05'),
+          '34.2' => array('start' => '2014-08-05',
+                          'end' => '2014-08-19'),
+          '34.3' => array('start' => '2014-08-19',
+                          'end' => '2014-09-02'),
     );
 
 $iterqueries = array('total', 'verifyneeded', 'verifydone', 'contactneeded', 'verifytriage');
