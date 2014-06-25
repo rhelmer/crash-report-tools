@@ -149,7 +149,7 @@ foreach ($days_to_analyze as $anaday) {
 $anaday = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -1 day'));
 print('Fetching Firefox iteration bug counts for right now, calling it '.$anaday.' EOD');
 if (!array_key_exists('fxiter', $bugdata[$anaday])) {
-  $bugdata[$anaday]['fxiter'] = array();
+  $bugdata[$anaday]['fxiter']['time_update'] = time();
 }
 foreach ($iterations as $iteration=>$iterdata) {
   if (($iterdata['start'] <= $anaday) && ($iterdata['end'] >= $anaday)) {
