@@ -4,7 +4,7 @@
 
 // See http://dygraphs.com/ for graphs documentation.
 
-//var gFoo;
+var gCountIDs = [];
 
 var gDataPath = "../../qa/";
 // for local debugging
@@ -13,10 +13,16 @@ var gDataPath = "../../qa/";
 var gBzAPIPath = "https://bugzilla.mozilla.org/bzapi/";
 var gBzBasePath = "https://bugzilla.mozilla.org/";
 
-var iterqueries = ['total', 'verifyneeded', 'verifydone', 'contactneeded', 'verifytriage'];
+var iterqueries = {
+  total: {desc: 'Total bugs in iteration'},
+  verifyneeded: {desc: 'Verification needed'},
+  verifydone: {desc: 'Verification done'},
+  contactneeded: {desc: 'QA contact needed'},
+  verifytriage: {desc: 'Verification +/- assessment needed'}
+};
 
 window.onload = function() {
-  // Get data to graph.
+  // Create iteration list.
   fetchFile(gDataPath + "qa.itermeta.json", "json", listCurrentData);
 }
 
@@ -36,12 +42,21 @@ function listCurrentData(aData) {
           var link = document.createElement("a");
           link.setAttribute("href", gBzBasePath + "buglist.cgi?" + aData[iteration].queries[qtype]);
           link.setAttribute("target", "_blank");
-          link.textContent = qtype;
+          link.textContent = iterqueries[qtype].desc;
           qItem.appendChild(link);
+          qItem.appendChild(document.createTextNode(": "));
+          var count = document.createElement("span");
+          var count_id = "count_" + iteration + "_" + qtype;
+          gCountIDs.push(count_id);
+          count.setAttribute("id", count_id);
+          count.setAttribute("data-query", aData[iteration].queries[qtype]);
+          count.textContent = "…";
+          qItem.appendChild(count);
           iterList.appendChild(qItem);
         }
       }
     }
+    updateCounts();
   }
   else {
     // ERROR! We're screwed!
@@ -51,7 +66,23 @@ function listCurrentData(aData) {
   }
 }
 
-function fetchFile(aURL, aFormat, aCallback) {
+function updateCounts() {
+  // Update bug counts.
+  for (i = 0; i < gCountIDs.length; i++) {
+    var count = document.getElementById(gCountIDs[i]);
+    fetchFile(gBzAPIPath + "count?" + count.dataset.query, "json",
+        function(aData, aCount) {
+          if (aData)
+            aCount.textContent = aData.data;
+          else
+            console.log("Getting count failed for: " + aCount.id);
+        },
+        count
+    );
+  }
+}
+
+function fetchFile(aURL, aFormat, aCallback, aCallbackForwards) {
   var XHR = new XMLHttpRequest();
   XHR.onreadystatechange = function() {
     if (XHR.readyState == 4) {/*
@@ -63,14 +94,14 @@ function fetchFile(aURL, aFormat, aCallback) {
       // so far so good
       if (XHR.responseXML != null && aFormat == "xml" &&
           XHR.responseXML.getElementById('test').firstChild.data)
-        aCallback(aXHR.responseXML.getElementById('test').firstChild.data);
+        aCallback(aXHR.responseXML.getElementById('test').firstChild.data, aCallbackForwards);
       else if (XHR.responseText != null && aFormat == "json")
-        aCallback(JSON.parse(XHR.responseText));
+        aCallback(JSON.parse(XHR.responseText), aCallbackForwards);
       else
-        aCallback(XHR.responseText);
+        aCallback(XHR.responseText, aCallbackForwards);
     } else if (XHR.readyState == 4 && XHR.status != 200) {
       // fetched the wrong page or network error...
-      aCallback(null);
+      aCallback(null, aCallbackForwards);
     }
   };
   XHR.open("GET", aURL);
@@ -80,7 +111,7 @@ function fetchFile(aURL, aFormat, aCallback) {
     XHR.send();
   }
   catch (e) {
-    aCallback(null);
+    aCallback(null, aCallbackForwards);
   }
 }
 
