@@ -138,8 +138,8 @@ foreach ($days_to_analyze as $anaday) {
   }
 }
 
-$anaday = date('Y-m-d', $curtime);
-print('Fetching Firefox iteration bug counts for today, '.$anaday);
+$anaday = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -1 day'));
+print('Fetching Firefox iteration bug counts for right now, calling it '.$anaday.' EOD');
 foreach ($iterations as $iteration=>$iterdata) {
   if (($iterdata['start'] <= $anaday) && ($iterdata['end'] >= $anaday)) {
     foreach ($iterqueries as $iqtype) {
