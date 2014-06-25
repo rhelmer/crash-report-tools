@@ -23,6 +23,8 @@ var iterqueries = {
 
 window.onload = function() {
   // Create iteration list.
+  document.getElementById("footer_itermeta").setAttribute("href", gDataPath + "qa.itermeta.json");
+  document.getElementById("footer_bugdata").setAttribute("href", gDataPath + "qa.bugdata.json");
   fetchFile(gDataPath + "qa.itermeta.json", "json", listCurrentData);
 }
 
