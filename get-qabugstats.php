@@ -68,6 +68,7 @@ $curtime = time();
 if (!file_exists($outdir)) { mkdir($outdir); }
 
 $bdfile = $outdir.'/qa.bugdata.json';
+$iqfile = $outdir.'/qa.iterquery.json';
 
 if (file_exists($bdfile)) {
   print('Reading stored QA bug data'."\n");
@@ -75,6 +76,13 @@ if (file_exists($bdfile)) {
 }
 else {
   $bugdata = array();
+}
+if (file_exists($iqfile)) {
+  print('Reading stored QA iteration queries'."\n");
+  $iterquerystore = json_decode(file_get_contents($iqfile), true);
+}
+else {
+  $iterquerystore = array();
 }
 
 $buggroups = array('FxIteration', 'FirefoxNonIter', 'CoreNonIter', 'ToolkitNonIter');
@@ -140,14 +148,21 @@ foreach ($days_to_analyze as $anaday) {
 
 $anaday = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -1 day'));
 print('Fetching Firefox iteration bug counts for right now, calling it '.$anaday.' EOD');
+if (!array_key_exists('fxiter', $bugdata[$anaday])) {
+  $bugdata[$anaday]['fxiter'] = array();
+}
 foreach ($iterations as $iteration=>$iterdata) {
   if (($iterdata['start'] <= $anaday) && ($iterdata['end'] >= $anaday)) {
+    if (!array_key_exists($iteration, $bugdata[$anaday]['fxiter'])) {
+      $bugdata[$anaday]['fxiter'][$iteration] = array();
+    }
     foreach ($iterqueries as $iqtype) {
       $bugquery = getIterQuery($iqtype, $iteration);
+      $iterquerystore[$iteration][$iqtype] = $bugquery;
       //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
       //print($buglist_url."\n");
       $bugcount = getBugCount($bugquery);
-      if ($bugcount !== false) {
+      if (($bugcount !== false) && !array_key_exists($iqtype, $bugdata[$anaday]['fxiter'][$iteration])) {
         $bugdata[$anaday]['fxiter'][$iteration][$iqtype] = $bugcount;
       }
       print('.');
@@ -157,10 +172,14 @@ foreach ($iterations as $iteration=>$iterdata) {
 print("\n");
 
 ksort($bugdata); // sort by date (key), ascending
-
 file_put_contents($bdfile, json_encode($bugdata));
 // debug only line
 //print_r($bugdata);
+
+ksort($iterquerystore); // sort by date (key), ascending
+file_put_contents($iqfile, json_encode($iterquerystore));
+// debug only line
+//print_r($iterquerystore);
 
 // *** helper functions ***
 function getBugQuery($type, $group, $date) {
@@ -235,8 +254,8 @@ function getIterQuery($type, $iteration) {
       $query .= '&resolution=FIXED';
       $query .= '&bug_status=RESOLVED';
       $query .= '&f2=OP&j2=OR';
-      $query .= '&f3=status_whiteboard&o3=substring&v3=[qa%2B]';
-      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4=[qa%2B]';
+      $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('[qa+]');
+      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa+]');
       break;
     case 'verifydone':
       // verification done
@@ -247,17 +266,17 @@ function getIterQuery($type, $iteration) {
       // QA contact is empty but the bug needs verification, so contact is needed
       $query .= '&f2=qa_contact&o2=isempty';
       $query .= '&f3=OP&j3=OR';
-      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4=[qa%2B]';
-      $query .= '&f5=status_whiteboard&o5=substring&v5=[qa%2B]';
+      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa+]');
+      $query .= '&f5=status_whiteboard&o5=substring&v5='.rawurlencode('[qa+]');
       break;
     case 'verifytriage':
-      // verification assessment missing, needs triage
+      // verification assessment missing, needs triage (qa? or no QA tag)
       $query .= '&f2=OP&j2=OR';
-      $query .= '&f3=status_whiteboard&o3=substring&v3=[qa%3F]';
-      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4=[qa%3F]';
+      $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('[qa?]');
+      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa?]');
       $query .= '&f5=OP';
-      $query .= '&f6=status_whiteboard&o6=notsubstring&v6=[qa';
-      $query .= '&f7=cf_qa_whiteboard&o7=notsubstring&v7=[qa';
+      $query .= '&f6=status_whiteboard&o6=notsubstring&v6='.rawurlencode('[qa');
+      $query .= '&f7=cf_qa_whiteboard&o7=notsubstring&v7='.rawurlencode('[qa');
       $query .= '&f8=CP';
       break;
     default:
