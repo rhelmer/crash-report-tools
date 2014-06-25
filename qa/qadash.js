@@ -8,7 +8,7 @@ var gCountIDs = [];
 
 var gDataPath = "../../qa/";
 // for local debugging
-gDataPath = "../socorro/qa/";
+//gDataPath = "../socorro/qa/";
 
 var gBzAPIPath = "https://bugzilla.mozilla.org/bzapi/";
 var gBzBasePath = "https://bugzilla.mozilla.org/";
@@ -36,6 +36,7 @@ function listCurrentData(aData) {
       if (aData[iteration].start <= today && aData[iteration].end >= today) {
         var iterDuration = ((dtEnd - dtStart) / 86400000).toFixed(0);
         var iterDone = ((Date.now() - dtStart) / 86400000).toFixed(0);
+        // Create main line for iteration description.
         var iterElement = document.createElement("li");
         curData.appendChild(iterElement);
         var itername = document.createElement("span");
@@ -47,17 +48,20 @@ function listCurrentData(aData) {
         completed.classList.add("itercompleted");
         completed.textContent = "(day " + iterDone + " of " + iterDuration + ")";
         iterElement.appendChild(completed);
+        // List queries for that iteration.
         var iterList = document.createElement("ul");
         iterList.classList.add("queries");
         iterElement.appendChild(iterList);
         for (var qtype in aData[iteration].queries) {
           var qItem = document.createElement("li");
+          // Link to buglist.
           var link = document.createElement("a");
           link.setAttribute("href", gBzBasePath + "buglist.cgi?" + aData[iteration].queries[qtype]);
           link.setAttribute("target", "_blank");
           link.textContent = iterqueries[qtype].desc;
           qItem.appendChild(link);
           qItem.appendChild(document.createTextNode(": "));
+          // Display bug count, placeholder will be replaced async by updateCounts().
           var count = document.createElement("span");
           var count_id = "count_" + iteration + "_" + qtype;
           gCountIDs.push(count_id);
