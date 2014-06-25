@@ -166,7 +166,7 @@ foreach ($days_to_analyze as $anaday) {
     foreach ($buggroups as $group) {
       $bugquery = getBugQuery($querytype, $group, $anaday);
       //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
-      //print($buglist_url."\n");
+      //print("\n".$buglist_url."\n");
       $bugcount = getBugCount($bugquery);
       if ($bugcount !== false) {
         $bugdata[$anaday][$group][$querytype] = $bugcount;
@@ -191,7 +191,7 @@ foreach ($iterations as $iteration=>$iterdata) {
       $bugquery = getIterQuery($iqtype, $iteration);
       $iterquerystore[$iteration][$iqtype] = $bugquery;
       //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
-      //print($buglist_url."\n");
+      //print("\n".$buglist_url."\n");
       $bugcount = getBugCount($bugquery);
       if (($bugcount !== false) && !array_key_exists($iqtype, $bugdata[$anaday]['fxiter'][$iteration])) {
         $bugdata[$anaday]['fxiter'][$iteration][$iqtype] = $bugcount;
@@ -247,26 +247,27 @@ function getBugQuery($type, $group, $date) {
   switch ($group) {
     case 'FxIteration':
       // within the Firefox iteration planning
-      $query .= '&status_whiteboard_type=regexp';
-      $query .= '&status_whiteboard='.rawurlencode('s=(it|[0-9][0-9]\.[1-3])');
+      $query .= '&f1=OP&j1=OR';
+      $query .= '&f2=cf_fx_iteration&o2=notequals&v2=---';
+      $query .= '&f3=status_whiteboard&o3=regexp&v3='.rawurlencode('s=(it|[0-9][0-9]\.[1-3])');
       break;
     case 'FirefoxNonIter':
       // in the Firefox product, but not on the iteration
       $query .= '&product=Firefox';
-      $query .= '&status_whiteboard_type=notregexp';
-      $query .= '&status_whiteboard='.rawurlencode('s=(it|[0-9][0-9]\.[1-3])');
+      $query .= '&f1=cf_fx_iteration&o1=equals&v1=---';
+      $query .= '&f2=status_whiteboard&o2=notregexp&v2='.rawurlencode('s=(it|[0-9][0-9]\.[1-3])');
       break;
     case 'CoreNonIter':
       // in the Core product, but not on the Firefox iteration
       $query .= '&product=Core';
-      $query .= '&status_whiteboard_type=notregexp';
-      $query .= '&status_whiteboard='.rawurlencode('s=(it|[0-9][0-9]\.[1-3])');
+      $query .= '&f1=cf_fx_iteration&o1=equals&v1=---';
+      $query .= '&f2=status_whiteboard&o2=notregexp&v2='.rawurlencode('s=(it|[0-9][0-9]\.[1-3])');
      break;
     case 'ToolkitNonIter':
       // in the Toolkit product, but not on the Firefox iteration
       $query .= '&product=Toolkit';
-      $query .= '&status_whiteboard_type=notregexp';
-      $query .= '&status_whiteboard='.rawurlencode('s=(it|[0-9][0-9]\.[1-3])');
+      $query .= '&f1=cf_fx_iteration&o1=equals&v1=---';
+      $query .= '&f2=status_whiteboard&o2=notregexp&v2='.rawurlencode('s=(it|[0-9][0-9]\.[1-3])');
       break;
     default:
       break;
