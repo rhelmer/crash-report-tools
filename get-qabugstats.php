@@ -68,7 +68,7 @@ $curtime = time();
 if (!file_exists($outdir)) { mkdir($outdir); }
 
 $bdfile = $outdir.'/qa.bugdata.json';
-$iqfile = $outdir.'/qa.iterquery.json';
+$imfile = $outdir.'/qa.itermeta.json';
 
 if (file_exists($bdfile)) {
   print('Reading stored QA bug data'."\n");
@@ -116,12 +116,12 @@ if (file_exists($bdfile)) {
 else {
   $bugdata = array();
 }
-if (file_exists($iqfile)) {
+if (file_exists($imfile)) {
   print('Reading stored QA iteration queries'."\n");
-  $iterquerystore = json_decode(file_get_contents($iqfile), true);
+  $itermetastore = json_decode(file_get_contents($imfile), true);
 }
 else {
-  $iterquerystore = array();
+  $itermetastore = array();
 }
 
 $buggroups = array('FxIteration', 'FirefoxNonIter', 'CoreNonIter', 'ToolkitNonIter');
@@ -187,9 +187,15 @@ foreach ($iterations as $iteration=>$iterdata) {
     if (!array_key_exists($iteration, $bugdata[$anaday]['fxiter'])) {
       $bugdata[$anaday]['fxiter'][$iteration] = array();
     }
+    if (!array_key_exists($iteration, $itermetastore)) {
+      $itermetastore[$iteration] = $iterdata;
+    }
+    else {
+      $itermetastore[$iteration] = array_merge($itermetastore[$iteration], $iterdata);
+    }
     foreach ($iterqueries as $iqtype) {
       $bugquery = getIterQuery($iqtype, $iteration);
-      $iterquerystore[$iteration][$iqtype] = $bugquery;
+      $itermetastore[$iteration]['queries'][$iqtype] = $bugquery;
       //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
       //print("\n".$buglist_url."\n");
       $bugcount = getBugCount($bugquery);
@@ -207,10 +213,10 @@ file_put_contents($bdfile, json_encode($bugdata));
 // debug only line
 //print_r($bugdata);
 
-ksort($iterquerystore); // sort by date (key), ascending
-file_put_contents($iqfile, json_encode($iterquerystore));
+ksort($itermetastore); // sort by date (key), ascending
+file_put_contents($imfile, json_encode($itermetastore));
 // debug only line
-//print_r($iterquerystore);
+//print_r($itermetastore);
 
 // *** helper functions ***
 function getBugQuery($type, $group, $date) {
