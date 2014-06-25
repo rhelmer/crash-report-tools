@@ -17,7 +17,7 @@ var iterqueries = ['total', 'verifyneeded', 'verifydone', 'contactneeded', 'veri
 
 window.onload = function() {
   // Get data to graph.
-  fetchFile(gDataPath + "qa.iterquery.json", "json", listCurrentData);
+  fetchFile(gDataPath + "qa.itermeta.json", "json", listCurrentData);
 }
 
 function listCurrentData(aData) {
