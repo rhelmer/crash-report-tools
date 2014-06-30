@@ -287,16 +287,19 @@ function getBugQuery($type, $group, $date) {
 }
 
 function getIterQuery($type, $iteration) {
-  $query = 'f1=cf_fx_iteration&o1=equals&v1='.rawurlencode($iteration);
+  $query = 'f1=OP&j1=OR';
+  $query .= '&f2=cf_fx_iteration&o2=equals&v2='.rawurlencode($iteration);
+  $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('s='.$iteration);
+  $query .= '&f4=CP';
   switch ($type) {
     case 'total':
       // total bugs
       break;
     case 'verifiable':
       // fixed, needing verification
-      $query .= '&f2=OP&j2=OR';
-      $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('[qa+]');
-      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa+]');
+      $query .= '&f5=OP&j5=OR';
+      $query .= '&f6=status_whiteboard&o6=substring&v6='.rawurlencode('[qa+]');
+      $query .= '&f7=cf_qa_whiteboard&o7=substring&v7='.rawurlencode('[qa+]');
       break;
     case 'verifydone':
       // verification done
@@ -307,26 +310,26 @@ function getIterQuery($type, $iteration) {
       // fixed, needing verification
       $query .= '&resolution=FIXED';
       $query .= '&bug_status=RESOLVED';
-      $query .= '&f2=OP&j2=OR';
-      $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('[qa+]');
-      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa+]');
+      $query .= '&f5=OP&j5=OR';
+      $query .= '&f6=status_whiteboard&o6=substring&v6='.rawurlencode('[qa+]');
+      $query .= '&f7=cf_qa_whiteboard&o7=substring&v7='.rawurlencode('[qa+]');
       break;
     case 'contactneeded':
       // QA contact is empty but the bug needs verification, so contact is needed
-      $query .= '&f2=qa_contact&o2=isempty';
-      $query .= '&f3=OP&j3=OR';
-      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa+]');
-      $query .= '&f5=status_whiteboard&o5=substring&v5='.rawurlencode('[qa+]');
+      $query .= '&f5=qa_contact&o5=isempty';
+      $query .= '&f6=OP&j6=OR';
+      $query .= '&f7=cf_qa_whiteboard&o7=substring&v7='.rawurlencode('[qa+]');
+      $query .= '&f8=status_whiteboard&o8=substring&v8='.rawurlencode('[qa+]');
       break;
     case 'verifytriage':
       // verification assessment missing, needs triage (qa? or no QA tag)
-      $query .= '&f2=OP&j2=OR';
-      $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('[qa?]');
-      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa?]');
-      $query .= '&f5=OP';
-      $query .= '&f6=status_whiteboard&o6=notsubstring&v6='.rawurlencode('[qa');
-      $query .= '&f7=cf_qa_whiteboard&o7=notsubstring&v7='.rawurlencode('[qa');
-      $query .= '&f8=CP';
+      $query .= '&f5=OP&j5=OR';
+      $query .= '&f6=status_whiteboard&o6=substring&v6='.rawurlencode('[qa?]');
+      $query .= '&f7=cf_qa_whiteboard&o7=substring&v7='.rawurlencode('[qa?]');
+      $query .= '&f8=OP';
+      $query .= '&f9=status_whiteboard&o9=notsubstring&v9='.rawurlencode('[qa');
+      $query .= '&f10=cf_qa_whiteboard&o10=notsubstring&v10='.rawurlencode('[qa');
+      $query .= '&f11=CP';
       break;
     default:
       break;
