@@ -151,7 +151,8 @@ $iterations =
                           'end' => '2014-09-02'),
     );
 
-$iterqueries = array('total', 'verifyneeded', 'verifydone', 'contactneeded', 'verifytriage');
+$iterqueries = array('total', 'verifiable', 'verifydone',
+                     'verifyneeded', 'contactneeded', 'verifytriage');
 
 $days_to_analyze = array();
 for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
@@ -291,10 +292,8 @@ function getIterQuery($type, $iteration) {
     case 'total':
       // total bugs
       break;
-    case 'verifyneeded':
+    case 'verifiable':
       // fixed, needing verification
-      $query .= '&resolution=FIXED';
-      $query .= '&bug_status=RESOLVED';
       $query .= '&f2=OP&j2=OR';
       $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('[qa+]');
       $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa+]');
@@ -303,6 +302,14 @@ function getIterQuery($type, $iteration) {
       // verification done
       $query .= '&resolution=FIXED';
       $query .= '&bug_status=VERIFIED';
+      break;
+    case 'verifyneeded':
+      // fixed, needing verification
+      $query .= '&resolution=FIXED';
+      $query .= '&bug_status=RESOLVED';
+      $query .= '&f2=OP&j2=OR';
+      $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('[qa+]');
+      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa+]');
       break;
     case 'contactneeded':
       // QA contact is empty but the bug needs verification, so contact is needed

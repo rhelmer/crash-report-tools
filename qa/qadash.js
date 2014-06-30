@@ -15,8 +15,9 @@ var gBzBasePath = "https://bugzilla.mozilla.org/";
 
 var iterqueries = {
   total: {desc: 'Total bugs in iteration'},
-  verifyneeded: {desc: 'Verification needed'},
+  verifiable: {desc: 'Total bugs that can be verified'},
   verifydone: {desc: 'Verification done'},
+  verifyneeded: {desc: 'Verification needed'},
   contactneeded: {desc: 'QA contact needed'},
   verifytriage: {desc: 'Verification +/- assessment needed'}
 };
@@ -54,7 +55,7 @@ function listCurrentData(aData) {
         var iterList = document.createElement("ul");
         iterList.classList.add("queries");
         iterElement.appendChild(iterList);
-        for (var qtype in aData[iteration].queries) {
+        for (var qtype in iterqueries) {
           var qItem = document.createElement("li");
           // Link to buglist.
           var link = document.createElement("a");
