@@ -74,45 +74,6 @@ $tmfile = $outdir.'/qa.trainmeta.json';
 if (file_exists($bdfile)) {
   print('Reading stored QA bug data'."\n");
   $bugdata = json_decode(file_get_contents($bdfile), true);
-  // See if there's data to migrate and do so if needed.
-  foreach ($bugdata as $anaday=>$data) {
-    if (array_key_exists('FxIteration_fixed', $data)) {
-      // Migrate everything
-      $bugdata[$anaday]['FxIteration']['fixed'] = $bugdata[$anaday]['FxIteration_fixed'];
-      unset($bugdata[$anaday]['FxIteration_fixed']);
-      $bugdata[$anaday]['FirefoxNonIter']['fixed'] = $bugdata[$anaday]['FirefoxNonIter_fixed'];
-      unset($bugdata[$anaday]['FirefoxNonIter_fixed']);
-      $bugdata[$anaday]['CoreNonIter']['fixed'] = $bugdata[$anaday]['CoreNonIter_fixed'];
-      unset($bugdata[$anaday]['CoreNonIter_fixed']);
-      $bugdata[$anaday]['ToolkitNonIter']['fixed'] = $bugdata[$anaday]['ToolkitNonIter_fixed'];
-      unset($bugdata[$anaday]['ToolkitNonIter_fixed']);
-
-      $bugdata[$anaday]['FxIteration']['verified'] = $bugdata[$anaday]['FxIteration_verified'];
-      unset($bugdata[$anaday]['FxIteration_verified']);
-      $bugdata[$anaday]['FirefoxNonIter']['verified'] = $bugdata[$anaday]['FirefoxNonIter_verified'];
-      unset($bugdata[$anaday]['FirefoxNonIter_verified']);
-      $bugdata[$anaday]['CoreNonIter']['verified'] = $bugdata[$anaday]['CoreNonIter_verified'];
-      unset($bugdata[$anaday]['CoreNonIter_verified']);
-      $bugdata[$anaday]['ToolkitNonIter']['verified'] = $bugdata[$anaday]['ToolkitNonIter_verified'];
-      unset($bugdata[$anaday]['ToolkitNonIter_verified']);
-
-      $bugdata[$anaday]['FxIteration']['reopened'] = $bugdata[$anaday]['FxIteration_reopened'];
-      unset($bugdata[$anaday]['FxIteration_reopened']);
-      $bugdata[$anaday]['FirefoxNonIter']['reopened'] = $bugdata[$anaday]['FirefoxNonIter_reopened'];
-      unset($bugdata[$anaday]['FirefoxNonIter_reopened']);
-      $bugdata[$anaday]['CoreNonIter']['reopened'] = $bugdata[$anaday]['CoreNonIter_reopened'];
-      unset($bugdata[$anaday]['CoreNonIter_reopened']);
-      $bugdata[$anaday]['ToolkitNonIter']['reopened'] = $bugdata[$anaday]['ToolkitNonIter_reopened'];
-      unset($bugdata[$anaday]['ToolkitNonIter_reopened']);
-    }
-    else {
-      // This will break out of the migration loop
-      // on the first day that no data for migration is found.
-      // As we consider that either all of the file needs migration or nothing,
-      // this should be good enough.
-      break;
-    }
-  }
 }
 else {
   $bugdata = array();
