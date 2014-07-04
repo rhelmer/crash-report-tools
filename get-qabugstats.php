@@ -46,7 +46,7 @@ if (count($force_dates)) {
 // *** data gathering variables ***
 
 // for how many days back to get the data
-$backlog_days = 0;
+$backlog_days = -1;
 
 // *** URLs ***
 
@@ -96,9 +96,11 @@ else {
 }
 
 $products = array('Firefox', 'Core', 'Toolkit', 'Firefox for Android', 'Loop');
+// Words that exclude bugs from queries (except Firefox, Firefox for Android products)
+$excludewords = 'b2g,gaia,homescreen,sms,dialer,flame';
 
 $dailygroups = array('FxIteration', 'FirefoxNonIter', 'CoreNonIter', 'ToolkitNonIter');
-$dailyqueries = array_keys('fixed', 'verified', 'reopened');
+$dailyqueries = array('fixed', 'verified', 'reopened');
 
 $iterations =
     array('33.2' => array('start' => '2014-06-24',
@@ -381,50 +383,56 @@ function getIterQuery($type, $iteration) {
 
 function getTrainQuery($type, $product, $train, $is_on_trunk) {
   $query = 'product='.rawurlencode($product);
+  if (!preg_match('/^Firefox/', $product)) {
+    $query .= '&f1=short_desc&o1=nowordssubstr&v1='.rawurlencode($GLOBALS['excludewords']);
+    $query .= '&f2=status_whiteboard&o2=nowordssubstr&v2='.rawurlencode($GLOBALS['excludewords']);
+  }
   switch ($type) {
     case 'verifydone':
       // verification done#
       if ($is_on_trunk) {
-        $query .= '&target_milestone='.rawurlencode('Firefox '.$train).'&target_milestone=mozilla'.rawurlencode($train);
+        $query .= '&target_milestone='.rawurlencode('Firefox '.$train);
+        $query .= '&target_milestone=mozilla'.rawurlencode($train);
         $query .= '&resolution=FIXED';
         $query .= '&bug_status=VERIFIED';
       }
       else {
-        $query .= '&f1=cf_status_firefox'.rawurlencode($train).'&o1=substring&v1=verified';
+        $query .= '&f3=cf_status_firefox'.rawurlencode($train);
+        $query .= '&o3=substring&v3=verified';
       }
-      $query .= '&f2=OP&j2=OR';
-      $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('[qa+]');
-      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa+]');
-      $query .= '&f5=keywords&o5=anywords&v5=verifyme';
       break;
     case 'verifyneeded':
       // fixed (or disabled), needing verification
       if ($is_on_trunk) {
-        $query .= '&target_milestone='.rawurlencode('Firefox '.$train).'&target_milestone=mozilla'.rawurlencode($train);
+        $query .= '&target_milestone='.rawurlencode('Firefox '.$train);
+        $query .= '&target_milestone=mozilla'.rawurlencode($train);
         $query .= '&resolution=FIXED';
         $query .= '&bug_status=RESOLVED';
       }
       else {
-        $query .= '&f1=cf_status_firefox'.rawurlencode($train).'&o1=regexp&v1='.rawurlencode('^(fixed|disabled)');
+        $query .= '&f3=cf_status_firefox'.rawurlencode($train);
+        $query .= '&o3=regexp&v3='.rawurlencode('^(fixed|disabled)');
       }
-      $query .= '&f2=OP&j2=OR';
-      $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('[qa+]');
-      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa+]');
-      $query .= '&f5=keywords&o5=anywords&v5=verifyme';
+      $query .= '&f4=OP&j4=OR';
+      $query .= '&f5=status_whiteboard&o5=substring&v5='.rawurlencode('[qa+]');
+      $query .= '&f6=cf_qa_whiteboard&o6=substring&v6='.rawurlencode('[qa+]');
+      $query .= '&f7=keywords&o7=anywords&v7=verifyme';
       break;
     case 'verifytriage':
       // verification assessment missing, needs triage (qa? tag)
       if ($is_on_trunk) {
-        $query .= '&target_milestone='.rawurlencode('Firefox '.$train).'&target_milestone=mozilla'.rawurlencode($train);
+        $query .= '&target_milestone='.rawurlencode('Firefox '.$train);
+        $query .= '&target_milestone=mozilla'.rawurlencode($train);
         $query .= '&resolution=FIXED&resolution=---';
-        $query .= '&f1=bug_status&o1=notequals&v1=VERIFIED';
+        $query .= '&f3=bug_status&o3=notequals&v3=VERIFIED';
       }
       else {
-        $query .= '&f1=cf_status_firefox'.rawurlencode($train).'&o1=regexp&v1='.rawurlencode('^(affected|fixed|disabled)');
+        $query .= '&f3=cf_status_firefox'.rawurlencode($train);
+        $query .= '&o3=regexp&v3='.rawurlencode('^(affected|fixed|disabled)');
       }
-      $query .= '&f2=OP&j2=OR';
-      $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('[qa?]');
-      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa?]');
+      $query .= '&f4=OP&j4=OR';
+      $query .= '&f5=status_whiteboard&o5=substring&v5='.rawurlencode('[qa?]');
+      $query .= '&f6=cf_qa_whiteboard&o6=substring&v6='.rawurlencode('[qa?]');
       break;
     default:
       break;
