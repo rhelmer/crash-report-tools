@@ -46,7 +46,7 @@ if (count($force_dates)) {
 // *** data gathering variables ***
 
 // for how many days back to get the data
-$backlog_days = -1;
+$backlog_days = 0;
 
 // *** URLs ***
 
@@ -97,19 +97,8 @@ else {
 
 $products = array('Firefox', 'Core', 'Toolkit', 'Firefox for Android', 'Loop');
 
-$buggroups = array('FxIteration', 'FirefoxNonIter', 'CoreNonIter', 'ToolkitNonIter');
-
-$queryinfo = array('fixed' =>    array('title' => 'Fixed',
-                                       'desc' => 'Bugs marked as FIXED',
-                                       'color' => 'rgba(0, 204, 0, .5)'),
-                   'verified' => array('title' => 'Verified',
-                                       'desc' => 'Bugs marked as VERIFIED',
-                                       'color' => 'rgba(0, 0, 255, .5)'),
-                   'reopened' => array('title' => 'Reopened',
-                                       'desc' => 'Bugs marked as REOPENED',
-                                       'color' => ''),
-                  );
-$bugqueries = array_keys($queryinfo);
+$dailygroups = array('FxIteration', 'FirefoxNonIter', 'CoreNonIter', 'ToolkitNonIter');
+$dailyqueries = array_keys('fixed', 'verified', 'reopened');
 
 $iterations =
     array('33.2' => array('start' => '2014-06-24',
@@ -168,8 +157,8 @@ foreach ($days_to_analyze as $anaday) {
   print('Fetching QA bug data for '.$anaday);
 
   $bugdata[$anaday]['time_update'] = time();
-  foreach ($bugqueries as $querytype) {
-    foreach ($buggroups as $group) {
+  foreach ($dailyqueries as $querytype) {
+    foreach ($dailygroups as $group) {
       $bugquery = getDailyBugQuery($querytype, $group, $anaday);
       //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
       //print("\n".$buglist_url."\n");
