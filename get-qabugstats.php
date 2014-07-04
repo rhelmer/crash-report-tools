@@ -169,7 +169,7 @@ foreach ($days_to_analyze as $anaday) {
   $bugdata[$anaday]['time_update'] = time();
   foreach ($bugqueries as $querytype) {
     foreach ($buggroups as $group) {
-      $bugquery = getBugQuery($querytype, $group, $anaday);
+      $bugquery = getDailyBugQuery($querytype, $group, $anaday);
       //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
       //print("\n".$buglist_url."\n");
       $bugcount = getBugCount($bugquery);
@@ -226,7 +226,7 @@ file_put_contents($imfile, json_encode($itermetastore));
 //print_r($itermetastore);
 
 // *** helper functions ***
-function getBugQuery($type, $group, $date) {
+function getDailyBugQuery($type, $group, $date) {
   $ymd_start = $date.' 00:00:00';
   $ymd_end = date('Y-m-d H:i:s', strtotime($ymd_start.' +1 day'));
 
@@ -298,7 +298,7 @@ function getIterQuery($type, $iteration) {
       // total bugs
       break;
     case 'verifiable':
-      // fixed, needing verification
+      // verification "possible", i.e. wanted at some point
       $query .= '&f5=OP&j5=OR';
       $query .= '&f6=status_whiteboard&o6=substring&v6='.rawurlencode('[qa+]');
       $query .= '&f7=cf_qa_whiteboard&o7=substring&v7='.rawurlencode('[qa+]');
