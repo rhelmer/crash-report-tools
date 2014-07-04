@@ -46,7 +46,7 @@ if (count($force_dates)) {
 // *** data gathering variables ***
 
 // for how many days back to get the data
-$backlog_days = 2;
+$backlog_days = -1;
 
 // *** URLs ***
 
@@ -69,6 +69,7 @@ if (!file_exists($outdir)) { mkdir($outdir); }
 
 $bdfile = $outdir.'/qa.bugdata.json';
 $imfile = $outdir.'/qa.itermeta.json';
+$tmfile = $outdir.'/qa.trainmeta.json';
 
 if (file_exists($bdfile)) {
   print('Reading stored QA bug data'."\n");
@@ -116,6 +117,7 @@ if (file_exists($bdfile)) {
 else {
   $bugdata = array();
 }
+
 if (file_exists($imfile)) {
   print('Reading stored QA iteration queries'."\n");
   $itermetastore = json_decode(file_get_contents($imfile), true);
@@ -123,6 +125,16 @@ if (file_exists($imfile)) {
 else {
   $itermetastore = array();
 }
+
+if (file_exists($tmfile)) {
+  print('Reading stored QA train queries'."\n");
+  $trainmetastore = json_decode(file_get_contents($tmfile), true);
+}
+else {
+  $trainmetastore = array();
+}
+
+$products = array('Firefox', 'Core', 'Toolkit', 'Firefox for Android', 'Loop');
 
 $buggroups = array('FxIteration', 'FirefoxNonIter', 'CoreNonIter', 'ToolkitNonIter');
 
@@ -150,9 +162,37 @@ $iterations =
           '34.3' => array('start' => '2014-08-19',
                           'end' => '2014-09-02'),
     );
-
 $iterqueries = array('total', 'verifiable', 'verifydone',
                      'verifyneeded', 'contactneeded', 'verifytriage');
+
+$trains =
+    array('30' => array('start'   => '2014-02-03',
+                        'aurora'  => '2014-03-17',
+                        'beta'    => '2014-04-28',
+                        'release' => '2014-06-10',
+                        'end'     => '2014-07-22'),
+          '31' => array('start'   => '2014-03-17',
+                        'aurora'  => '2014-04-28',
+                        'beta'    => '2014-06-09',
+                        'release' => '2014-07-22',
+                        'end'     => '2014-09-02'),
+          '32' => array('start'   => '2014-04-28',
+                        'aurora'  => '2014-06-09',
+                        'beta'    => '2014-07-21',
+                        'release' => '2014-09-02',
+                        'end'     => '2014-08-05'),
+          '33' => array('start'   => '2014-06-09',
+                        'aurora'  => '2014-07-21',
+                        'beta'    => '2014-09-01',
+                        'release' => '2014-10-14',
+                        'end'     => '2014-11-25'),
+          '34' => array('start'   => '2014-07-21',
+                        'aurora'  => '2014-09-01',
+                        'beta'    => '2014-10-13',
+                        'release' => '2014-11-25',
+                        'end'     => '2015-01-06'),
+    );
+$trainqueries = array('verifydone', 'verifyneeded', 'verifytriage');
 
 $days_to_analyze = array();
 for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
@@ -183,14 +223,17 @@ foreach ($days_to_analyze as $anaday) {
 }
 
 $anaday = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -1 day'));
-print('Fetching Firefox iteration bug counts for right now, calling it '.$anaday.' EOD');
-if (!array_key_exists('fxiter', $bugdata[$anaday])) {
+print('Fetching bug counts for right now, calling it '.$anaday.' EOD'."\n");
+print('Firefox iteration');
+if (!array_key_exists($anaday, $bugdata) ||
+    !array_key_exists('fxiter', $bugdata[$anaday])) {
   $bugdata[$anaday]['fxiter']['time_update'] = time();
 }
 foreach ($iterations as $iteration=>$iterdata) {
   // Record data up to 7 days past the end of the iteration.
   $maxday = date('Y-m-d', strtotime($iterdata['end'].' +7 day'));
   if (($iterdata['start'] <= $anaday) && ($maxday >= $anaday)) {
+    print('|'.$iteration);
     if (!array_key_exists($iteration, $bugdata[$anaday]['fxiter'])) {
       $bugdata[$anaday]['fxiter'][$iteration] = array();
     }
@@ -206,10 +249,52 @@ foreach ($iterations as $iteration=>$iterdata) {
       //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
       //print("\n".$buglist_url."\n");
       $bugcount = getBugCount($bugquery);
-      if (($bugcount !== false) && !array_key_exists($iqtype, $bugdata[$anaday]['fxiter'][$iteration])) {
+      if (($bugcount !== false) &&
+          !array_key_exists($iqtype, $bugdata[$anaday]['fxiter'][$iteration])) {
         $bugdata[$anaday]['fxiter'][$iteration][$iqtype] = $bugcount;
       }
       print('.');
+    }
+  }
+}
+print("\n");
+
+print('Trains');
+if (!array_key_exists('train', $bugdata[$anaday])) {
+  $bugdata[$anaday]['train']['time_update'] = time();
+}
+foreach ($trains as $train=>$traindata) {
+  // Record data up to 7 days past the end of the release.
+  $maxday = date('Y-m-d', strtotime($traindata['end'].' +7 day'));
+  if (($traindata['start'] <= $anaday) && ($maxday >= $anaday)) {
+    print('|'.$train);
+    $is_on_trunk = ($traindata['aurora'] > $anaday);
+    if (!array_key_exists($train, $bugdata[$anaday]['train'])) {
+      $bugdata[$anaday]['train'][$train] = array();
+    }
+    if (!array_key_exists($train, $trainmetastore)) {
+      $trainmetastore[$train] = $traindata;
+    }
+    else {
+      $trainmetastore[$train] = array_merge($trainmetastore[$train], $traindata);
+    }
+    foreach ($products as $prod) {
+      print(':');
+      if (!array_key_exists($prod, $bugdata[$anaday]['train'][$train])) {
+        $bugdata[$anaday]['train'][$train][$prod] = array();
+      }
+      foreach ($trainqueries as $tqtype) {
+        $bugquery = getTrainQuery($tqtype, $prod, $train, $is_on_trunk);
+        $trainmetastore[$train]['queries'][$prod][$tqtype] = $bugquery;
+        //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
+        //print("\n".$buglist_url."\n");
+        $bugcount = getBugCount($bugquery);
+        if (($bugcount !== false) &&
+            !array_key_exists($tqtype, $bugdata[$anaday]['train'][$train][$prod])) {
+          $bugdata[$anaday]['train'][$train][$prod][$tqtype] = $bugcount;
+        }
+        print('.');
+      }
     }
   }
 }
@@ -224,6 +309,11 @@ ksort($itermetastore); // sort by date (key), ascending
 file_put_contents($imfile, json_encode($itermetastore));
 // debug only line
 //print_r($itermetastore);
+
+ksort($trainmetastore); // sort by date (key), ascending
+file_put_contents($tmfile, json_encode($trainmetastore));
+// debug only line
+//print_r($trainmetastore);
 
 // *** helper functions ***
 function getDailyBugQuery($type, $group, $date) {
@@ -332,6 +422,59 @@ function getIterQuery($type, $iteration) {
       $query .= '&f9=status_whiteboard&o9=notsubstring&v9='.rawurlencode('[qa');
       $query .= '&f10=cf_qa_whiteboard&o10=notsubstring&v10='.rawurlencode('[qa');
       $query .= '&f11=CP';
+      break;
+    default:
+      break;
+  }
+  return $query;
+}
+
+function getTrainQuery($type, $product, $train, $is_on_trunk) {
+  $query = 'product='.rawurlencode($product);
+  switch ($type) {
+    case 'verifydone':
+      // verification done#
+      if ($is_on_trunk) {
+        $query .= '&target_milestone='.rawurlencode('Firefox '.$train).'&target_milestone=mozilla'.rawurlencode($train);
+        $query .= '&resolution=FIXED';
+        $query .= '&bug_status=VERIFIED';
+      }
+      else {
+        $query .= '&f1=cf_status_firefox'.rawurlencode($train).'&o1=substring&v1=verified';
+      }
+      $query .= '&f2=OP&j2=OR';
+      $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('[qa+]');
+      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa+]');
+      $query .= '&f5=keywords&o5=anywords&v5=verifyme';
+      break;
+    case 'verifyneeded':
+      // fixed (or disabled), needing verification
+      if ($is_on_trunk) {
+        $query .= '&target_milestone='.rawurlencode('Firefox '.$train).'&target_milestone=mozilla'.rawurlencode($train);
+        $query .= '&resolution=FIXED';
+        $query .= '&bug_status=RESOLVED';
+      }
+      else {
+        $query .= '&f1=cf_status_firefox'.rawurlencode($train).'&o1=regexp&v1='.rawurlencode('^(fixed|disabled)');
+      }
+      $query .= '&f2=OP&j2=OR';
+      $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('[qa+]');
+      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa+]');
+      $query .= '&f5=keywords&o5=anywords&v5=verifyme';
+      break;
+    case 'verifytriage':
+      // verification assessment missing, needs triage (qa? tag)
+      if ($is_on_trunk) {
+        $query .= '&target_milestone='.rawurlencode('Firefox '.$train).'&target_milestone=mozilla'.rawurlencode($train);
+        $query .= '&resolution=FIXED&resolution=---';
+        $query .= '&f1=bug_status&o1=notequals&v1=VERIFIED';
+      }
+      else {
+        $query .= '&f1=cf_status_firefox'.rawurlencode($train).'&o1=regexp&v1='.rawurlencode('^(affected|fixed|disabled)');
+      }
+      $query .= '&f2=OP&j2=OR';
+      $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('[qa?]');
+      $query .= '&f4=cf_qa_whiteboard&o4=substring&v4='.rawurlencode('[qa?]');
       break;
     default:
       break;
