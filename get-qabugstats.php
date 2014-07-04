@@ -46,7 +46,7 @@ if (count($force_dates)) {
 // *** data gathering variables ***
 
 // for how many days back to get the data
-$backlog_days = -1;
+$backlog_days = 2;
 
 // *** URLs ***
 
@@ -146,6 +146,8 @@ $trains =
     );
 $trainqueries = array('verifydone', 'verifyneeded', 'verifytriage');
 
+$staticqueries = array('nonTMfixed', 'needURLs', 'qawanted', 'stepswanted', 'windowwanted');
+
 $days_to_analyze = array();
 for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $days_to_analyze[] = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day'));
@@ -176,6 +178,7 @@ foreach ($days_to_analyze as $anaday) {
 
 $anaday = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -1 day'));
 print('Fetching bug counts for right now, calling it '.$anaday.' EOD'."\n");
+
 print('Firefox iteration');
 if (!array_key_exists($anaday, $bugdata) ||
     !array_key_exists('fxiter', $bugdata[$anaday])) {
@@ -249,6 +252,23 @@ foreach ($trains as $train=>$traindata) {
       }
     }
   }
+}
+print("\n");
+
+print('Static queries');
+if (!array_key_exists('static', $bugdata[$anaday])) {
+  $bugdata[$anaday]['static']['time_update'] = time();
+}
+foreach ($staticqueries as $sqtype) {
+  $bugquery = getStaticQuery($sqtype);
+  //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
+  //print("\n".$buglist_url."\n");
+  $bugcount = getBugCount($bugquery);
+  if (($bugcount !== false) &&
+      !array_key_exists($sqtype, $bugdata[$anaday]['static'])) {
+    $bugdata[$anaday]['static'][$sqtype] = $bugcount;
+  }
+  print('.');
 }
 print("\n");
 
@@ -433,6 +453,37 @@ function getTrainQuery($type, $product, $train, $is_on_trunk) {
       $query .= '&f4=OP&j4=OR';
       $query .= '&f5=status_whiteboard&o5=substring&v5='.rawurlencode('[qa?]');
       $query .= '&f6=cf_qa_whiteboard&o6=substring&v6='.rawurlencode('[qa?]');
+      break;
+    default:
+      break;
+  }
+  return $query;
+}
+
+function getStaticQuery($type) {
+  switch ($type) {
+    case 'nonTMfixed':
+      // Fixed in last 7 days without a target milestone
+      $query = 'target_milestone=---';
+      foreach ($GLOBALS['products'] as $prod) {
+        $query .= '&product='.rawurlencode($prod);
+      }
+      $query .= '&bug_status=RESOLVED';
+      $query .= '&chfield=resolution&chfieldfrom=-7d&chfieldto=Now&chfieldvalue=FIXED';
+      break;
+    case 'needURLs':
+      // bugs with needURLs keyword set
+    case 'qawanted':
+      // bugs with qawanted keyword set
+    case 'stepswanted':
+      // bugs with steps-wanted keyword set
+    case 'windowwanted':
+      // bugs with regressionwindow-wanted keyword set
+      if ($type == 'stepswanted') { $keyword = 'steps-wanted'; }
+      elseif ($type == 'windowwanted') { $keyword = 'regressionwindow-wanted'; }
+      else { $keyword = $type; }
+      $query = 'resolution=---';
+      $query .= '&keywords_type=allwords&keywords='.rawurlencode($keyword);
       break;
     default:
       break;
