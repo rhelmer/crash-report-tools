@@ -49,7 +49,15 @@ function listCurrentData(aData) {
         iterElement.appendChild(document.createTextNode(" "));
         var completed = document.createElement("span");
         completed.classList.add("itercompleted");
-        completed.textContent = "(day " + iterDay + " of " + iterDuration + ")";
+        if (iterDay <= iterDuration) {
+          completed.textContent = "(day " + iterDay + " of " + iterDuration + ")";
+        }
+        else if ((iterDay - iterDuration) == 1) {
+          completed.textContent = "(ended yesterday)";
+        }
+        else {
+          completed.textContent = "(ended " + (iterDay - iterDuration) + " days ago)";
+        }
         iterElement.appendChild(completed);
         // List queries for that iteration.
         var iterList = document.createElement("ul");
