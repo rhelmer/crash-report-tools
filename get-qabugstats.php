@@ -176,6 +176,7 @@ foreach ($days_to_analyze as $anaday) {
   print("\n");
 }
 
+$today = date('Y-m-d', $curtime);
 $anaday = date('Y-m-d', strtotime(date('Y-m-d', $curtime).' -1 day'));
 print('Fetching bug counts for right now, calling it '.$anaday.' EOD'."\n");
 
@@ -187,7 +188,7 @@ if (!array_key_exists($anaday, $bugdata) ||
 foreach ($iterations as $iteration=>$iterdata) {
   // Record data up to 7 days past the end of the iteration.
   $maxday = date('Y-m-d', strtotime($iterdata['end'].' +7 day'));
-  if (($iterdata['start'] <= $anaday) && ($maxday >= $anaday)) {
+  if (($iterdata['start'] <= $today) && ($maxday >= $today)) {
     print('|'.$iteration);
     if (!array_key_exists($iteration, $bugdata[$anaday]['fxiter'])) {
       $bugdata[$anaday]['fxiter'][$iteration] = array();
@@ -221,9 +222,9 @@ if (!array_key_exists('train', $bugdata[$anaday])) {
 foreach ($trains as $train=>$traindata) {
   // Record data up to 7 days past the end of the release.
   $maxday = date('Y-m-d', strtotime($traindata['end'].' +7 day'));
-  if (($traindata['start'] <= $anaday) && ($maxday >= $anaday)) {
+  if (($traindata['start'] <= $today) && ($maxday >= $today)) {
     print('|'.$train);
-    $is_on_trunk = ($traindata['aurora'] > $anaday);
+    $is_on_trunk = ($traindata['aurora'] >= $today);
     if (!array_key_exists($train, $bugdata[$anaday]['train'])) {
       $bugdata[$anaday]['train'][$train] = array();
     }

@@ -52,7 +52,7 @@ $reports = array(
                          'minor_version' => 9,
                          'show_other_os' => true,
                          'products' => array('Firefox')),
-    'yosemite' => array('display_name' => 'Mavericks',
+    'yosemite' => array('display_name' => 'Yosemite',
                         'os_name' => 'Mac OS X',
                         'major_version' => 10,
                         'minor_version' => 10,
