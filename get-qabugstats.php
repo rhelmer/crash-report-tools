@@ -78,10 +78,12 @@ if (file_exists($bdfile)) {
   foreach ($bugdata as $anaday=>$data) {
     if (array_key_exists('fxiter', $data)) {
       foreach ($data['fxiter'] as $iter=>$iterdata) {
-        if (array_key_exists('verifiable', $data) && array_key_exists('verifydone', $data)) {
-          $bugdata[$anaday]['fxiter']['verifiable'] =
-              $bugdata[$anaday]['fxiter']['verifiable'] +
-              $bugdata[$anaday]['fxiter']['verifydone'];
+        if (($iter != 'time_update') &&
+            array_key_exists('verifiable', $iterdata) &&
+            array_key_exists('verifydone', $iterdata)) {
+          $bugdata[$anaday]['fxiter'][$iter]['verifiable'] =
+              $bugdata[$anaday]['fxiter'][$iter]['verifiable'] +
+              $bugdata[$anaday]['fxiter'][$iter]['verifydone'];
         }
       }
     }
