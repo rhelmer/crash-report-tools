@@ -74,20 +74,6 @@ $tmfile = $outdir.'/qa.trainmeta.json';
 if (file_exists($bdfile)) {
   print('Reading stored QA bug data'."\n");
   $bugdata = json_decode(file_get_contents($bdfile), true);
-  // See if there's data to migrate and do so if needed.
-  foreach ($bugdata as $anaday=>$data) {
-    if (array_key_exists('fxiter', $data)) {
-      foreach ($data['fxiter'] as $iter=>$iterdata) {
-        if (($iter != 'time_update') &&
-            array_key_exists('verifiable', $iterdata) &&
-            array_key_exists('verifydone', $iterdata)) {
-          $bugdata[$anaday]['fxiter'][$iter]['verifiable'] =
-              $bugdata[$anaday]['fxiter'][$iter]['verifiable'] +
-              $bugdata[$anaday]['fxiter'][$iter]['verifydone'];
-        }
-      }
-    }
-  }
 }
 else {
   $bugdata = array();
