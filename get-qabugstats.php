@@ -74,6 +74,18 @@ $tmfile = $outdir.'/qa.trainmeta.json';
 if (file_exists($bdfile)) {
   print('Reading stored QA bug data'."\n");
   $bugdata = json_decode(file_get_contents($bdfile), true);
+  // See if there's data to migrate and do so if needed.
+  foreach ($bugdata as $anaday=>$data) {
+    if (array_key_exists('fxiter', $data)) {
+      foreach ($data['fxiter'] as $iter=>$iterdata) {
+        if (array_key_exists('verifiable', $data) && array_key_exists('verifydone', $data)) {
+          $bugdata[$anaday]['fxiter']['verifiable'] =
+              $bugdata[$anaday]['fxiter']['verifiable'] +
+              $bugdata[$anaday]['fxiter']['verifydone'];
+        }
+      }
+    }
+  }
 }
 else {
   $bugdata = array();
@@ -362,9 +374,11 @@ function getIterQuery($type, $iteration) {
       break;
     case 'verifiable':
       // verification "possible", i.e. wanted at some point
+      // We need to include already verified as people set whiteboard away from [qa+]
       $query .= '&f5=OP&j5=OR';
       $query .= '&f6=status_whiteboard&o6=substring&v6='.rawurlencode('[qa+]');
       $query .= '&f7=cf_qa_whiteboard&o7=substring&v7='.rawurlencode('[qa+]');
+      $query .= '&f8=bug_status&o8=equals&v8=VERIFIED';
       break;
     case 'verifydone':
       // verification done
