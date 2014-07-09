@@ -4,7 +4,7 @@
 
 // See http://dygraphs.com/ for graphs documentation.
 
-var gCountIDs = [];
+var gCountIDs = {iter: [], train: [], static: []};
 
 var gDataPath = "../../qa/";
 // for local debugging
@@ -12,6 +12,14 @@ var gDataPath = "../../qa/";
 
 var gBzAPIPath = "https://bugzilla.mozilla.org/bzapi/";
 var gBzBasePath = "https://bugzilla.mozilla.org/";
+
+var gProducts = {
+  fx: {name: 'Firefox', abbr: 'Fx'},
+  core: {name: 'Core', abbr: 'Core'},
+  tkit: {name: 'Toolkit', abbr: 'Toolkit'},
+  fennec: {name: 'Firefox for Android', abbr: 'Android'},
+  loop: {name: 'Loop', abbr: 'Loop'}
+};
 
 var iterqueries = {
   total: {desc: 'Total bugs in iteration'},
@@ -22,11 +30,29 @@ var iterqueries = {
   verifytriage: {desc: 'Verification +/- assessment needed'}
 };
 
+var trainqueries = {
+  verifydone: {desc: 'Verification done'},
+  verifyneeded: {desc: 'Verification needed'},
+  verifytriage: {desc: 'Verification +/- assessment needed'}
+};
+
+var staticqueries = {
+  nonTMfixed: {desc: 'Fixed in last 7 days without Target Milestone'},
+  needURLs: {desc: 'Crash URLs needed'},
+  qawanted: {desc: 'QA investigation wanted'},
+  stepswanted: {desc: 'Steps to reproduce wanted'},
+  windowwanted: {desc: 'Regression window wanted'}
+};
+
 window.onload = function() {
   // Create iteration list.
   document.getElementById("footer_itermeta").setAttribute("href", gDataPath + "qa.itermeta.json");
+  document.getElementById("footer_trainmeta").setAttribute("href", gDataPath + "qa.trainmeta.json");
+  document.getElementById("footer_staticmeta").setAttribute("href", gDataPath + "qa.staticmeta.json");
   document.getElementById("footer_bugdata").setAttribute("href", gDataPath + "qa.bugdata.json");
   fetchFile(gDataPath + "qa.itermeta.json", "json", listIterData);
+  fetchFile(gDataPath + "qa.trainmeta.json", "json", listTrainData);
+  fetchFile(gDataPath + "qa.staticmeta.json", "json", listStaticData);
 }
 
 function listIterData(aData) {
@@ -75,8 +101,8 @@ function listIterData(aData) {
           qItem.appendChild(document.createTextNode(": "));
           // Display bug count, placeholder will be replaced async by updateCounts().
           var count = document.createElement("span");
-          var count_id = "count_" + iteration + "_" + qtype;
-          gCountIDs.push(count_id);
+          var count_id = "count_iter_" + iteration + "_" + qtype;
+          gCountIDs.iter.push(count_id);
           count.classList.add("bugcount");
           count.setAttribute("id", count_id);
           count.setAttribute("data-query", aData[iteration].queries[qtype]);
@@ -86,20 +112,113 @@ function listIterData(aData) {
         }
       }
     }
-    updateCounts();
+    updateCounts('iter');
   }
   else {
     // ERROR! We're screwed!
     var iterElement = document.createElement("li");
     iterData.appendChild(iterElement);
-    iterElement.appendChild(document.createTextNode("Error loading iteration query."));
+    iterElement.appendChild(document.createTextNode("Error loading iteration query data."));
   }
 }
 
-function updateCounts() {
+function listTrainData(aData) {
+  var trainData = document.getElementById("traindata");
+  if (aData) {
+    var today = makeISODayString(Date.now());
+    for (var train in aData) {
+      var dtStart = new Date(aData[train].start);
+      var dtEnd = new Date(aData[train].end);
+      var showEnd = makeISODayString(new Date(dtEnd.getFullYear(), dtEnd.getMonth(), dtEnd.getDate() + 7));
+      if (aData[train].start <= today && showEnd >= today) {
+        // Create main line for train description.
+        var trainElement = document.createElement("li");
+        trainData.appendChild(trainElement);
+        var trainname = document.createElement("span");
+        trainname.classList.add("itername");
+        trainname.textContent = train;
+        trainElement.appendChild(trainname);
+        // List queries for that train.
+        var trainList = document.createElement("ul");
+        trainList.classList.add("queries");
+        trainElement.appendChild(trainList);
+        for (var qtype in trainqueries) {
+          var qItem = document.createElement("li");
+          // Link to buglist.
+          qItem.textContent = trainqueries[qtype].desc;
+          trainList.appendChild(qItem);
+          for (var prod in gProducts) {
+            qItem.appendChild(document.createTextNode(" - "));
+            // Link to buglist.
+            var link = document.createElement("a");
+            link.setAttribute("href", gBzBasePath + "buglist.cgi?" +
+                                      aData[train].queries[gProducts[prod].name][qtype]);
+            link.setAttribute("target", "_blank");
+            link.textContent = gProducts[prod].abbr;
+            qItem.appendChild(link);
+            qItem.appendChild(document.createTextNode(": "));
+            // Display bug count, placeholder will be replaced async by updateCounts().
+            var count = document.createElement("span");
+            var count_id = "count_train_" + train + "_" + prod + "_" + qtype;
+            gCountIDs.train.push(count_id);
+            count.classList.add("bugcount");
+            count.setAttribute("id", count_id);
+            count.setAttribute("data-query", aData[train].queries[gProducts[prod].name][qtype]);
+            count.textContent = "…";
+            qItem.appendChild(count);
+          }
+        }
+      }
+    }
+    updateCounts('train');
+  }
+  else {
+    // ERROR! We're screwed!
+    var trainElement = document.createElement("li");
+    trainData.appendChild(trainElement);
+    trainElement.appendChild(document.createTextNode("Error loading iteration query data."));
+  }
+}
+
+function listStaticData(aData) {
+  var staticData = document.getElementById("staticdata");
+  if (aData) {
+    // List static queries.
+    staticData.classList.add("queries");
+    for (var qtype in staticqueries) {
+      var qItem = document.createElement("li");
+      // Link to buglist.
+      var link = document.createElement("a");
+      link.setAttribute("href", gBzBasePath + "buglist.cgi?" + aData.queries[qtype]);
+      link.setAttribute("target", "_blank");
+      link.textContent = staticqueries[qtype].desc;
+      qItem.appendChild(link);
+      qItem.appendChild(document.createTextNode(": "));
+      // Display bug count, placeholder will be replaced async by updateCounts().
+      var count = document.createElement("span");
+      var count_id = "count_static_" + qtype;
+      gCountIDs.static.push(count_id);
+      count.classList.add("bugcount");
+      count.setAttribute("id", count_id);
+      count.setAttribute("data-query", aData.queries[qtype]);
+      count.textContent = "…";
+      qItem.appendChild(count);
+      staticData.appendChild(qItem);
+    }
+    updateCounts('static');
+  }
+  else {
+    // ERROR! We're screwed!
+    var staticElement = document.createElement("li");
+    staticData.appendChild(staticElement);
+    staticElement.appendChild(document.createTextNode("Error loading static query data."));
+  }
+}
+
+function updateCounts(aType) {
   // Update bug counts.
-  for (i = 0; i < gCountIDs.length; i++) {
-    var count = document.getElementById(gCountIDs[i]);
+  for (i = 0; i < gCountIDs[aType].length; i++) {
+    var count = document.getElementById(gCountIDs[aType][i]);
     fetchFile(gBzAPIPath + "count?" + count.dataset.query, "json",
         function(aData, aCount) {
           if (aData)

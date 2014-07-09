@@ -70,6 +70,7 @@ if (!file_exists($outdir)) { mkdir($outdir); }
 $bdfile = $outdir.'/qa.bugdata.json';
 $imfile = $outdir.'/qa.itermeta.json';
 $tmfile = $outdir.'/qa.trainmeta.json';
+$smfile = $outdir.'/qa.staticmeta.json';
 
 if (file_exists($bdfile)) {
   print('Reading stored QA bug data'."\n");
@@ -93,6 +94,14 @@ if (file_exists($tmfile)) {
 }
 else {
   $trainmetastore = array();
+}
+
+if (file_exists($smfile)) {
+  print('Reading stored static queries'."\n");
+  $staticmetastore = json_decode(file_get_contents($smfile), true);
+}
+else {
+  $staticmetastore = array();
 }
 
 $products = array('Firefox', 'Core', 'Toolkit', 'Firefox for Android', 'Loop');
@@ -262,6 +271,7 @@ if (!array_key_exists('static', $bugdata[$anaday])) {
 }
 foreach ($staticqueries as $sqtype) {
   $bugquery = getStaticQuery($sqtype);
+  $staticmetastore['queries'][$sqtype] = $bugquery;
   //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
   //print("\n".$buglist_url."\n");
   $bugcount = getBugCount($bugquery);
@@ -278,15 +288,19 @@ file_put_contents($bdfile, json_encode($bugdata));
 // debug only line
 //print_r($bugdata);
 
-ksort($itermetastore); // sort by date (key), ascending
+ksort($itermetastore); // sort by iteration (key), ascending
 file_put_contents($imfile, json_encode($itermetastore));
 // debug only line
 //print_r($itermetastore);
 
-ksort($trainmetastore); // sort by date (key), ascending
+ksort($trainmetastore); // sort by train (key), ascending
 file_put_contents($tmfile, json_encode($trainmetastore));
 // debug only line
 //print_r($trainmetastore);
+
+file_put_contents($smfile, json_encode($staticmetastore));
+// debug only line
+//print_r($staticmetastore);
 
 // *** helper functions ***
 function getDailyBugQuery($type, $group, $date) {
