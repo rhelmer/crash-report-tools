@@ -26,11 +26,11 @@ window.onload = function() {
   // Create iteration list.
   document.getElementById("footer_itermeta").setAttribute("href", gDataPath + "qa.itermeta.json");
   document.getElementById("footer_bugdata").setAttribute("href", gDataPath + "qa.bugdata.json");
-  fetchFile(gDataPath + "qa.itermeta.json", "json", listCurrentData);
+  fetchFile(gDataPath + "qa.itermeta.json", "json", listIterData);
 }
 
-function listCurrentData(aData) {
-  var curData = document.getElementById("currentdata");
+function listIterData(aData) {
+  var iterData = document.getElementById("iterdata");
   if (aData) {
     var today = makeISODayString(Date.now());
     for (var iteration in aData) {
@@ -42,7 +42,7 @@ function listCurrentData(aData) {
         var iterDay = Math.ceil((Date.now() - dtStart) / 86400000);
         // Create main line for iteration description.
         var iterElement = document.createElement("li");
-        curData.appendChild(iterElement);
+        iterData.appendChild(iterElement);
         var itername = document.createElement("span");
         itername.classList.add("itername");
         itername.textContent = iteration;
@@ -91,7 +91,7 @@ function listCurrentData(aData) {
   else {
     // ERROR! We're screwed!
     var iterElement = document.createElement("li");
-    curData.appendChild(iterElement);
+    iterData.appendChild(iterElement);
     iterElement.appendChild(document.createTextNode("Error loading iteration query."));
   }
 }
