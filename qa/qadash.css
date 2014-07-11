@@ -9,7 +9,15 @@ h1 {
 
 h2 {
   font-size: 1.2em;
-  margin: 0 0 .5em;
+  margin: .5em 0;
+}
+
+h2 + ul {
+  margin: 0;
+}
+
+ul {
+  padding: 0 1em;
 }
 
 .itername {
@@ -18,6 +26,42 @@ h2 {
 
 .itercompleted {
   color: #808080;
+}
+
+table {
+  border: 1px solid #000000;
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+td, th {
+  padding: 1px 3px;
+}
+
+td:not(:last-child), th:not(:last-child) {
+  border-right: 1px solid #CCCCCC;
+}
+tr:not(:last-child) > td, tr:not(:last-child) > th {
+  border-bottom: 1px solid #CCCCCC;
+}
+
+td:last-child, th:last-child {
+  border-right: 1px solid #000000;
+}
+tr:last-child > td, tr:last-child > th {
+  border-bottom: 1px solid #000000;
+}
+
+tr:not(:last-child) > th.trainname {
+  border-bottom: 1px solid #000000;
+}
+
+th.product {
+  width: 8ch;
+}
+
+td.num {
+  text-align: right;
 }
 
 #footer {

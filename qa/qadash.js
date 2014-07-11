@@ -126,47 +126,65 @@ function listTrainData(aData) {
   var trainData = document.getElementById("traindata");
   if (aData) {
     var today = makeISODayString(Date.now());
+    var trainHeader = document.createElement("thead");
+    trainData.appendChild(trainHeader);
+    var trainRow = document.createElement("tr");
+    trainHeader.appendChild(trainRow);
+    var emptyCell = document.createElement("td");
+    emptyCell.setAttribute("colspan", 2);
+    trainRow.appendChild(emptyCell);
+    for (var prod in gProducts) {
+      var prodCell = document.createElement("th");
+      prodCell.classList.add("product");
+      prodCell.textContent = gProducts[prod].abbr;
+      trainRow.appendChild(prodCell);
+    }
     for (var train in aData) {
       var dtStart = new Date(aData[train].start);
       var dtEnd = new Date(aData[train].end);
       var showEnd = makeISODayString(new Date(dtEnd.getFullYear(), dtEnd.getMonth(), dtEnd.getDate() + 7));
       if (aData[train].start <= today && showEnd >= today) {
-        // Create main line for train description.
-        var trainElement = document.createElement("li");
-        trainData.appendChild(trainElement);
-        var trainname = document.createElement("span");
-        trainname.classList.add("itername");
+        // Create block for train data.
+        var trainBody = document.createElement("tbody");
+        trainData.appendChild(trainBody);
+        var trainRow = document.createElement("tr");
+        trainBody.appendChild(trainRow);
+        var trainname = document.createElement("th");
+        trainname.classList.add("trainname");
+        trainname.setAttribute("rowspan", Object.keys(trainqueries).length);
         trainname.textContent = train;
-        trainElement.appendChild(trainname);
+        trainRow.appendChild(trainname);
         // List queries for that train.
-        var trainList = document.createElement("ul");
-        trainList.classList.add("queries");
-        trainElement.appendChild(trainList);
+        var rowCount = 1;
         for (var qtype in trainqueries) {
-          var qItem = document.createElement("li");
+          if (rowCount > 1) {
+            trainRow = document.createElement("tr");
+            trainBody.appendChild(trainRow);
+          }
+          var qItem = document.createElement("td");
           // Link to buglist.
           qItem.textContent = trainqueries[qtype].desc;
-          trainList.appendChild(qItem);
+          trainRow.appendChild(qItem);
           for (var prod in gProducts) {
-            qItem.appendChild(document.createTextNode(" - "));
+            var qItem = document.createElement("td");
+            qItem.classList.add("num");
             // Link to buglist.
             var link = document.createElement("a");
             link.setAttribute("href", gBzBasePath + "buglist.cgi?" +
                                       aData[train].queries[gProducts[prod].name][qtype]);
             link.setAttribute("target", "_blank");
-            link.textContent = gProducts[prod].abbr;
             qItem.appendChild(link);
-            qItem.appendChild(document.createTextNode(": "));
             // Display bug count, placeholder will be replaced async by updateCounts().
-            var count = document.createElement("span");
             var count_id = "count_train_" + train + "_" + prod + "_" + qtype;
             gCountIDs.train.push(count_id);
-            count.classList.add("bugcount");
-            count.setAttribute("id", count_id);
-            count.setAttribute("data-query", aData[train].queries[gProducts[prod].name][qtype]);
-            count.textContent = "…";
-            qItem.appendChild(count);
+            link.classList.add("bugcount");
+            link.setAttribute("id", count_id);
+            link.setAttribute("data-query", aData[train].queries[gProducts[prod].name][qtype]);
+            link.textContent = "…";
+            qItem.appendChild(link);
+            trainRow.appendChild(qItem);
           }
+          rowCount++;
         }
       }
     }
@@ -174,9 +192,11 @@ function listTrainData(aData) {
   }
   else {
     // ERROR! We're screwed!
-    var trainElement = document.createElement("li");
-    trainData.appendChild(trainElement);
-    trainElement.appendChild(document.createTextNode("Error loading iteration query data."));
+    var trainRow = document.createElement("tr");
+    var trainCell = document.createElement("td");
+    trainData.appendChild(trainRow);
+    trainRow.appendChild(trainCell);
+    trainCell.appendChild(document.createTextNode("Error loading train query data."));
   }
 }
 
