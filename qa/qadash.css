@@ -5,6 +5,9 @@
 h1 {
   font-size: 1.5em;
   margin: 0 0 .5em;
+  padding-left: 35px;
+  background-image: url("FirefoxQA_32.png");
+  background-repeat: no-repeat;
 }
 
 h2 {
