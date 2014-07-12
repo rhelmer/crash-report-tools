@@ -9,7 +9,7 @@ h1 {
 
 h2 {
   font-size: 1.2em;
-  margin: .1em 0 .5em;
+  margin: 1em 0 .5em;
 }
 
 h1 + h2 {
@@ -25,7 +25,7 @@ ul {
 }
 
 #iterdata > li + li {
-  margin-top: 0.25em;
+  margin-top: 0.5em;
 }
 
 .itername {
