@@ -283,8 +283,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                 $pvdata[$rep_row['product_version_id']]['release_version'];
 
             $adu_query =
-              'SELECT SUM(adi_count) as adu '
-              .'FROM raw_adi '
+              'SELECT SUM(adu_count) as adu '
+              .'FROM raw_adu '
               ."WHERE product_guid = btrim('".$productid."', '{}')"
               ." AND update_channel = '".$adu_channel."'"
               ." AND product_version = '".$adu_version."'"
