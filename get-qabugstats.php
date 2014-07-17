@@ -58,6 +58,7 @@ else { chdir('/mnt/mozilla/projects/socorro/'); }
 
 $bugzilla_url = 'https://bugzilla.mozilla.org/';
 $bzapi_url = 'https://bugzilla.mozilla.org/bzapi/';
+$bz_restapi_url = 'https://bugzilla.mozilla.org/rest/';
 
 // *** code start ***
 
@@ -106,10 +107,12 @@ else {
 
 $products = array('Firefox', 'Core', 'Toolkit', 'Firefox for Android', 'Loop');
 // Words that exclude bugs from queries (except Firefox, Firefox for Android products)
-$excludewords = 'b2g,gaia,homescreen,sms,dialer,flame';
+$excludewords = 'b2g,gaia,homescreen,sms,dialer,flame,hamachi,buri';
 
-$dailygroups = array('FxIteration', 'FirefoxNonIter', 'CoreNonIter', 'ToolkitNonIter');
-$dailyqueries = array('fixed', 'verified', 'reopened');
+$dailycountgroups = array('FxIteration', 'FirefoxNonIter', 'CoreNonIter', 'ToolkitNonIter');
+$dailycountqueries = array('fixed', 'verified', 'reopened');
+
+$dailycompqueries = array('filed');
 
 $iterations =
     array('33.2' => array('start' => '2014-06-24',
@@ -170,14 +173,35 @@ foreach ($days_to_analyze as $anaday) {
   print('Fetching QA bug data for '.$anaday);
 
   $bugdata[$anaday]['time_update'] = time();
-  foreach ($dailyqueries as $querytype) {
-    foreach ($dailygroups as $group) {
-      $bugquery = getDailyBugQuery($querytype, $group, $anaday);
+  foreach ($dailycountqueries as $querytype) {
+    foreach ($dailycountgroups as $group) {
+      $bugquery = getDailyBugCountQuery($querytype, $group, $anaday);
       //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
       //print("\n".$buglist_url."\n");
       $bugcount = getBugCount($bugquery);
       if ($bugcount !== false) {
         $bugdata[$anaday][$group][$querytype] = $bugcount;
+      }
+      print('.');
+    }
+  }
+  print(':');
+
+  foreach ($dailycompqueries as $querytype) {
+    foreach ($products as $prod) {
+      $bugquery = getDailyComponentQuery($querytype, $prod, $anaday);
+      //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
+      //print("\n".$buglist_url."\n");
+      $compcounts = getProdCompCounts($bugquery);
+      if ($compcounts !== false) {
+        if (!array_key_exists('comp', $bugdata[$anaday]) ||
+            !array_key_exists($querytype, $bugdata[$anaday]['comp'])) {
+          $bugdata[$anaday]['comp'][$querytype] = $compcounts;
+        }
+        else {
+          $bugdata[$anaday]['comp'][$querytype] =
+              array_merge($bugdata[$anaday]['comp'][$querytype], $compcounts);
+        }
       }
       print('.');
     }
@@ -303,7 +327,7 @@ file_put_contents($smfile, json_encode($staticmetastore));
 //print_r($staticmetastore);
 
 // *** helper functions ***
-function getDailyBugQuery($type, $group, $date) {
+function getDailyBugCountQuery($type, $group, $date) {
   $ymd_start = $date.' 00:00:00';
   $ymd_end = date('Y-m-d H:i:s', strtotime($ymd_start.' +1 day'));
 
@@ -358,6 +382,28 @@ function getDailyBugQuery($type, $group, $date) {
       $query .= '&product=Toolkit';
       $query .= '&f1=cf_fx_iteration&o1=equals&v1=---';
       $query .= '&f2=status_whiteboard&o2=notregexp&v2='.rawurlencode('s=(it|[0-9][0-9]\.[1-3])');
+      break;
+    default:
+      break;
+  }
+  return $query;
+}
+
+function getDailyComponentQuery($type, $product, $date) {
+  $ymd_start = $date.' 00:00:00';
+  $ymd_end = date('Y-m-d H:i:s', strtotime($ymd_start.' +1 day'));
+
+  $query = 'product='.rawurlencode($product);
+  if (!preg_match('/^Firefox/', $product)) {
+    $query .= '&f1=short_desc&o1=nowordssubstr&v1='.rawurlencode($GLOBALS['excludewords']);
+    $query .= '&f2=status_whiteboard&o2=nowordssubstr&v2='.rawurlencode($GLOBALS['excludewords']);
+  }
+  $query .= '&chfield='.rawurlencode('[Bug creation]');
+  $query .= '&chfieldfrom='.rawurlencode($ymd_start);
+  $query .= '&chfieldto='.rawurlencode($ymd_end);
+  switch ($type) {
+    case 'filed':
+      // total filed bugs
       break;
     default:
       break;
@@ -513,6 +559,34 @@ function getBugCount($query) {
   if ($list_json) {
     $list_info = json_decode($list_json, true);
     return $list_info['data'];
+  }
+  return false;
+}
+
+function getProdCompCounts($query) {
+  $list_json = file_get_contents($GLOBALS['bz_restapi_url'].'bug?'.$query);
+  if ($list_json) {
+    $list_info = json_decode($list_json, true);
+    if (array_key_exists('bugs', $list_info)) {
+      $pccounts = array();
+      foreach ($list_info['bugs'] as $bug) {
+        if (!array_key_exists($bug['product'], $pccounts) ||
+            !array_key_exists($bug['component'], $pccounts[$bug['product']])) {
+          $pccounts[$bug['product']][$bug['component']] =
+              array('total' => 1, 'regression' => 0, 'crash' => 0);
+        }
+        else {
+          $pccounts[$bug['product']][$bug['component']]['total']++;
+        }
+        if (in_array('regression', $bug['keywords'])) {
+          $pccounts[$bug['product']][$bug['component']]['regression']++;
+        }
+        if (in_array('crash', $bug['keywords'])) {
+          $pccounts[$bug['product']][$bug['component']]['crash']++;
+        }
+      }
+      return $pccounts;
+    }
   }
   return false;
 }
