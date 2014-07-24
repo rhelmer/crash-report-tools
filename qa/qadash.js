@@ -16,7 +16,7 @@ var gBzAPIPath = "https://bugzilla.mozilla.org/bzapi/";
 var gBzBasePath = "https://bugzilla.mozilla.org/";
 
 var gProducts = {
-  fx: {name: 'Firefox', abbr: 'Fx', color: "#FF8000"},
+  fx: {name: 'Firefox', abbr: 'Fx', color: "#808080"},
   core: {name: 'Core', abbr: 'Core', color: "#004080"},
   tkit: {name: 'Toolkit', abbr: 'Toolkit', color: "#00CC00"},
   fennec: {name: 'Firefox for Android', abbr: 'Android', color: "#FFCC00"},
