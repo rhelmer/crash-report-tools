@@ -2,6 +2,24 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+html.fullpage {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: #FFFFFF;
+  color: #000000;
+}
+
+html.fullpage > body {
+  height: calc(100% - 2em); /* Make room for 2 margins of .5em, a header of 2em and a footer of 1em total */
+  margin: .5em;
+  padding: 0;
+}
+
 h1 {
   font-size: 1.5em;
   margin: 0 0 .5em;
@@ -80,6 +98,10 @@ td.num {
   border-top: 1px solid #CCCCCC;
   font-size: .75em;
   color: #8080CC;
+}
+
+html.fullpage > body > #footer {
+  margin-top: .5em;
 }
 
 #footer a:link, #footer a:visited { color: #AA99CC; }

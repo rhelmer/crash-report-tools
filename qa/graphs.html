@@ -3,34 +3,23 @@
    - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
 
 <!DOCTYPE html>
-<html>
+<html class="fullpage">
 <head>
-  <title>Firefox QA Dashboard</title>
+  <title>Firefox QA Graphs</title>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <link rel="stylesheet" href="qadash.css">
+  <script src="../longtermgraph/dygraph-combined.js"></script>
   <script src="qadash.js"></script>
   <link rel="shortcut icon" href="FirefoxQA_16icon.png" type="image/png">
 </head>
 <body>
-<h1 id="fxqadashboard">Firefox QA Dashboard</h1>
+<h1 id="fxqagraphs">Firefox QA Graphs</h1>
 
-<h2>Current iteration work:</h2>
-<ul id="iterdata">
-</ul>
-
-<h2>Current release train work:</h2>
-<table id="traindata">
-</table>
-
-<h2>Ongoing work:</h2>
-<ul id="staticdata">
-</ul>
+<div id="graphdiv"></div>
 
 <div id="footer">
 This dashboard is experimental. Give feedback and suggestions to KaiRo.
-Look <a href="" id="footer_staticmeta">at</a>
-<a href="" id="footer_trainmeta">some</a>
-<a href="" id="footer_itermeta">raw</a>
+Look at some raw
 <a href="" id="footer_bugdata">data</a>.
 </div>
 </body>

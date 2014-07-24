@@ -4,6 +4,8 @@
 
 // See http://dygraphs.com/ for graphs documentation.
 
+var gBody, gGraph;
+
 var gCountIDs = {iter: [], train: [], static: []};
 
 var gDataPath = "../../qa/";
@@ -14,11 +16,11 @@ var gBzAPIPath = "https://bugzilla.mozilla.org/bzapi/";
 var gBzBasePath = "https://bugzilla.mozilla.org/";
 
 var gProducts = {
-  fx: {name: 'Firefox', abbr: 'Fx'},
-  core: {name: 'Core', abbr: 'Core'},
-  tkit: {name: 'Toolkit', abbr: 'Toolkit'},
-  fennec: {name: 'Firefox for Android', abbr: 'Android'},
-  loop: {name: 'Loop', abbr: 'Loop'}
+  fx: {name: 'Firefox', abbr: 'Fx', color: "#FF8000"},
+  core: {name: 'Core', abbr: 'Core', color: "#004080"},
+  tkit: {name: 'Toolkit', abbr: 'Toolkit', color: "#00CC00"},
+  fennec: {name: 'Firefox for Android', abbr: 'Android', color: "#FFCC00"},
+  loop: {name: 'Loop', abbr: 'Loop', color: "#008080"}
 };
 
 var iterqueries = {
@@ -45,14 +47,30 @@ var staticqueries = {
 };
 
 window.onload = function() {
-  // Create iteration list.
-  document.getElementById("footer_itermeta").setAttribute("href", gDataPath + "qa.itermeta.json");
-  document.getElementById("footer_trainmeta").setAttribute("href", gDataPath + "qa.trainmeta.json");
-  document.getElementById("footer_staticmeta").setAttribute("href", gDataPath + "qa.staticmeta.json");
-  document.getElementById("footer_bugdata").setAttribute("href", gDataPath + "qa.bugdata.json");
-  fetchFile(gDataPath + "qa.itermeta.json", "json", listIterData);
-  fetchFile(gDataPath + "qa.trainmeta.json", "json", listTrainData);
-  fetchFile(gDataPath + "qa.staticmeta.json", "json", listStaticData);
+  if (document.getElementById("fxqadashboard")) {
+    // Create iteration list.
+    document.getElementById("footer_itermeta").setAttribute("href", gDataPath + "qa.itermeta.json");
+    document.getElementById("footer_trainmeta").setAttribute("href", gDataPath + "qa.trainmeta.json");
+    document.getElementById("footer_staticmeta").setAttribute("href", gDataPath + "qa.staticmeta.json");
+    document.getElementById("footer_bugdata").setAttribute("href", gDataPath + "qa.bugdata.json");
+    fetchFile(gDataPath + "qa.itermeta.json", "json", listIterData);
+    fetchFile(gDataPath + "qa.trainmeta.json", "json", listTrainData);
+    fetchFile(gDataPath + "qa.staticmeta.json", "json", listStaticData);
+  }
+  else if (document.getElementById("fxqagraphs")) {
+    gBody = document.getElementsByTagName("body")[0];
+    document.getElementById("footer_bugdata").setAttribute("href", gDataPath + "qa.bugdata.json");
+    fetchFile(gDataPath + "qa.bugdata.json", "json", graphData);
+  }
+}
+
+window.onresize = function() {
+  if (document.getElementById("fxqagraphs")) {
+    gGraph.resize(
+      gBody.clientWidth,
+      gBody.clientHeight - document.getElementById("graphdiv").offsetTop
+    );
+  }
 }
 
 function listIterData(aData) {
@@ -248,6 +266,45 @@ function updateCounts(aType) {
         },
         count
     );
+  }
+}
+
+function graphData(aData) {
+  var graphDiv = document.getElementById("graphdiv");
+  if (aData) {
+    var graphData = [], dataArray, bugs;
+    // add elements in the following format: [ new Date("2009-07-12"), 100, 200 ]
+    for (var day in aData) {
+      if (aData[day].comp.filed) {
+        dataArray = [ new Date(day) ];
+        for (var prod in gProducts) {
+          bugs = 0;
+          if (aData[day].comp.filed[gProducts[prod].name]) {
+            for (var comp in aData[day].comp.filed[gProducts[prod].name]) {
+              bugs += aData[day].comp.filed[gProducts[prod].name][comp].total;
+            }
+          }
+          dataArray.push(bugs);
+        }
+      }
+      graphData.push(dataArray);
+    }
+    var labels = ["date"];
+    for (var prod in gProducts) { labels.push(gProducts[prod].name); }
+    var colors = [];
+    for (var prod in gProducts) { colors.push(gProducts[prod].color); }
+    var graphOptions = {
+      title: "Bugs filed",
+      colors: colors,
+      strokeWidth: 2,
+      legend: 'always',
+      labels: labels,
+      labelsSeparateLines: true,
+      labelsShowZeroValues: true,
+      width: gBody.clientWidth,
+      height: gBody.clientHeight - graphDiv.offsetTop,
+    };
+    gGraph = new Dygraph(graphDiv, graphData, graphOptions);
   }
 }
 
