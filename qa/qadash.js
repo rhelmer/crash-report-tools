@@ -287,7 +287,7 @@ function updateCounts(aType) {
 function graphData(aData) {
   var graphDiv = document.getElementById("graphdiv");
   if (aData) {
-    var graphData = [], dataArray, bugs = [], unitEnd = true;
+    var graphData = [], dataArray, bugs = [], unitEnd = false;
     for (var prod in gProducts) { bugs[gProducts[prod].name] = 0; }
     // add elements in the following format: [ new Date("2009-07-12"), 100, 200 ]
     for (var day in aData) {
@@ -301,6 +301,13 @@ function graphData(aData) {
           }
         }
       }
+      // Find out if it's the last day of the selected unit.
+      if (gGraphUnit == "foo") {
+      }
+      else {
+        // if (gGraphUnit == "day")
+        unitEnd = true;
+      }
       if (unitEnd) {
         dataArray = [ new Date(day) ];
         for (var prod in gProducts) {
@@ -308,6 +315,7 @@ function graphData(aData) {
           bugs[gProducts[prod].name] = 0;
         }
         graphData.push(dataArray);
+        unitEnd = false;
       }
     }
     var labels = ["date"];
