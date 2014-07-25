@@ -4,7 +4,8 @@
 
 // See http://dygraphs.com/ for graphs documentation.
 
-var gBody, gRawData, gGraph, gGraphType, gGraphUnit, gTypeSelect, gUnitSelect;
+var gBody, gTrainData, gRawData, gGraph,
+    gGraphType, gGraphUnit, gTypeSelect, gUnitSelect;
 
 var gCountIDs = {iter: [], train: [], static: []};
 
@@ -56,7 +57,7 @@ var gGraphUnits = {
   day: {desc: "by day"},
   week: {desc: "by week"},
   month: {desc: "by month"},
-//  cycle: {desc: "by release cycle"},
+  cycle: {desc: "by release cycle"},
 }
 
 window.onload = function() {
@@ -101,7 +102,12 @@ window.onload = function() {
     }
     gBody = document.getElementsByTagName("body")[0];
     document.getElementById("footer_bugdata").setAttribute("href", gDataPath + "qa.bugdata.json");
-    fetchFile(gDataPath + "qa.bugdata.json", "json", graphData);
+    fetchFile(gDataPath + "qa.trainmeta.json", "json", function(aData) {
+      if (aData) {
+        gTrainData = aData;
+        fetchFile(gDataPath + "qa.bugdata.json", "json", graphData);
+      }
+    });
   }
 }
 
@@ -332,7 +338,16 @@ function graphData(aData) {
       var nextDate = new Date(day);
       nextDate.setUTCDate(nextDate.getUTCDate() + 1); // add a day
       // Find out if it's the last day of the selected unit.
-      if (gGraphUnit == "month") {
+      if (gGraphUnit == "cycle") {
+        for (train in gTrainData) {
+          if (day >= gTrainData[train].start &&
+              day < gTrainData[train].aurora &&
+              makeISODayString(nextDate) >= gTrainData[train].aurora) {
+            unitEnd = true;
+          }
+        }
+      }
+      else if (gGraphUnit == "month") {
         unitEnd = (nextDate.getUTCDate() == 1); // today is the last if tomorrow is the first
       }
       else if (gGraphUnit == "week") {

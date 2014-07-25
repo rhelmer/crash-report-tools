@@ -130,7 +130,12 @@ $iterqueries = array('total', 'verifiable', 'verifydone',
                      'verifyneeded', 'contactneeded', 'verifytriage');
 
 $trains =
-    array('30' => array('start'   => '2014-02-03',
+    array('29' => array('start'   => '2013-12-09',
+                        'aurora'  => '2014-02-03',
+                        'beta'    => '2014-03-17',
+                        'release' => '2014-04-29',
+                        'end'     => '2014-06-10'),
+          '30' => array('start'   => '2014-02-03',
                         'aurora'  => '2014-03-17',
                         'beta'    => '2014-04-28',
                         'release' => '2014-06-10',
