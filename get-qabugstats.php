@@ -568,6 +568,11 @@ function getStaticQuery($type) {
       else { $keyword = $type; }
       $query = 'resolution=---';
       $query .= '&keywords_type=allwords&keywords='.rawurlencode($keyword);
+      if ($type != 'needURLs') {
+        foreach ($GLOBALS['products'] as $prod) {
+          $query .= '&product='.rawurlencode($prod);
+        }
+      }
       break;
     default:
       break;
