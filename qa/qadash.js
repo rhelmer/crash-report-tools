@@ -4,7 +4,7 @@
 
 // See http://dygraphs.com/ for graphs documentation.
 
-var gBody, gGraph, gGraphType, gGraphUnit;
+var gBody, gRawData, gGraph, gGraphType, gGraphUnit, gTypeSelect, gUnitSelect;
 
 var gCountIDs = {iter: [], train: [], static: []};
 
@@ -56,7 +56,7 @@ var gGraphUnits = {
   day: {desc: "by day"},
   week: {desc: "by week"},
   month: {desc: "by month"},
-  cycle: {desc: "by release cycle"},
+//  cycle: {desc: "by release cycle"},
 }
 
 window.onload = function() {
@@ -73,6 +73,32 @@ window.onload = function() {
   else if (document.getElementById("fxqagraphs")) {
     gGraphType = "total";
     gGraphUnit = "week";
+    gTypeSelect = document.getElementById("type");
+    gTypeSelect.onchange = function() {
+      gGraphType = gTypeSelect.value;
+      graphData(gRawData);
+    }
+    var option;
+    for (var typeID in gGraphTypes) {
+      option = document.createElement("option");
+      option.value = typeID;
+      option.text = gGraphTypes[typeID].desc;
+      if (typeID == gGraphType) { option.selected = true; }
+      gTypeSelect.add(option);
+    }
+    gUnitSelect = document.getElementById("unit");
+    gUnitSelect.onchange = function() {
+      gGraphUnit = gUnitSelect.value;
+      graphData(gRawData);
+    }
+    var option;
+    for (var unitID in gGraphUnits) {
+      option = document.createElement("option");
+      option.value = unitID;
+      option.text = gGraphUnits[unitID].desc;
+      if (unitID == gGraphUnit) { option.selected = true; }
+      gUnitSelect.add(option);
+    }
     gBody = document.getElementsByTagName("body")[0];
     document.getElementById("footer_bugdata").setAttribute("href", gDataPath + "qa.bugdata.json");
     fetchFile(gDataPath + "qa.bugdata.json", "json", graphData);
@@ -285,6 +311,7 @@ function updateCounts(aType) {
 }
 
 function graphData(aData) {
+  gRawData = aData;
   var graphDiv = document.getElementById("graphdiv");
   if (aData) {
     var graphData = [], dataArray, bugs = [], unitEnd = false, curDate;
