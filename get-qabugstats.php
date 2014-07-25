@@ -161,7 +161,7 @@ $trains =
                         'release' => '2014-11-25',
                         'end'     => '2015-01-06'),
     );
-$trainqueries = array('verifydone', 'verifyneeded', 'verifytriage');
+$trainqueries = array('verifydone', 'verifyneeded', 'notverifymarked', 'verifytriage');
 
 $staticqueries = array('nonTMfixed', 'needURLs', 'qawanted', 'stepswanted', 'windowwanted');
 
@@ -505,6 +505,22 @@ function getTrainQuery($type, $product, $train, $is_on_trunk) {
       $query .= '&f5=status_whiteboard&o5=substring&v5='.rawurlencode('[qa+]');
       $query .= '&f6=cf_qa_whiteboard&o6=substring&v6='.rawurlencode('[qa+]');
       $query .= '&f7=keywords&o7=anywords&v7=verifyme';
+      break;
+    case 'notverifymarked':
+      // fixed (or disabled) without verification +/- tagging
+      if ($is_on_trunk) {
+        $query .= '&target_milestone='.rawurlencode('Firefox '.$train);
+        $query .= '&target_milestone=mozilla'.rawurlencode($train);
+        $query .= '&resolution=FIXED';
+        $query .= '&bug_status=RESOLVED';
+      }
+      else {
+        $query .= '&f3=cf_status_firefox'.rawurlencode($train);
+        $query .= '&o3=regexp&v3='.rawurlencode('^(fixed|disabled)');
+      }
+      $query .= '&f4=status_whiteboard&o4=notsubstring&v4='.rawurlencode('[qa');
+      $query .= '&f5=cf_qa_whiteboard&o5=notsubstring&v5='.rawurlencode('[qa');
+      $query .= '&f6=keywords&o6=nowords&v6=verifyme';
       break;
     case 'verifytriage':
       // verification assessment missing, needs triage (qa? tag)
