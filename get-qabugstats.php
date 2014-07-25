@@ -161,7 +161,7 @@ $trains =
                         'release' => '2014-11-25',
                         'end'     => '2015-01-06'),
     );
-$trainqueries = array('verifydone', 'verifyneeded', 'notverifymarked', 'verifytriage');
+$trainqueries = array('notverifymarked', 'verifydone', 'verifyneeded', 'verifytriage');
 
 $staticqueries = array('nonTMfixed', 'needURLs', 'qawanted', 'stepswanted', 'windowwanted');
 
