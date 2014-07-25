@@ -287,7 +287,7 @@ function updateCounts(aType) {
 function graphData(aData) {
   var graphDiv = document.getElementById("graphdiv");
   if (aData) {
-    var graphData = [], dataArray, bugs = [], unitEnd = false;
+    var graphData = [], dataArray, bugs = [], unitEnd = false, curDate;
     for (var prod in gProducts) { bugs[gProducts[prod].name] = 0; }
     // add elements in the following format: [ new Date("2009-07-12"), 100, 200 ]
     for (var day in aData) {
@@ -301,15 +301,23 @@ function graphData(aData) {
           }
         }
       }
+      curDate = new Date(day);
+      var nextDate = new Date(day);
+      nextDate.setUTCDate(nextDate.getUTCDate() + 1); // add a day
       // Find out if it's the last day of the selected unit.
-      if (gGraphUnit == "foo") {
+      if (gGraphUnit == "month") {
+        unitEnd = (nextDate.getUTCDate() == 1); // today is the last if tomorrow is the first
+      }
+      else if (gGraphUnit == "week") {
+        unitEnd = (curDate.getUTCDay() == 0); // week ends if today is Sunday
       }
       else {
         // if (gGraphUnit == "day")
         unitEnd = true;
       }
+      if (!aData[makeISODayString(nextDate)]) { unitEnd = true; }
       if (unitEnd) {
-        dataArray = [ new Date(day) ];
+        dataArray = [ curDate ];
         for (var prod in gProducts) {
           dataArray.push(bugs[gProducts[prod].name]);
           bugs[gProducts[prod].name] = 0;
@@ -323,7 +331,25 @@ function graphData(aData) {
     var colors = [];
     for (var prod in gProducts) { colors.push(gProducts[prod].color); }
     var graphOptions = {
-      title: gGraphTypes[gGraphType].desc,
+      title: gGraphTypes[gGraphType].desc + ", " +  gGraphUnits[gGraphUnit].desc,
+      axes: {
+        x: {
+          axisLabelFormatter: function(aDate) {
+            return makeISODayString(aDate.valueOf());
+          },
+          pixelsPerLabel: 100,
+          valueFormatter: function(aMilliseconds) {
+            if (gGraphUnit == "month") {
+              var dateValue = new Date(aMilliseconds);
+              return (dateValue.getUTCMonth() + 1) + "/" + dateValue.getUTCFullYear();
+            }
+            else {
+              return makeISODayString(aMilliseconds);
+            }
+          },
+        },
+      },
+      xAxisLabelWidth: 80,
       colors: colors,
       strokeWidth: 2,
       legend: 'always',

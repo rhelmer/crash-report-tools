@@ -93,6 +93,10 @@ td.num {
   text-align: right;
 }
 
+.dygraph-legend {
+  background-color: rgba(255, 255, 255, .75) !important;
+}
+
 #footer {
   margin-top: 2em;
   border-top: 1px solid #CCCCCC;
