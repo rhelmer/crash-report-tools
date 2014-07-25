@@ -381,7 +381,16 @@ function graphData(aData) {
           },
           pixelsPerLabel: 100,
           valueFormatter: function(aMilliseconds) {
-            if (gGraphUnit == "month") {
+            if (gGraphUnit == "cycle") {
+              var day = makeISODayString(aMilliseconds);
+              for (train in gTrainData) {
+                if (day >= gTrainData[train].start &&
+                    day < gTrainData[train].aurora) {
+                  return train;
+                }
+              }
+            }
+            else if (gGraphUnit == "month") {
               var dateValue = new Date(aMilliseconds);
               return (dateValue.getUTCMonth() + 1) + "/" + dateValue.getUTCFullYear();
             }
