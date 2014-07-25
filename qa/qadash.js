@@ -4,7 +4,7 @@
 
 // See http://dygraphs.com/ for graphs documentation.
 
-var gBody, gGraph;
+var gBody, gGraph, gGraphType, gGraphUnit;
 
 var gCountIDs = {iter: [], train: [], static: []};
 
@@ -46,6 +46,19 @@ var staticqueries = {
   windowwanted: {desc: 'Regression window wanted'}
 };
 
+var gGraphTypes = {
+  total: {desc: "Total bugs filed"},
+  regression: {desc: "Regression bugs filed"},
+  crash: {desc: "Crash bugs filed"},
+};
+
+var gGraphUnits = {
+  day: {desc: "by day"},
+  week: {desc: "by week"},
+  month: {desc: "by month"},
+  cycle: {desc: "by release cycle"},
+}
+
 window.onload = function() {
   if (document.getElementById("fxqadashboard")) {
     // Create iteration list.
@@ -58,6 +71,8 @@ window.onload = function() {
     fetchFile(gDataPath + "qa.staticmeta.json", "json", listStaticData);
   }
   else if (document.getElementById("fxqagraphs")) {
+    gGraphType = "total";
+    gGraphUnit = "week";
     gBody = document.getElementsByTagName("body")[0];
     document.getElementById("footer_bugdata").setAttribute("href", gDataPath + "qa.bugdata.json");
     fetchFile(gDataPath + "qa.bugdata.json", "json", graphData);
@@ -272,29 +287,35 @@ function updateCounts(aType) {
 function graphData(aData) {
   var graphDiv = document.getElementById("graphdiv");
   if (aData) {
-    var graphData = [], dataArray, bugs;
+    var graphData = [], dataArray, bugs = [], unitEnd = true;
+    for (var prod in gProducts) { bugs[gProducts[prod].name] = 0; }
     // add elements in the following format: [ new Date("2009-07-12"), 100, 200 ]
     for (var day in aData) {
       if (aData[day].comp.filed) {
-        dataArray = [ new Date(day) ];
         for (var prod in gProducts) {
-          bugs = 0;
           if (aData[day].comp.filed[gProducts[prod].name]) {
             for (var comp in aData[day].comp.filed[gProducts[prod].name]) {
-              bugs += aData[day].comp.filed[gProducts[prod].name][comp].total;
+              bugs[gProducts[prod].name] +=
+                  aData[day].comp.filed[gProducts[prod].name][comp][gGraphType];
             }
           }
-          dataArray.push(bugs);
         }
       }
-      graphData.push(dataArray);
+      if (unitEnd) {
+        dataArray = [ new Date(day) ];
+        for (var prod in gProducts) {
+          dataArray.push(bugs[gProducts[prod].name]);
+          bugs[gProducts[prod].name] = 0;
+        }
+        graphData.push(dataArray);
+      }
     }
     var labels = ["date"];
     for (var prod in gProducts) { labels.push(gProducts[prod].name); }
     var colors = [];
     for (var prod in gProducts) { colors.push(gProducts[prod].color); }
     var graphOptions = {
-      title: "Bugs filed",
+      title: gGraphTypes[gGraphType].desc,
       colors: colors,
       strokeWidth: 2,
       legend: 'always',
