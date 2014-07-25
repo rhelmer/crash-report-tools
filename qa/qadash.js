@@ -34,7 +34,7 @@ var iterqueries = {
 };
 
 var trainqueries = {
-  notverifymarked: {desc: "not marked for verification"},
+  notverifymarked: {desc: "Not marked for verification"},
   verifydone: {desc: 'Verification done'},
   verifyneeded: {desc: 'Verification needed'},
   verifytriage: {desc: 'Verification +/- assessment needed'}
