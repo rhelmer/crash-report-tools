@@ -521,6 +521,8 @@ function getTrainQuery($type, $product, $train, $is_on_trunk) {
       $query .= '&f4=status_whiteboard&o4=notsubstring&v4='.rawurlencode('[qa');
       $query .= '&f5=cf_qa_whiteboard&o5=notsubstring&v5='.rawurlencode('[qa');
       $query .= '&f6=keywords&o6=nowords&v6=verifyme';
+      $query .= '&f7=flagtypes.name&o7=notequals&v7='.rawurlencode('in-testsuite+');
+      $query .= '&f8=flagtypes.name&o8=notequals&v8='.rawurlencode('in-qa-testsuite+');
       break;
     case 'verifytriage':
       // verification assessment missing, needs triage (qa? tag)
