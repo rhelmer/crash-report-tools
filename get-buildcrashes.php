@@ -285,7 +285,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             $adu_query =
               'SELECT SUM(adi_count) as adu '
               .'FROM raw_adi '
-              ."WHERE product_guid = '{".trim($productid, '{}')."}')" // As a workaround, foo@bar IDs get wrapped in {} as well.
+              ."WHERE product_guid = '{".trim($productid, '{}')."}'" // As a workaround, foo@bar IDs get wrapped in {} as well.
               ." AND update_channel = '".$adu_channel."'"
               ." AND product_version = '".$adu_version."'"
               ." AND build = '".$rep_row['build']."'"
