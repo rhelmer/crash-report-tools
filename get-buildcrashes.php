@@ -167,7 +167,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             'SELECT major_version '
             .'FROM product_versions '
             ."WHERE product_name = '".$product."'"
-            ." AND build_type = '".ucfirst($channel)."'"
+            ." AND build_type_enum = '".$channel."'"
             ." AND featured_version = 't';";
 
           $feat_result = pg_query($db_conn, $feat_query);
@@ -186,7 +186,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               'SELECT major_version '
               .'FROM product_versions '
               ."WHERE product_name = '".$product."'"
-              ." AND build_type = '".ucfirst($channel)."' "
+              ." AND build_type_enum = '".$channel."' "
               ."ORDER BY build_date DESC LIMIT 1;";
 
             $last_result = pg_query($db_conn, $last_query);
@@ -210,7 +210,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             .'FROM product_versions '
             ."WHERE product_name = '".$product."'"
             ." AND major_version IN ('".implode("','", $mver)."')"
-            ." AND build_type = '".ucfirst($channel)."';";
+            ." AND build_type_enum = '".$channel."';";
           $pv_result = pg_query($db_conn, $pv_query);
           if (!$pv_result) {
             print('--- ERROR: product version query failed!'."\n");
@@ -283,9 +283,9 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                 $pvdata[$rep_row['product_version_id']]['release_version'];
 
             $adu_query =
-              'SELECT SUM(adu_count) as adu '
-              .'FROM raw_adu '
-              ."WHERE product_guid = btrim('".$productid."', '{}')"
+              'SELECT SUM(adi_count) as adu '
+              .'FROM raw_adi '
+              ."WHERE product_guid = '{".trim($productid, '{}')."}')" // As a workaround, foo@bar IDs get wrapped in {} as well.
               ." AND update_channel = '".$adu_channel."'"
               ." AND product_version = '".$adu_version."'"
               ." AND build = '".$rep_row['build']."'"
