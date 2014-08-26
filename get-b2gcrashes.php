@@ -326,6 +326,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           .'.device.unknown_alcatel_onetouch_pop_fire_c,'."\n"
           .'.device.unknown_alcatel_one_touch_fire,'."\n"
           .'.device.unknown_alcatel_onetouch_fire_c,'."\n"
+          .'.device.unknown_alcatel_onetouch_fire_e,'."\n"
           .'.device.zte_p752d04,'."\n"
           .'.device.zte_roamer2,'."\n"
           .'.device.zte_open_c,'."\n"
