@@ -11,7 +11,7 @@ var gCountIDs = {iter: [], train: [], static: []};
 
 var gDataPath = "../../qa/";
 // for local debugging
-gDataPath = "../socorro/qa/";
+//gDataPath = "../socorro/qa/";
 
 var gBzAPIPath = "https://bugzilla.mozilla.org/bzapi/";
 var gBzBasePath = "https://bugzilla.mozilla.org/";
