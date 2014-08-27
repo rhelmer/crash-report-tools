@@ -4,14 +4,14 @@
 
 // See http://dygraphs.com/ for graphs documentation.
 
-var gBody, gTrainData, gRawData, gGraph,
+var gBody, gIterData, gTrainData, gRawData, gGraph,
     gGraphType, gGraphUnit, gTypeSelect, gUnitSelect;
 
 var gCountIDs = {iter: [], train: [], static: []};
 
 var gDataPath = "../../qa/";
 // for local debugging
-//gDataPath = "../socorro/qa/";
+gDataPath = "../socorro/qa/";
 
 var gBzAPIPath = "https://bugzilla.mozilla.org/bzapi/";
 var gBzBasePath = "https://bugzilla.mozilla.org/";
@@ -110,10 +110,26 @@ window.onload = function() {
       }
     });
   }
+  else if (document.getElementById("workgraphs")) {
+    gBody = document.getElementsByTagName("body")[0];
+    document.getElementById("footer_bugdata").setAttribute("href", gDataPath + "qa.bugdata.json");
+    fetchFile(gDataPath + "qa.itermeta.json", "json", function(aData) {
+      if (aData) {
+        gIterData = aData;
+        fetchFile(gDataPath + "qa.trainmeta.json", "json", function(aData) {
+          if (aData) {
+            gTrainData = aData;
+            fetchFile(gDataPath + "qa.bugdata.json", "json", graphWorkData);
+          }
+        });
+      }
+    });
+  }
 }
 
 window.onresize = function() {
-  if (document.getElementById("fxqagraphs")) {
+  if (document.getElementById("fxqagraphs") ||
+      document.getElementById("workgraphs")) {
     gGraph.resize(
       gBody.clientWidth,
       gBody.clientHeight - document.getElementById("graphdiv").offsetTop
@@ -398,6 +414,86 @@ function graphData(aData) {
             else {
               return makeISODayString(aMilliseconds);
             }
+          },
+        },
+      },
+      xAxisLabelWidth: 80,
+      colors: colors,
+      strokeWidth: 2,
+      legend: 'always',
+      labels: labels,
+      labelsSeparateLines: true,
+      labelsShowZeroValues: true,
+      width: gBody.clientWidth,
+      height: gBody.clientHeight - graphDiv.offsetTop,
+    };
+    gGraph = new Dygraph(graphDiv, graphData, graphOptions);
+  }
+}
+
+function graphWorkData(aData) {
+  gRawData = aData;
+  var graphDiv = document.getElementById("graphdiv");
+  if (aData) {
+    var graphData = [], dataArray, bugs = [], unitEnd = false, curDate;
+    // add elements in the following format: [ new Date("2009-07-12"), 100, 200 ]
+    for (var day in aData) {
+      bugs["iter-verifyneeded"] = 0;
+      bugs["iter-contactneeded"] = 0;
+      bugs["iter-verifytriage"] = 0;
+      bugs["train-verifyneeded"] = 0;
+      bugs["train-verifytriage"] = 0;
+      if (aData[day].fxiter) {
+        for (var iter in aData[day].fxiter) {
+          if (aData[day].fxiter[iter].verifyneeded) {
+            bugs["iter-verifyneeded"] +=
+                aData[day].fxiter[iter].verifyneeded;
+            bugs["iter-contactneeded"] +=
+                aData[day].fxiter[iter].contactneeded;
+            bugs["iter-verifytriage"] +=
+                aData[day].fxiter[iter].verifytriage;
+          }
+        }
+      }
+      if (aData[day].train) {
+        for (var train in aData[day].train) {
+          for (var prod in aData[day].train[train]) {
+            if (aData[day].train[train][prod].verifyneeded) {
+              bugs["train-verifyneeded"] +=
+                  aData[day].train[train][prod].verifyneeded;
+              bugs["train-verifytriage"] +=
+                  aData[day].train[train][prod].verifytriage;
+            }
+          }
+        }
+      }
+      if (aData[day].fxiter || aData[day].train) {
+        dataArray = [ new Date(day) ];
+        dataArray.push(bugs["iter-verifyneeded"]);
+        dataArray.push(bugs["iter-contactneeded"]);
+        dataArray.push(bugs["iter-verifytriage"]);
+        dataArray.push(bugs["train-verifyneeded"]);
+        dataArray.push(bugs["train-verifytriage"]);
+        graphData.push(dataArray);
+      }
+    }
+    var labels = ["date",
+                  "Iterations: Verification needed",
+                  "Iterations: QA contact needed",
+                  "Iterations: +/- Triage needed",
+                  "Trains: Verification needed",
+                  "Trains: +/- Triage needed"];
+    var colors = ["#0000FF", "#008000", "#FF0000", "#8080CC", "#FF8080"];
+    var graphOptions = {
+      title: "Open Iteration and Train Work",
+      axes: {
+        x: {
+          axisLabelFormatter: function(aDate) {
+            return makeISODayString(aDate.valueOf());
+          },
+          pixelsPerLabel: 100,
+          valueFormatter: function(aMilliseconds) {
+            return makeISODayString(aMilliseconds);
           },
         },
       },
