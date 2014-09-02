@@ -53,7 +53,6 @@ if (count($force_dates)) {
 
 $flash_versions = array('14.0.0.145',
                         '14.0.0.179',
-                        '15.0.0.130',
                         '15.0.0.144');
 
 // for how many days back to get the data
