@@ -64,7 +64,11 @@ $reports = array(
                      'products' => array('FennecAndroid')),
     'x86' => array('display_name' => 'x86',
                    'wherex' => " AND reports_clean.architecture='x86'",
-                   'products' => array('FennecAndroid')));
+                   'products' => array('FennecAndroid')),
+    'GMP' => array('display_name' => 'GMP',
+                   'include_raw_table' => true,
+                   'wherex' => " AND reports_clean.process_type='plugin' AND raw_crashes.raw_crash->>'GMPPlugin'='1'",
+                   'products' => array('Firefox')));
 
 // for how many days back to get the data
 $backlog_days = 7;
@@ -222,9 +226,12 @@ foreach ($reports as $rname=>$rep) {
             'SELECT COUNT(*) as cnt, signatures.signature, signatures.signature_id '
             .'FROM '
             .((array_key_exists('include_reports_table', $rep) && $rep['include_reports_table'])?
-                '(reports_clean LEFT JOIN reports'
-                .' ON (reports_clean.uuid=reports.uuid))'
-              :'reports_clean')
+               '(reports_clean LEFT JOIN reports'
+               .' ON (reports_clean.uuid=reports.uuid))'
+              :((array_key_exists('include_raw_table', $rep) && $rep['include_raw_table'])?
+                 '(reports_clean LEFT JOIN raw_crashes'
+                 .' ON (reports_clean.uuid=raw_crashes.uuid::text))'
+                :'reports_clean'))
             .' LEFT JOIN signatures'
             .' ON (reports_clean.signature_id=signatures.signature_id) '
             .' WHERE reports_clean.product_version_id IN ('.implode(',', $all_pv_ids).') '
