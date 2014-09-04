@@ -20,12 +20,33 @@ html.fullpage > body {
   padding: 0;
 }
 
-h1 {
+h1, #tabs {
   font-size: 1.5em;
   margin: 0 0 .5em;
+}
+
+h1 {
   padding-left: 35px;
   background-image: url("FirefoxQA_32.png");
   background-repeat: no-repeat;
+  float: left;
+}
+
+#tabs > li {
+  display: inline-block;
+  margin-left: .5em;
+}
+
+#tabs > li.active {
+  font-weight: bold;
+}
+
+#tabs > li > a:link, #tabs > li > a:visited {
+  text-decoration: none;
+}
+
+section:not(.active) {
+  display: none;
 }
 
 h2 {
@@ -100,6 +121,10 @@ td.num {
   top: .5em;
   right: .5em;
   text-align: right;
+}
+
+#selectorplus:not(.active) {
+  display: none;
 }
 
 .dygraph-legend {

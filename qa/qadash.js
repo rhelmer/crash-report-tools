@@ -62,7 +62,24 @@ var gGraphUnits = {
 }
 
 window.onload = function() {
-  if (document.getElementById("fxqadashboard")) {
+  if (location.search) {
+    var urlAnchor = location.search.substr(1); // Cut off the ? sign.
+    // I have no idea why |urlAnchor in ["dash", "filedgraph", "workgraph"]| doesn't work.
+    if (urlAnchor in {dash:true, filedgraph:true, workgraph:true}) {
+      gTabID = urlAnchor;
+    }
+    else {
+      gTabID = "dash";
+    }
+  }
+  else {
+    gTabID = "dash";
+  }
+
+  document.getElementById(gTabID + "tab").classList.add("active");
+
+  if (gTabID == "dash") {
+    document.getElementById(gTabID).classList.add("active");
     // Create iteration list.
     document.getElementById("footer_itermeta").setAttribute("href", gDataPath + "qa.itermeta.json");
     document.getElementById("footer_trainmeta").setAttribute("href", gDataPath + "qa.trainmeta.json");
@@ -72,7 +89,12 @@ window.onload = function() {
     fetchFile(gDataPath + "qa.trainmeta.json", "json", listTrainData);
     fetchFile(gDataPath + "qa.staticmeta.json", "json", listStaticData);
   }
-  else if (document.getElementById("fxqagraphs")) {
+  else if (gTabID == "filedgraph") {
+    document.getElementById(gTabID).classList.add("active");
+    gBody = document.getElementsByTagName("body")[0];
+    gBody.parentNode.classList.add("fullpage");
+    document.getElementById("footer_bugdata").setAttribute("href", gDataPath + "qa.bugdata.json");
+    document.getElementById("selectorplus").classList.add("active");
     gGraphType = "total";
     gGraphUnit = "week";
     gTypeSelect = document.getElementById("type");
@@ -101,8 +123,6 @@ window.onload = function() {
       if (unitID == gGraphUnit) { option.selected = true; }
       gUnitSelect.add(option);
     }
-    gBody = document.getElementsByTagName("body")[0];
-    document.getElementById("footer_bugdata").setAttribute("href", gDataPath + "qa.bugdata.json");
     fetchFile(gDataPath + "qa.trainmeta.json", "json", function(aData) {
       if (aData) {
         gTrainData = aData;
@@ -110,8 +130,10 @@ window.onload = function() {
       }
     });
   }
-  else if (document.getElementById("workgraphs")) {
+  else if (gTabID == "workgraph") {
+    document.getElementById(gTabID).classList.add("active");
     gBody = document.getElementsByTagName("body")[0];
+    gBody.parentNode.classList.add("fullpage");
     document.getElementById("footer_bugdata").setAttribute("href", gDataPath + "qa.bugdata.json");
     fetchFile(gDataPath + "qa.itermeta.json", "json", function(aData) {
       if (aData) {
@@ -128,11 +150,10 @@ window.onload = function() {
 }
 
 window.onresize = function() {
-  if (document.getElementById("fxqagraphs") ||
-      document.getElementById("workgraphs")) {
+  if (gTabID == "filedgraph" || gTabID == "workgraph") {
     gGraph.resize(
       gBody.clientWidth,
-      gBody.clientHeight - document.getElementById("graphdiv").offsetTop
+      gBody.clientHeight - document.getElementById(gTabID + "div").offsetTop
     );
   }
 }
@@ -335,7 +356,7 @@ function updateCounts(aType) {
 
 function graphData(aData) {
   gRawData = aData;
-  var graphDiv = document.getElementById("graphdiv");
+  var graphDiv = document.getElementById(gTabID + "div");
   if (aData) {
     var graphData = [], dataArray, bugs = [], unitEnd = false, curDate;
     for (var prod in gProducts) { bugs[gProducts[prod].name] = 0; }
@@ -433,7 +454,7 @@ function graphData(aData) {
 
 function graphWorkData(aData) {
   gRawData = aData;
-  var graphDiv = document.getElementById("graphdiv");
+  var graphDiv = document.getElementById(gTabID + "div");
   if (aData) {
     var graphData = [], dataArray, bugs = [], unitEnd = false, curDate;
     // add elements in the following format: [ new Date("2009-07-12"), 100, 200 ]

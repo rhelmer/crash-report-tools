@@ -8,12 +8,23 @@
   <title>Firefox QA Dashboard</title>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <link rel="stylesheet" href="qadash.css">
+  <script src="../longtermgraph/dygraph-combined.js"></script>
   <script src="qadash.js"></script>
   <link rel="shortcut icon" href="FirefoxQA_16icon.png" type="image/png">
 </head>
 <body>
-<h1 id="fxqadashboard">Firefox QA Dashboard</h1>
+<div id="selectorplus">
+<select id="type"></select>
+<select id="unit"></select>
+</div>
+<h1>Firefox QA:</h1>
+<ul id="tabs">
+<li id="dashtab"><a href="?dash">Dashboard</a></li>
+<li id="filedgraphtab"><a href="?filedgraph">Filed Bugs</a></li>
+<li id="workgraphtab"><a href="?workgraph">Open Work</a></li>
+</ul>
 
+<section id="dash">
 <h2>Current iteration work:</h2>
 <ul id="iterdata">
 </ul>
@@ -25,6 +36,15 @@
 <h2>Ongoing work:</h2>
 <ul id="staticdata">
 </ul>
+</section>
+
+<section id="filedgraph">
+<div id="filedgraphdiv"></div>
+</section>
+
+<section id="workgraph">
+<div id="workgraphdiv"></div>
+</section>
 
 <div id="footer">
 This dashboard is experimental. Give feedback and suggestions to KaiRo.
