@@ -497,30 +497,31 @@ function getTrainQuery($type, $product, $train, $is_on_trunk) {
   }
   switch ($type) {
     case 'verifydone':
-      // verification done#
-      if ($is_on_trunk) {
-        $query .= '&target_milestone='.rawurlencode('Firefox '.$train);
-        $query .= '&target_milestone=mozilla'.rawurlencode($train);
-        $query .= '&resolution=FIXED';
-        $query .= '&bug_status=VERIFIED';
-      }
-      else {
-        $query .= '&f'.$i.'=cf_status_firefox'.rawurlencode($train);
-        $query .= '&o'.$i.'=substring&v'.$i.'=verified'; $i++;
-      }
+      // verification done
+      $query .= '&f'.$i.'=OP&j'.$i.'=OR'; $i++;
+      // Bug is marked VERIFIED+FIXED and TM is set for this train.
+      $query .= '&f'.$i.'=resolution&o'.$i.'=equals&v'.$i.'=FIXED'; $i++;
+      $query .= '&f'.$i.'=bug_status&o'.$i.'=equals&v'.$i.'=VERIFIED'; $i++;
+      $query .= '&f'.$i.'=target_milestone&o'.$i.'=anyexact&v'.$i.'='.rawurlencode('Firefox '.$train.',mozilla'.$train); $i++;
+      $query .= '&f'.$i.'=OP'; $i++;
+      // (OR:) Status flag contains for this train (could be "verified disabled").
+      $query .= '&f'.$i.'=cf_status_firefox'.rawurlencode($train);
+      $query .= '&o'.$i.'=substring&v'.$i.'=verified'; $i++;
       break;
     case 'verifyneeded':
       // fixed (or disabled), needing verification
-      if ($is_on_trunk) {
-        $query .= '&target_milestone='.rawurlencode('Firefox '.$train);
-        $query .= '&target_milestone=mozilla'.rawurlencode($train);
-        $query .= '&resolution=FIXED';
-        $query .= '&bug_status=RESOLVED';
-      }
-      else {
-        $query .= '&f'.$i.'=cf_status_firefox'.rawurlencode($train);
-        $query .= '&o'.$i.'=regexp&v'.$i.'='.rawurlencode('^(fixed|disabled)'); $i++;
-      }
+      $query .= '&f'.$i.'=OP&j'.$i.'=OR'; $i++;
+      // Bug is marked RESO+FIXED and TM is set for this train.
+      $query .= '&f'.$i.'=resolution&o'.$i.'=equals&v'.$i.'=FIXED'; $i++;
+      $query .= '&f'.$i.'=bug_status&o'.$i.'=equals&v'.$i.'=RESOLVED'; $i++;
+      $query .= '&f'.$i.'=target_milestone&o'.$i.'=anyexact&v'.$i.'='.rawurlencode('Firefox '.$train.',mozilla'.$train); $i++;
+      $query .= '&f'.$i.'=OP'; $i++;
+      // (OR:) Status flag is fixed or disabled for this train.
+      $query .= '&f'.$i.'=cf_status_firefox'.rawurlencode($train);
+      $query .= '&o'.$i.'=regexp&v'.$i.'='.rawurlencode('^(fixed|disabled)'); $i++;
+      $query .= '&f'.$i.'=CP'; $i++;
+      $query .= '&f'.$i.'=CP'; $i++;
+      // (AND:) Bug has any verification marking set to "+".
       $query .= '&f'.$i.'=OP&j'.$i.'=OR'; $i++;
       $query .= '&f'.$i.'=status_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('[qa+]'); $i++;
       $query .= '&f'.$i.'=cf_qa_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('[qa+]'); $i++;
@@ -529,16 +530,18 @@ function getTrainQuery($type, $product, $train, $is_on_trunk) {
       break;
     case 'notverifymarked':
       // fixed (or disabled) without verification +/- tagging
-      if ($is_on_trunk) {
-        $query .= '&target_milestone='.rawurlencode('Firefox '.$train);
-        $query .= '&target_milestone=mozilla'.rawurlencode($train);
-        $query .= '&resolution=FIXED';
-        $query .= '&bug_status=RESOLVED';
-      }
-      else {
-        $query .= '&f'.$i.'=cf_status_firefox'.rawurlencode($train);
-        $query .= '&o'.$i.'=regexp&v'.$i.'='.rawurlencode('^(fixed|disabled)'); $i++;
-      }
+      $query .= '&f'.$i.'=OP&j'.$i.'=OR'; $i++;
+      // Bug is marked RESO+FIXED and TM is set for this train.
+      $query .= '&f'.$i.'=resolution&o'.$i.'=equals&v'.$i.'=FIXED'; $i++;
+      $query .= '&f'.$i.'=bug_status&o'.$i.'=equals&v'.$i.'=RESOLVED'; $i++;
+      $query .= '&f'.$i.'=target_milestone&o'.$i.'=anyexact&v'.$i.'='.rawurlencode('Firefox '.$train.',mozilla'.$train); $i++;
+      $query .= '&f'.$i.'=OP'; $i++;
+      // (OR:) Status flag is fixed or disabled for this train.
+      $query .= '&f'.$i.'=cf_status_firefox'.rawurlencode($train);
+      $query .= '&o'.$i.'=regexp&v'.$i.'='.rawurlencode('^(fixed|disabled)'); $i++;
+      $query .= '&f'.$i.'=CP'; $i++;
+      $query .= '&f'.$i.'=CP'; $i++;
+      // (AND:) Bug doesn't have any verification marking.
       $query .= '&f'.$i.'=status_whiteboard&o'.$i.'=notsubstring&v'.$i.'='.rawurlencode('[qa'); $i++;
       $query .= '&f'.$i.'=cf_qa_whiteboard&o'.$i.'=notsubstring&v'.$i.'='.rawurlencode('[qa'); $i++;
       $query .= '&f'.$i.'=keywords&o'.$i.'=nowords&v'.$i.'=verifyme'; $i++;
@@ -549,16 +552,18 @@ function getTrainQuery($type, $product, $train, $is_on_trunk) {
       break;
     case 'verifytriage':
       // verification assessment missing, needs triage (qa? tag)
-      if ($is_on_trunk) {
-        $query .= '&target_milestone='.rawurlencode('Firefox '.$train);
-        $query .= '&target_milestone=mozilla'.rawurlencode($train);
-        $query .= '&resolution=FIXED&resolution=---';
-        $query .= '&f'.$i.'=bug_status&o'.$i.'=notequals&v'.$i.'=VERIFIED'; $i++;
-      }
-      else {
-        $query .= '&f'.$i.'=cf_status_firefox'.rawurlencode($train);
-        $query .= '&o'.$i.'=regexp&v'.$i.'='.rawurlencode('^(affected|fixed|disabled)'); $i++;
-      }
+      $query .= '&f'.$i.'=OP&j'.$i.'=OR'; $i++;
+      // Bug is FIXED or open, not verified and TM is set for this train.
+      $query .= '&f'.$i.'=resolution&o'.$i.'=anyexact&v'.$i.'='.rawurlencode('FIXED,---'); $i++;
+      $query .= '&f'.$i.'=bug_status&o'.$i.'=notequals&v'.$i.'=VERIFIED'; $i++;
+      $query .= '&f'.$i.'=target_milestone&o'.$i.'=anyexact&v'.$i.'='.rawurlencode('Firefox '.$train.',mozilla'.$train); $i++;
+      $query .= '&f'.$i.'=OP'; $i++;
+      // (OR:) Status flag is affected, fixed or disabled for this train.
+      $query .= '&f'.$i.'=cf_status_firefox'.rawurlencode($train);
+      $query .= '&o'.$i.'=regexp&v'.$i.'='.rawurlencode('^(affected|fixed|disabled)'); $i++;
+      $query .= '&f'.$i.'=CP'; $i++;
+      $query .= '&f'.$i.'=CP'; $i++;
+      // (AND:) Bug has a verification marking set to "?".
       $query .= '&f'.$i.'=OP&j'.$i.'=OR'; $i++;
       $query .= '&f'.$i.'=status_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('[qa?]'); $i++;
       $query .= '&f'.$i.'=cf_qa_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('[qa?]'); $i++;
