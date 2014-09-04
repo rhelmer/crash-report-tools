@@ -429,10 +429,11 @@ function getDailyComponentQuery($type, $product, $date) {
 }
 
 function getIterQuery($type, $iteration) {
-  $query = 'f1=OP&j1=OR';
-  $query .= '&f2=cf_fx_iteration&o2=equals&v2='.rawurlencode($iteration);
-  $query .= '&f3=status_whiteboard&o3=substring&v3='.rawurlencode('s='.$iteration);
-  $query .= '&f4=CP';
+  $i = 1; // counter for "custom search" or "boolean chart" fields
+  $query = 'f'.$i.'=OP&j'.$i.'=OR'; $i++;
+  $query .= '&f'.$i.'=cf_fx_iteration&o'.$i.'=equals&v'.$i.'='.rawurlencode($iteration); $i++;
+  $query .= '&f'.$i.'=status_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('s='.$iteration); $i++;
+  $query .= '&f'.$i.'=CP'; $i++;
   switch ($type) {
     case 'total':
       // total bugs
@@ -440,11 +441,11 @@ function getIterQuery($type, $iteration) {
     case 'verifiable':
       // verification "possible", i.e. wanted at some point
       // We need to include already verified as people set whiteboard away from [qa+]
-      $query .= '&f5=OP&j5=OR';
-      $query .= '&f6=status_whiteboard&o6=substring&v6='.rawurlencode('[qa+]');
-      $query .= '&f7=cf_qa_whiteboard&o7=substring&v7='.rawurlencode('[qa+]');
-      $query .= '&f8=flagtypes.name&o8=equals&v8='.rawurlencode('qe-verify+');
-      $query .= '&f9=bug_status&o9=equals&v9=VERIFIED';
+      $query .= '&f'.$i.'=OP&j'.$i.'=OR'; $i++;
+      $query .= '&f'.$i.'=status_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('[qa+]'); $i++;
+      $query .= '&f'.$i.'=cf_qa_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('[qa+]'); $i++;
+      $query .= '&f'.$i.'=flagtypes.name&o'.$i.'=equals&v'.$i.'='.rawurlencode('qe-verify+'); $i++;
+      $query .= '&f'.$i.'=bug_status&o'.$i.'=equals&v'.$i.'=VERIFIED'; $i++;
       break;
     case 'verifydone':
       // verification done
@@ -455,31 +456,31 @@ function getIterQuery($type, $iteration) {
       // fixed, needing verification
       $query .= '&resolution=FIXED';
       $query .= '&bug_status=RESOLVED';
-      $query .= '&f5=OP&j5=OR';
-      $query .= '&f6=status_whiteboard&o6=substring&v6='.rawurlencode('[qa+]');
-      $query .= '&f7=cf_qa_whiteboard&o7=substring&v7='.rawurlencode('[qa+]');
-      $query .= '&f8=flagtypes.name&o8=equals&v8='.rawurlencode('qe-verify+');
+      $query .= '&f'.$i.'=OP&j'.$i.'=OR'; $i++;
+      $query .= '&f'.$i.'=status_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('[qa+]'); $i++;
+      $query .= '&f'.$i.'=cf_qa_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('[qa+]'); $i++;
+      $query .= '&f'.$i.'=flagtypes.name&o'.$i.'=equals&v'.$i.'='.rawurlencode('qe-verify+'); $i++;
       break;
     case 'contactneeded':
       // QA contact is empty but the bug needs verification, so contact is needed
-      $query .= '&f5=qa_contact&o5=isempty';
-      $query .= '&f6=OP&j6=OR';
-      $query .= '&f7=cf_qa_whiteboard&o7=substring&v7='.rawurlencode('[qa+]');
-      $query .= '&f8=status_whiteboard&o8=substring&v8='.rawurlencode('[qa+]');
-      $query .= '&f9=flagtypes.name&o9=equals&v9='.rawurlencode('qe-verify+');
+      $query .= '&f'.$i.'=qa_contact&o'.$i.'=isempty'; $i++;
+      $query .= '&f'.$i.'=OP&j'.$i.'=OR'; $i++;
+      $query .= '&f'.$i.'=cf_qa_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('[qa+]'); $i++;
+      $query .= '&f'.$i.'=status_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('[qa+]'); $i++;
+      $query .= '&f'.$i.'=flagtypes.name&o'.$i.'=equals&v'.$i.'='.rawurlencode('qe-verify+'); $i++;
       break;
     case 'verifytriage':
       // verification assessment missing, needs triage (qa? or no QA tag)
-      $query .= '&f5=OP&j5=OR';
-      $query .= '&f6=status_whiteboard&o6=substring&v6='.rawurlencode('[qa?]');
-      $query .= '&f7=cf_qa_whiteboard&o7=substring&v7='.rawurlencode('[qa?]');
-      $query .= '&f8=flagtypes.name&o8=equals&v8='.rawurlencode('qe-verify?');
-      $query .= '&f9=OP';
-      $query .= '&f10=status_whiteboard&o10=notsubstring&v10='.rawurlencode('[qa');
-      $query .= '&f11=cf_qa_whiteboard&o11=notsubstring&v11='.rawurlencode('[qa');
-      $query .= '&f12=flagtypes.name&o12=notequals&v12='.rawurlencode('qe-verify+');
-      $query .= '&f13=flagtypes.name&o13=notequals&v13='.rawurlencode('qe-verify-');
-      $query .= '&f14=CP';
+      $query .= '&f'.$i.'=OP&j'.$i.'=OR'; $i++;
+      $query .= '&f'.$i.'=status_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('[qa?]'); $i++;
+      $query .= '&f'.$i.'=cf_qa_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('[qa?]'); $i++;
+      $query .= '&f'.$i.'=flagtypes.name&o'.$i.'=equals&v'.$i.'='.rawurlencode('qe-verify?'); $i++;
+      $query .= '&f'.$i.'=OP'; $i++;
+      $query .= '&f'.$i.'=status_whiteboard&o'.$i.'=notsubstring&v'.$i.'='.rawurlencode('[qa'); $i++;
+      $query .= '&f'.$i.'=cf_qa_whiteboard&o'.$i.'=notsubstring&v'.$i.'='.rawurlencode('[qa'); $i++;
+      $query .= '&f'.$i.'=flagtypes.name&o'.$i.'=notequals&v'.$i.'='.rawurlencode('qe-verify+'); $i++;
+      $query .= '&f'.$i.'=flagtypes.name&o'.$i.'=notequals&v'.$i.'='.rawurlencode('qe-verify-'); $i++;
+      $query .= '&f'.$i.'=CP'; $i++;
       break;
     default:
       break;
