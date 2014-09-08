@@ -64,7 +64,7 @@ var gGraphUnits = {
 window.onload = function() {
   if (location.search) {
     var urlAnchor = location.search.substr(1); // Cut off the ? sign.
-    // I have no idea why |urlAnchor in ["dash", "filedgraph", "workgraph"]| doesn't work.
+    // I have no idea why |urlAnchor in ["dash", "filedgraph", "workgraph"]| doesn't work. Possibly need to use indexOf to check arrays.
     if (urlAnchor in {dash:true, filedgraph:true, workgraph:true}) {
       gTabID = urlAnchor;
     }
