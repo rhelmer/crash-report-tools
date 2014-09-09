@@ -235,8 +235,8 @@ if (!array_key_exists($anaday, $bugdata) ||
   $bugdata[$anaday]['fxiter']['time_update'] = time();
 }
 foreach ($iterations as $iteration=>$iterdata) {
-  // Record data up to 7 days past the end of the iteration.
-  $maxday = date('Y-m-d', strtotime($iterdata['end'].' +7 day'));
+  // Record data up to 14 days past the end of the iteration.
+  $maxday = date('Y-m-d', strtotime($iterdata['end'].' +14 day'));
   if (($iterdata['start'] <= $today) && ($maxday >= $today)) {
     print('|'.$iteration);
     if (!array_key_exists($iteration, $bugdata[$anaday]['fxiter'])) {

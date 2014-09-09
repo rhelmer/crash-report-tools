@@ -165,7 +165,7 @@ function listIterData(aData) {
     for (var iteration in aData) {
       var dtStart = new Date(aData[iteration].start);
       var dtEnd = new Date(aData[iteration].end);
-      var showEnd = makeISODayString(new Date(dtEnd.getFullYear(), dtEnd.getMonth(), dtEnd.getDate() + 7));
+      var showEnd = makeISODayString(new Date(dtEnd.getFullYear(), dtEnd.getMonth(), dtEnd.getDate() + 14));
       if (aData[iteration].start <= today && showEnd >= today) {
         var iterDuration = Math.round((dtEnd - dtStart) / 86400000);
         var iterDay = Math.ceil((Date.now() - dtStart) / 86400000);
