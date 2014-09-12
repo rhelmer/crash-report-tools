@@ -587,6 +587,7 @@ function getStaticQuery($type) {
         $query .= '&product='.rawurlencode($prod);
       }
       $query .= '&bug_status=RESOLVED';
+      $query .= '&resolution=FIXED';
       $query .= '&chfield=resolution&chfieldfrom=-7d&chfieldto=Now&chfieldvalue=FIXED';
       break;
     case 'needURLs':
