@@ -147,6 +147,7 @@ $iterations =
 $iterqueries = array('total', 'verifiable', 'verifydone',
                      'verifyneeded', 'contactneeded', 'verifytriage');
 
+// See https://wiki.mozilla.org/RapidRelease/Calendar
 $trains =
     array('29' => array('start'   => '2013-12-09',
                         'aurora'  => '2014-02-03',
