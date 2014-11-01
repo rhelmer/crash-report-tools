@@ -242,7 +242,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $th = $tr->appendChild($doc->createElement('th', 'Crashes'));
     $th = $tr->appendChild($doc->createElement('th', '%'));
 
-    foreach ($gd['adapters'] as $ad_id=>$adinfo) {
+    foreach ($gd['full'] as $ad_id=>$adinfo) {
       $idstring = 'full-'.sanitize_name($ad_id);
       $tr = $table->appendChild($doc->createElement('tr'));
       $td = $tr->appendChild($doc->createElement('td', $adinfo['vendorID']));
@@ -266,7 +266,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     else {
       $pages = array();
     }
-    $pages[$fwebcur] =
+    $pages[$fweb] =
       array('product' => null,
             'channel' => null,
             'version' => null,
