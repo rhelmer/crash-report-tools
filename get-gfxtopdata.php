@@ -159,7 +159,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   // print_r($gd); continue;
 
   $anafweb = $anadir.'/'.$fweb;
-  if (!file_exists($anafweb) && $curdd['total_crashes']) {
+  if (!file_exists($anafweb) && $gd['total_crashes']) {
     // create out an HTML page
     print('Writing'.($type == 'week'?' weekly':' daily').' HTML output'."\n");
     $doc = new DOMDocument('1.0', 'utf-8');
