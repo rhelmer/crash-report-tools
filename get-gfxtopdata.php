@@ -114,10 +114,10 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                        'driverVer' => array_key_exists('AdapterDriverVersion', $raw_crash_data) ? $raw_crash_data['AdapterDriverVersion'] : '');
 
       // We sometimes get 4-digit hex IDs without a leading 0x, add it to make sums work better.
-      if (preg_match('/^[0-9a-f]{4}$/', $gfxdata['vendorID']) {
+      if (preg_match('/^[0-9a-f]{4}$/', $gfxdata['vendorID'])) {
         $gfxdata['vendorID'] = '0x'.$gfxdata['vendorID'];
       }
-      if (preg_match('/^[0-9a-f]{4}$/', $gfxdata['adapterID']) {
+      if (preg_match('/^[0-9a-f]{4}$/', $gfxdata['adapterID'])) {
         $gfxdata['adapterID'] = '0x'.$gfxdata['adapterID'];
       }
 
