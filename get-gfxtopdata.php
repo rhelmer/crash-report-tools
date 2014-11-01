@@ -156,9 +156,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   }
 
   // debug only line
-  print_r($gd); continue;
+  // print_r($gd); continue;
 
-/*
   $anafweb = $anadir.'/'.$fweb;
   if (!file_exists($anafweb) && $curdd['total_crashes']) {
     // create out an HTML page
@@ -174,23 +173,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $style = $head->appendChild($doc->createElement('style'));
     $style->setAttribute('type', 'text/css');
     $style->appendChild($doc->createCDATASection(
-        '.sig {'."\n"
-        .'  font-size: small;'."\n"
-        .'  text-align: left;'."\n"
-        .'}'."\n"
-        .'.num, .pct {'."\n"
+        '.num, .pct {'."\n"
         .'  text-align: right;'."\n"
-        .'}'."\n"
-        .'tr.devheader, tr.sigheader {'."\n"
-        .'  background: #EEEEAA;'."\n"
-        .'}'."\n"
-        .'tr.devheader:target {'."\n"
-        .'  background: #EECCAA;'."\n"
-        .'}'."\n"
-        .'tr.subheader {'."\n"
-        .'  background: #FFFFCC;'."\n"
-        .'  color: #808080;'."\n"
-        .'  font-size: small;'."\n"
         .'}'."\n"
     ));
 
@@ -200,159 +184,76 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
     // description
     $para = $body->appendChild($doc->createElement('p',
-        'All signatures of crashes listed by the devices '
-        .' they seem to be happening on.'));
+        'Graphics device/driver information from all crashes of all products during that day.'));
 
     $para = $body->appendChild($doc->createElement('p',
-        'Total crashes analyzed in this report: '.$curdd['total_crashes']
-        .($type == 'week'?' - covering 7 days up to and including '.$anadir.'.':'')));
+        'Total crashes analyzed in this report: '.$gd['total_crashes']));
 
     $list = $body->appendChild($doc->createElement('ul'));
-    foreach (array('overview' => 'Device Overview',
-                    'devices' => 'Top Signatures Per Device',
-                    'sigs' => 'Devices Per Signature')
-              as $name=>$title) {
+    foreach (array('adapters' => 'Adapters',
+                   'full' => 'Subsystems and Drivers')
+             as $name=>$title) {
       $item = $list->appendChild($doc->createElement('li'));
       $link = $item->appendChild($doc->createElement('a', $title));
       $link->setAttribute('href', '#'.$name);
     }
 
     $section = $body->appendChild($doc->createElement('section'));
-    $section->setAttribute('id', 'bydevice');
+    $section->setAttribute('id', 'adapters');
 
-    $header = $section->appendChild($doc->createElement('h2', 'Device Overview'));
-    $header->setAttribute('id', 'overview');
+    $header = $section->appendChild($doc->createElement('h2', 'Adapters'));
 
     $table = $section->appendChild($doc->createElement('table'));
     $table->setAttribute('border', '1');
 
     // table head
     $tr = $table->appendChild($doc->createElement('tr'));
-    $th = $tr->appendChild($doc->createElement('th', 'Device'));
+    $th = $tr->appendChild($doc->createElement('th', 'Vendor ID'));
+    $th = $tr->appendChild($doc->createElement('th', 'Adapter ID'));
     $th = $tr->appendChild($doc->createElement('th', 'Crashes'));
     $th = $tr->appendChild($doc->createElement('th', '%'));
 
-    // create a list of all devices to be sorted by crash totals
-    $devtotals = array();
-    foreach ($curdd['devices'] as $devname=>$devdata) {
-      $devtotals[$devname] = $devdata['crashes'];
-    }
-    arsort($devtotals);
-
-    // variable for by-signature device stats
-    $ddbysig = array();
-
-    foreach ($devtotals as $devname=>$count) {
-      $idstring = 'dev-'.sanitize_name($devname);
+    foreach ($gd['adapters'] as $ad_id=>$adinfo) {
+      $idstring = 'ad-'.sanitize_name($ad_id);
       $tr = $table->appendChild($doc->createElement('tr'));
-      $td = $tr->appendChild($doc->createElement('td'));
-      $link = $td->appendChild($doc->createElement('a', htmlentities($devname, ENT_COMPAT, 'UTF-8')));
-      $link->setAttribute('href', '#'.$idstring);
-      $td = $tr->appendChild($doc->createElement('td', $count));
+      $td = $tr->appendChild($doc->createElement('td', $adinfo['vendorID']));
+      $td = $tr->appendChild($doc->createElement('td', $adinfo['adapterID']));
+      $td = $tr->appendChild($doc->createElement('td', $adinfo['.count']));
       $td->setAttribute('class', 'num');
       $td = $tr->appendChild($doc->createElement('td',
-          sprintf('%.1f', 100 * $count / $curdd['total_crashes']).'%'));
+          sprintf('%.1f', 100 * $adinfo['.count'] / $gd['total_crashes']).'%'));
       $td->setAttribute('class', 'pct');
     }
 
-    $header = $section->appendChild($doc->createElement('h2',
-        'Top Signatures Per Device'));
-    $header->setAttribute('id', 'devices');
-
-    $table = $section->appendChild($doc->createElement('table'));
-    $table->setAttribute('border', '1');
-
-    foreach ($curdd['devices'] as $devname=>$devdata) {
-      $idstring = 'dev-'.sanitize_name($devname);
-
-      $tr = $table->appendChild($doc->createElement('tr'));
-      $tr->setAttribute('id', $idstring);
-      $tr->setAttribute('class', 'devheader');
-      $th = $tr->appendChild($doc->createElement('th', htmlentities($devname, ENT_COMPAT, 'UTF-8')));
-      $th->setAttribute('colspan', 2);
-
-      $tr = $table->appendChild($doc->createElement('tr'));
-      $tr->setAttribute('class', 'subheader');
-      $td = $tr->appendChild($doc->createElement('td',
-          'Android versions: '.(count($devdata['android_versions'])?implode(', ',$devdata['android_versions']):'unknown')));
-      $td->setAttribute('colspan', 2);
-
-      // signatures rows
-      foreach ($devdata['signatures'] as $sig=>$count) {
-        // add element to by-signature array
-        if (!array_key_exists($sig, $ddbysig)) {
-          $ddbysig[$sig] = array('devices' => array(), '.count' => 0);
-        }
-        $ddbysig[$sig]['devices'][$devname] = $count;
-        $ddbysig[$sig]['.count'] += $count;
-
-        $tr = $table->appendChild($doc->createElement('tr'));
-        $td = $tr->appendChild($doc->createElement('td'));
-        if (!strlen($sig)) {
-          $link = $td->appendChild($doc->createElement('a', '(empty signature)'));
-          $link->setAttribute('href', $url_nullsiglink);
-        }
-        elseif ($sig == '\N') {
-          $td->appendChild($doc->createTextNode('(processing failure - "'.$sig.'")'));
-        }
-        else {
-          // common case, useful signature
-          $link = $td->appendChild($doc->createElement('a',
-              htmlentities($sig, ENT_COMPAT, 'UTF-8')));
-          $link->setAttribute('href', $url_siglinkbase.rawurlencode($sig));
-        }
-        $td->setAttribute('class', 'sig');
-        $td = $tr->appendChild($doc->createElement('td', $count));
-        $td->setAttribute('class', 'num');
-      }
-    }
-
     $section = $body->appendChild($doc->createElement('section'));
-    $section->setAttribute('id', 'bysig');
+    $section->setAttribute('id', 'full');
 
-    // sort signatures and devices by count
-    uasort($ddbysig, 'count_compare'); // sort by count, highest-first
-    foreach ($ddbysig as $sig=>$sigdata) {
-      arsort($ddbysig[$sig]['devices']);
-    }
-
-    $header = $section->appendChild($doc->createElement('h2',
-        'Devices Per Signature'));
-    $header->setAttribute('id', 'sigs');
+    $header = $section->appendChild($doc->createElement('h2', 'Subsystems and Drivers'));
 
     $table = $section->appendChild($doc->createElement('table'));
     $table->setAttribute('border', '1');
 
-    foreach ($ddbysig as $sig=>$sigdata) {
-      $tr = $table->appendChild($doc->createElement('tr'));
-      $tr->setAttribute('class', 'sigheader');
-      $th = $tr->appendChild($doc->createElement('th'));
-      $th->setAttribute('class', 'sig');
-      if (!strlen($sig)) {
-        $link = $th->appendChild($doc->createElement('a', '(empty signature)'));
-        $link->setAttribute('href', $url_nullsiglink);
-      }
-      elseif ($sig == '\N') {
-        $th->appendChild($doc->createTextNode('(processing failure - "'.$sig.'")'));
-      }
-      else {
-        // common case, useful signature
-        $link = $th->appendChild($doc->createElement('a',
-            htmlentities($sig, ENT_COMPAT, 'UTF-8')));
-        $link->setAttribute('href', $url_siglinkbase.rawurlencode($sig));
-      }
-      $th = $tr->appendChild($doc->createElement('th', $sigdata['.count']));
-      $th->setAttribute('class', 'num');
+    // table head
+    $tr = $table->appendChild($doc->createElement('tr'));
+    $th = $tr->appendChild($doc->createElement('th', 'Vendor ID'));
+    $th = $tr->appendChild($doc->createElement('th', 'Adapter ID'));
+    $th = $tr->appendChild($doc->createElement('th', 'Subsys ID'));
+    $th = $tr->appendChild($doc->createElement('th', 'Driver Version'));
+    $th = $tr->appendChild($doc->createElement('th', 'Crashes'));
+    $th = $tr->appendChild($doc->createElement('th', '%'));
 
-      // signatures rows
-      foreach ($sigdata['devices'] as $devname=>$count) {
-        $tr = $table->appendChild($doc->createElement('tr'));
-        $td = $tr->appendChild($doc->createElement('td',
-            htmlentities($devname, ENT_COMPAT, 'UTF-8')));
-        $td->setAttribute('class', 'devname');
-        $td = $tr->appendChild($doc->createElement('td', $count));
-        $td->setAttribute('class', 'num');
-      }
+    foreach ($gd['adapters'] as $ad_id=>$adinfo) {
+      $idstring = 'full-'.sanitize_name($ad_id);
+      $tr = $table->appendChild($doc->createElement('tr'));
+      $td = $tr->appendChild($doc->createElement('td', $adinfo['vendorID']));
+      $td = $tr->appendChild($doc->createElement('td', $adinfo['adapterID']));
+      $td = $tr->appendChild($doc->createElement('td', $adinfo['subsysID']));
+      $td = $tr->appendChild($doc->createElement('td', $adinfo['driverVer']));
+      $td = $tr->appendChild($doc->createElement('td', $adinfo['.count']));
+      $td->setAttribute('class', 'num');
+      $td = $tr->appendChild($doc->createElement('td',
+          sprintf('%.1f', 100 * $adinfo['.count'] / $gd['total_crashes']).'%'));
+      $td->setAttribute('class', 'pct');
     }
 
     $doc->saveHTMLFile($anafweb);
@@ -366,17 +267,15 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $pages = array();
     }
     $pages[$fwebcur] =
-      array('product' => $rep['product'],
-            'channel' => $channel,
-            'version' => $ver,
-            'report' => 'devices',
-            'report_sub' => $type,
+      array('product' => null,
+            'channel' => null,
+            'version' => null,
+            'report' => 'gfxdata',
+            'report_sub' => null,
             'display_ver' => $prdverdisplay,
-            'display_rep' => ($type == 'week'?'Weekly ':'')
-                              .'Device Crash Report');
+            'display_rep' => 'GFX Devices Report');
     file_put_contents($anafpages, json_encode($pages));
   }
-*/
 }
 
 // *** helper functions ***
