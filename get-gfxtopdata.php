@@ -168,7 +168,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $root = $doc->appendChild($doc->createElement('html'));
     $head = $root->appendChild($doc->createElement('head'));
     $title = $head->appendChild($doc->createElement('title',
-        $anadir.' '.$prdverdisplay.' GFX Devices Report'));
+        $anadir.' GFX Devices Report'));
 
     $style = $head->appendChild($doc->createElement('style'));
     $style->setAttribute('type', 'text/css');
@@ -180,7 +180,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
     $body = $root->appendChild($doc->createElement('body'));
     $h1 = $body->appendChild($doc->createElement('h1',
-        $anadir.' '.$prdverdisplay.' GFX Devices Report'));
+        $anadir.' GFX Devices Report'));
 
     // description
     $para = $body->appendChild($doc->createElement('p',
@@ -272,7 +272,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             'version' => null,
             'report' => 'gfxdata',
             'report_sub' => null,
-            'display_ver' => $prdverdisplay,
+            'display_ver' => '',
             'display_rep' => 'GFX Devices Report');
     file_put_contents($anafpages, json_encode($pages));
   }
