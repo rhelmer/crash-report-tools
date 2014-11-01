@@ -108,10 +108,10 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
                 'adapters' => array());
     while ($raw_row = pg_fetch_array($raw_result)) {
       $raw_crash_data = json_decode($raw_row['raw_crash'], true);
-      $gfxdata = array('vendorID' => $raw_crash_data['AdapterVendorID'],
-                        'adapterID' => $raw_crash_data['AdapterDeviceID'],
-                        'subsysID' => $raw_crash_data['AdapterSubsysID'],
-                        'driverVer' => $raw_crash_data['AdapterDriverVersion']);
+      $gfxdata = array('vendorID' => array_key_exists('AdapterVendorID', $raw_crash_data) ? $raw_crash_data['AdapterVendorID'] : '0x0',
+                       'adapterID' => array_key_exists('AdapterDeviceID', $raw_crash_data) ? $raw_crash_data['AdapterDeviceID'] : '0x0',
+                       'subsysID' => array_key_exists('AdapterSubsysID', $raw_crash_data) ? $raw_crash_data['AdapterSubsysID'] : '',
+                       'driverVer' => array_key_exists('AdapterDriverVersion', $raw_crash_data) ? $raw_crash_data['AdapterDriverVersion'] : '');
 
       $full_gfx_id = $gfxdata['vendorID'].'::'.$gfxdata['adapterID'].'::'
                       .$gfxdata['subsysID'].'::'.$gfxdata['driverVer'];
