@@ -137,8 +137,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
     // sort both arrays by count
     foreach (array('full', 'adapters') as $aname) {
-      uasort($dd[$aname], 'count_compare');
-      uasort($dd[$aname], 'count_compare');
+      uasort($gd[$aname], 'count_compare');
+      uasort($gd[$aname], 'count_compare');
     }
 
     file_put_contents($anafgfxdata, json_encode($gd));
