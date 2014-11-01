@@ -126,19 +126,19 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $gfx_adapter = $gfxdata['vendorID'].'::'.$gfxdata['adapterID'];
 
       if (array_key_exists($full_gfx_id, $gd['full'])) {
-        $gd['full'][$full_gfx_id]['count']++;
+        $gd['full'][$full_gfx_id]['.count']++;
       }
       else {
         $gd['full'][$full_gfx_id] = $gfxdata;
-        $gd['full'][$full_gfx_id]['count'] = 1;
+        $gd['full'][$full_gfx_id]['.count'] = 1;
       }
       if (array_key_exists($gfx_adapter, $gd['adapters'])) {
-        $gd['adapters'][$gfx_adapter]['count']++;
+        $gd['adapters'][$gfx_adapter]['.count']++;
       }
       else {
         $gd['adapters'][$gfx_adapter] = array('vendorID' => $gfxdata['vendorID'],
                                               'adapterID' => $gfxdata['adapterID']);
-        $gd['adapters'][$gfx_adapter]['count'] = 1;
+        $gd['adapters'][$gfx_adapter]['.count'] = 1;
       }
       $gd['total_crashes']++;
     }
