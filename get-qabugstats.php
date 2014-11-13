@@ -106,13 +106,36 @@ else {
 }
 
 $products = array('Firefox', 'Core', 'Toolkit', 'Firefox for Android', 'Loop');
+// Products/components that Firefox QE cares about
+$productmap = array(
+  'Firefox' => true,
+  'Toolkit' => true,
+  'Core' => true,
+  'NSPR' => true,
+  'NSS' => true,
+  'Plugins' => true,
+  'Firefox for Android' => true,
+  'Android Background Services' => true,
+  'Firefox Health Report' => true,
+  'Loop' => array('Client', 'General'),
+  'Mozilla Services' => true,
+  'Snippets' => true,
+  'Mozilla Localizations' => true,
+  'Mozilla QA' => array('Mozmill Tests'),
+);
+
+/* products/components that have the qe-verify flag but are not above
+Firefox for Metro      -- Any --
+Firefox OS             -- Any --
+*/
+
 // Words that exclude bugs from queries (except Firefox, Firefox for Android products)
 $excludewords = 'b2g,gaia,homescreen,sms,dialer,flame,hamachi,buri';
 
 $dailycountgroups = array('FxIteration', 'FirefoxNonIter', 'CoreNonIter', 'ToolkitNonIter');
 $dailycountqueries = array('fixed', 'verified', 'reopened');
 
-$dailycompqueries = array('filed');
+$dailycompqueries = array('filed', 'fixed');
 
 $iterations =
     array('33.2' => array('start' => '2014-06-24',
@@ -232,8 +255,8 @@ foreach ($days_to_analyze as $anaday) {
   print(':');
 
   foreach ($dailycompqueries as $querytype) {
-    foreach ($products as $prod) {
-      $bugquery = getDailyComponentQuery($querytype, $prod, $anaday);
+    foreach ($productmap as $prod=>$comps) {
+      $bugquery = getDailyComponentQuery($querytype, $prod, $comps, $anaday);
       //$buglist_url = $bugzilla_url.'buglist.cgi?'.$bugquery;
       //print("\n".$buglist_url."\n");
       $compcounts = getProdCompCounts($bugquery);
@@ -433,22 +456,33 @@ function getDailyBugCountQuery($type, $group, $date) {
   return $query;
 }
 
-function getDailyComponentQuery($type, $product, $date) {
+function getDailyComponentQuery($type, $product, $comps, $date) {
   $ymd_start = $date.' 00:00:00';
   $ymd_end = date('Y-m-d H:i:s', strtotime($ymd_start.' +1 day'));
 
   $query = 'product='.rawurlencode($product);
+  if (is_array($comps)) {
+    foreach ($comps as $comp) {
+      $query .= '&component='.rawurlencode($comp);
+    }
+  }
   if (!preg_match('/^Firefox/', $product)) {
     $query .= '&f1=short_desc&o1=nowordssubstr&v1='.rawurlencode($GLOBALS['excludewords']);
     $query .= '&f2=status_whiteboard&o2=nowordssubstr&v2='.rawurlencode($GLOBALS['excludewords']);
     $query .= '&f3=op_sys&o3=notsubstring&v3=Gonk';
   }
-  $query .= '&chfield='.rawurlencode('[Bug creation]');
-  $query .= '&chfieldfrom='.rawurlencode($ymd_start);
-  $query .= '&chfieldto='.rawurlencode($ymd_end);
   switch ($type) {
     case 'filed':
       // total filed bugs
+      $query .= '&chfield='.rawurlencode('[Bug creation]');
+      $query .= '&chfieldfrom='.rawurlencode($ymd_start);
+      $query .= '&chfieldto='.rawurlencode($ymd_end);
+      break;
+    case 'fixed':
+      // bugs switched to fixed
+      $query .= '&chfield=resolution&chfieldvalue=FIXED';
+      $query .= '&chfieldfrom='.rawurlencode($ymd_start);
+      $query .= '&chfieldto='.rawurlencode($ymd_end);
       break;
     default:
       break;
@@ -644,7 +678,11 @@ function getStaticQuery($type) {
 }
 
 function getBugCount($query) {
-  $list_json = file_get_contents($GLOBALS['bzapi_url'].'count?'.$query);
+  // On failure, try again, up to 3 times.
+  $list_json = null; $count = 0;
+  while (!$list_json && ($count++ <= 3)) {
+    $list_json = file_get_contents($GLOBALS['bzapi_url'].'count?'.$query);
+  }
   if ($list_json) {
     $list_info = json_decode($list_json, true);
     return $list_info['data'];
@@ -653,7 +691,11 @@ function getBugCount($query) {
 }
 
 function getProdCompCounts($query) {
-  $list_json = file_get_contents($GLOBALS['bz_restapi_url'].'bug?'.$query);
+  // On failure, try again, up to 3 times.
+  $list_json = null; $count = 0;
+  while (!$list_json && ($count++ <= 3)) {
+    $list_json = file_get_contents($GLOBALS['bz_restapi_url'].'bug?'.$query);
+  }
   if ($list_json) {
     $list_info = json_decode($list_json, true);
     if (array_key_exists('bugs', $list_info)) {
