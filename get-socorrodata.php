@@ -35,14 +35,11 @@ date_default_timezone_set('America/Los_Angeles');
 $products = array('Firefox', 'MetroFirefox', 'Fennec', 'FennecAndroid');
 
 // products and channels to gather data per-type from
-$prodchannels = array('Firefox' => array('release', 'beta'),
-                      'FennecAndroid' => array('release', 'beta'));
-
-// try how gathering aurora/nightly data looks with this
-$prodchannels = array('FennecAndroid' => array('aurora', 'nightly'));
+$prodchannels = array('Firefox' => array('release', 'beta', 'aurora', 'nightly'),
+                      'FennecAndroid' => array('release', 'beta', 'aurora', 'nightly'));
 
 // for how many days back to get the data
-$backlog_days = -1;
+$backlog_days = -1; // 15;
 
 // *** URLs and paths ***
 
@@ -166,7 +163,7 @@ foreach ($products as $product) {
 }
 
 // uncomment for backfilling
-$day_start = '2014-01-01';
+$day_start = '2011-01-01';
 
 foreach ($prodchannels as $product=>$channels) {
   foreach ($channels as $channel) {
