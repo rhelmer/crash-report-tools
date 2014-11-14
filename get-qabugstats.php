@@ -124,11 +124,6 @@ $productmap = array(
   'Mozilla QA' => array('Mozmill Tests'),
 );
 
-/* products/components that have the qe-verify flag but are not above
-Firefox for Metro      -- Any --
-Firefox OS             -- Any --
-*/
-
 // Words that exclude bugs from queries (except Firefox, Firefox for Android products)
 $excludewords = 'b2g,gaia,homescreen,sms,dialer,flame,hamachi,buri';
 
