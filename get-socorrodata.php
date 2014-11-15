@@ -39,7 +39,7 @@ $prodchannels = array('Firefox' => array('release', 'beta', 'aurora', 'nightly')
                       'FennecAndroid' => array('release', 'beta', 'aurora', 'nightly'));
 
 // for how many days back to get the data
-$backlog_days = -1; // 15;
+$backlog_days = 15;
 
 // *** URLs and paths ***
 
@@ -163,7 +163,7 @@ foreach ($products as $product) {
 }
 
 // uncomment for backfilling
-$day_start = '2011-01-01';
+// $day_start = '2011-01-01';
 
 foreach ($prodchannels as $product=>$channels) {
   foreach ($channels as $channel) {
