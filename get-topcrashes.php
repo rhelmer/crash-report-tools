@@ -67,6 +67,10 @@ $reports = array(
     'x86' => array('display_name' => 'x86',
                    'wherex' => " AND reports_clean.architecture='x86'",
                    'products' => array('FennecAndroid')),
+    'lollipop' => array('display_name' => 'Lollipop',
+                   'include_raw_table' => true,
+                   'wherex' => " AND reports_clean.process_type='plugin' AND raw_crashes.raw_crash->>'Android_Version'='21 (REL)'",
+                   'products' => array('FennecAndroid')));
     'GMP' => array('display_name' => 'GMP',
                    'include_raw_table' => true,
                    'wherex' => " AND reports_clean.process_type='plugin' AND raw_crashes.raw_crash->>'GMPPlugin'='1'",
