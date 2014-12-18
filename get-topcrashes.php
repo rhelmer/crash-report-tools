@@ -70,7 +70,7 @@ $reports = array(
     'lollipop' => array('display_name' => 'Lollipop',
                    'include_raw_table' => true,
                    'wherex' => " AND reports_clean.process_type='plugin' AND raw_crashes.raw_crash->>'Android_Version'='21 (REL)'",
-                   'products' => array('FennecAndroid')));
+                   'products' => array('FennecAndroid')),
     'GMP' => array('display_name' => 'GMP',
                    'include_raw_table' => true,
                    'wherex' => " AND reports_clean.process_type='plugin' AND raw_crashes.raw_crash->>'GMPPlugin'='1'",
