@@ -494,7 +494,7 @@ function getDailyComponentQuery($type, $product, $comps, $date) {
 function getIterQuery($type, $iteration) {
   $i = 1; // counter for "custom search" or "boolean chart" fields
   $query = 'f'.$i.'=OP&j'.$i.'=OR'; $i++;
-  $query .= '&f'.$i.'=cf_fx_iteration&o'.$i.'=equals&v'.$i.'='.rawurlencode($iteration); $i++;
+  $query .= '&f'.$i.'=cf_fx_iteration&o'.$i.'=substring&v'.$i.'='.rawurlencode($iteration); $i++;
   $query .= '&f'.$i.'=status_whiteboard&o'.$i.'=substring&v'.$i.'='.rawurlencode('s='.$iteration); $i++;
   $query .= '&f'.$i.'=CP'; $i++;
   switch ($type) {
