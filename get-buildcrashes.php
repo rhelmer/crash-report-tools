@@ -381,7 +381,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               $link->setAttribute('href',
                   'https://crash-stats.mozilla.com/search/?product='.$product
                   .'&version='.$pvdata[$builddata['pvid']]['release_version']
-                  .'&build_id='.$builddata['build'].'&release_channel='.$channel
+                  .'&build_id='.$builddata['build']
+                  .'&release_channel='.($channel == 'other'?'':$channel)
                   .'&process_type='.$ptype.'&hang_type='.$htype
                   .'&date=%3E%3D'.$anadir.'&date=%3C'.date('Y-m-d', strtotime($anadir.' +1 day'))
                   .'&_facets=signature#facet-signature');
