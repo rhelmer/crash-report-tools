@@ -372,8 +372,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               $small->setAttribute('class', 'buildadu');
             }
             foreach ($fields as $fld) {
-              $ptype = !in_array($fld, array('hang','crash','total'))?$fld:'any';
-              $htype = in_array($fld, array('hang','crash'))?$fld:'any';
+              $ptype = !in_array($fld, array('hang','crash','total'))?$fld:'';
+              $htype = in_array($fld, array('hang','crash'))?$fld:'';
 
               $td = $tr->appendChild($doc->createElement('td'));
               $td->setAttribute('class', 'num');
