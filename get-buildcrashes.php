@@ -379,7 +379,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               $td->setAttribute('class', 'num');
               $link = $td->appendChild($doc->createElement('a', intval(@$builddata['cnt'][$fld])));
               $link->setAttribute('href',
-                  'https://crash-stats.mozilla.com/search/?product=Firefox'.$product
+                  'https://crash-stats.mozilla.com/search/?product='.$product
                   .'&version='.$pvdata[$builddata['pvid']]['release_version']
                   .'&build_id='.$builddata['build'].'&release_channel='.$channel
                   .'&process_type='.$ptype.'&hang_type='.$htype
