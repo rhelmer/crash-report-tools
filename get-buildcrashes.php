@@ -379,13 +379,12 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               $td->setAttribute('class', 'num');
               $link = $td->appendChild($doc->createElement('a', intval(@$builddata['cnt'][$fld])));
               $link->setAttribute('href',
-                  'https://crash-stats.mozilla.com/query/query?product='.$product
-                  .'&version='.$product.'%3A'.$pvdata[$builddata['pvid']]['version_string']
-                  .'&range_value=1&range_unit=days&&date='.$anadir.'+23%3A59%3A59'
-                  .'&query_type=contains&query=&reason='
-                  .'&build_id='.$builddata['build']
+                  'https://crash-stats.mozilla.com/search/?product=Firefox'.$product
+                  .'&version='.$pvdata[$builddata['pvid']]['release_version']
+                  .'&build_id='.$builddata['build'].'&release_channel='.$channel
                   .'&process_type='.$ptype.'&hang_type='.$htype
-                  .'&do_query=1');
+                  .'&date=%3E%3D'.$anadir.'&date=%3C'.$anadir
+                  .'&_facets=signature#facet-signature');
               if (@$buildadu[$idx]) {
                 $td->appendChild($doc->createElement('br'));
                 $small = $td->appendChild($doc->createElement('small',
