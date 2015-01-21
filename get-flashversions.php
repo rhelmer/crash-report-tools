@@ -51,9 +51,7 @@ if (count($force_dates)) {
 
 // Flash versions to gather reports for.
 
-$flash_versions = array('15.0.0.246',
-                        '16.0.0.235',
-                        '16.0.0.240',
+$flash_versions = array('16.0.0.235',
                         '16.0.0.257',
                         '16.0.0.280');
 
