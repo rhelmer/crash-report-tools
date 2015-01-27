@@ -1,0 +1,12 @@
+language: php
+php:
+- '5.5'
+- '5.4'
+- '5.3'
+deploy:
+  provider: heroku
+  api_key:
+    secure: fw45WeEfq5AHFi7IoGlN98LQW8LNyTBfUzSLoa38iHf+n6M2Y2AAYCn/AXbHgLwYrPoeTY9VtL4ER94dYzIfHd3VFIemvoCHe3U217dv5kGYKMGkLLGAqXIAzMyYXqRym/tGG9+zBs9ux8DFGCKrrejk/KpFT8Wd2iqqRT2+YvM=
+  app: stark-sierra-8823
+  on:
+    repo: mozilla/crash-report-tools
