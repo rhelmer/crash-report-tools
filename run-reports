@@ -2,9 +2,6 @@
 
 # Invoke all scripts that build reports.
 
-# Switch to the directory this script is placed in.
-cd `dirname $_`
-
 php get-buildcrashes.php
 php get-explosives.php
 php get-flashhangs.php $@
