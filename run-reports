@@ -5,19 +5,19 @@
 # Switch to the directory this script is placed in.
 cd `dirname $_`
 
-./get-buildcrashes.php
-./get-explosives.php
-./get-flashhangs.php $@
-./get-flashversions.php $@
+php get-buildcrashes.php
+php get-explosives.php
+php get-flashhangs.php $@
+php get-flashversions.php $@
 #./get-components.php
-./get-startupcrashes.php
+php get-startupcrashes.php
 #./get-devicecrashes.php
-./get-topcrashes.php
-./get-b2gcrashes.php
-./get-socorrodata.php
-./get-socorrobugsweekly.php
-./get-crashbugsweekly.php
-./get-qabugstats.php
+php get-topcrashes.php
+php get-b2gcrashes.php
+php get-socorrodata.php
+php get-socorrobugsweekly.php
+php get-crashbugsweekly.php
+php get-qabugstats.php
 
 # indicate the latest processed date
-date -d "yesterday" +"%F" > ../latestdate.txt
+date -d "yesterday" +"%F" > latestdate.txt
