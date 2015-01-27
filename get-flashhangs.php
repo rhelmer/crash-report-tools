@@ -89,9 +89,6 @@ $on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
 // File storing the DB access data - including password!
 $fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
 
-if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
-else { chdir('/mnt/mozilla/projects/socorro/'); }
-
 // *** code start ***
 
 // get current day

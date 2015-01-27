@@ -46,10 +46,6 @@ $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPT
 $url_replinkbase = 'https://crash-stats.mozilla.com/report/index/';
 $url_buglinkbase = 'https://bugzilla.mozilla.org/show_bug.cgi?id=';
 
-
-if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
-else { chdir('/mnt/mozilla/projects/socorro/'); }
-
 // *** code start ***
 
 // get current day

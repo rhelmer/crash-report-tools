@@ -65,9 +65,6 @@ $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
 // File storing the DB access data - including password!
 $fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
 
-if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
-else { chdir('/mnt/mozilla/projects/socorro/'); }
-
 // *** code start ***
 
 // get current day

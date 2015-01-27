@@ -53,9 +53,6 @@ $backlog_days = 2;
 $on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
 $outdir = 'qa';
 
-if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
-else { chdir('/mnt/mozilla/projects/socorro/'); }
-
 $bugzilla_url = 'https://bugzilla.mozilla.org/';
 $bzapi_url = 'https://bugzilla.mozilla.org/bzapi/';
 $bz_restapi_url = 'https://bugzilla.mozilla.org/rest/';

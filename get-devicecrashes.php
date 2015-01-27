@@ -72,9 +72,6 @@ $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPT
 // File storing the DB access data - including password!
 $fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
 
-if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
-else { chdir('/mnt/mozilla/projects/socorro/'); }
-
 // *** code start ***
 
 // get current day

@@ -42,9 +42,6 @@ $fake_counts = false; //true; // DEBUG only!
 $on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
 $outdir = 'socorro-bugs';
 
-if ($on_moz_server) { chdir('/mnt/crashanalysis/rkaiser/'); }
-else { chdir('/mnt/mozilla/projects/socorro/'); }
-
 // *** code start ***
 
 // get current day
