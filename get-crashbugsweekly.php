@@ -15,6 +15,10 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array(region => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -376,7 +380,8 @@ if (count($bugdata)) {
       $td = $trow->appendChild($doc->createElement('td', $qinfo['desc']));
     }
 
-    $doc->saveHTMLFile($yearfweb);
+    $s3->upload($bucket, $yearfweb, $doc->saveHTML(), 'public-read',
+        array('params' => array('ContentType'=>'text/html')));
   }
 
   print("\n");
