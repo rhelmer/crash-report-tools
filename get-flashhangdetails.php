@@ -58,7 +58,6 @@ $backlog_days = 7;
 
 // *** URLs ***
 
-$on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
 $url_nullsiglink = 'https://crash-stats.mozilla.com/report/list?missing_sig=EMPTY_STRING';
 $url_siglinkbase = 'https://crash-stats.mozilla.com/report/list?signature=';
 

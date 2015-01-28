@@ -39,7 +39,6 @@ $fake_counts = false; //true; // DEBUG only!
 
 // *** URLs ***
 
-$on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
 $outdir = 'socorro-bugs';
 
 // *** code start ***

@@ -39,9 +39,7 @@ $channels = array('Release','Beta');
 
 // *** URLs and paths ***
 
-$on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
-$url_csvbase = $on_moz_server?'/mnt/crashanalysis/crash_analysis/'
-                             :'http://people.mozilla.com/crash_analysis/';
+$url_csvbase = 'http://people.mozilla.com/crash_analysis/';
 
 // *** code start ***
 
@@ -67,24 +65,15 @@ foreach ($channels as $channel) {
     $fcsv = date('Ymd', $anatime).'-pub-crashdata.csv';
 
     // Make sure we have the crashdata csv.
-    if ($on_moz_server) {
-      $anafcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-      if (!file_exists($anafcsvgz)) {
-        print($anafcsvgz.' does not exist!'."\n");
-        continue;
-      }
+    $anafcsv = $fcsv;
+    if (!file_exists($anafcsv)) {
+      print('Fetching '.$anafcsv.' from the web'."\n");
+      $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
+      if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
     }
-    else {
-      $anafcsv = $fcsv;
-      if (!file_exists($anafcsv)) {
-        print('Fetching '.$anafcsv.' from the web'."\n");
-        $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
-        if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
-      }
-      if (!file_exists($anafcsv)) {
-        print($anafcsv.' does not exist!'."\n");
-        continue;
-      }
+    if (!file_exists($anafcsv)) {
+      print($anafcsv.' does not exist!'."\n");
+      continue;
     }
 
     $min_builddate = strtotime(date('Y-m-d', $anatime).' -'.$max_build_age);
@@ -100,12 +89,7 @@ foreach ($channels as $channel) {
       $cmd = 'awk \'-F\t\' \'$7 ~ /^Firefox$/'
 //             .' && $29 ~ /^'.awk_quote($channel, '/')
             .' {printf ",%s,%s,%s,%s,%s,%s\n",$7,$8,$9,$25,($23!="\\\\N"),$29}\'';
-      if ($on_moz_server) {
-        $return = shell_exec('gunzip --stdout '.$anafcsvgz.' | '.$cmd.' | sort | uniq -c');
-      }
-      else {
-        $return = shell_exec($cmd.' '.$anafcsv.' | sort | uniq -c');
-      }
+      $return = shell_exec($cmd.' '.$anafcsv.' | sort | uniq -c');
 
       // Filter and sum up the data.
       foreach (explode("\n", $return) as $line) {

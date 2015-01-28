@@ -36,8 +36,6 @@ $backlog_days = 7;
 
 // *** URLs ***
 
-$on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
-
 // File storing the DB access data - including password!
 $fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
 

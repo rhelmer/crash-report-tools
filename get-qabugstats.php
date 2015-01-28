@@ -50,7 +50,6 @@ $backlog_days = 2;
 
 // *** URLs ***
 
-$on_moz_server = file_exists('/mnt/crashanalysis/rkaiser/');
 $outdir = 'qa';
 
 $bugzilla_url = 'https://bugzilla.mozilla.org/';
