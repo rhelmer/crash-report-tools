@@ -43,43 +43,27 @@ $prodchan = array('Firefox' => array('release', 'beta', 'aurora', 'nightly', 'es
 // how many days back to look at
 $backlog_days = 7;
 
-// *** URLs ***
-
-// File storing the DB access data - including password!
-$fdbsecret = '/home/rkaiser/.socorro-prod-dbsecret.json';
-
 // *** code start ***
 
 // get current day
 $curtime = time();
 
-if (file_exists($fdbsecret)) {
-  $dbsecret = json_decode(file_get_contents($fdbsecret), true);
-  if (!is_array($dbsecret) || !count($dbsecret)) {
-    print('ERROR: No DB secrets found, aborting!'."\n");
-    exit(1);
-  }
-  $db_conn = pg_pconnect('host='.$dbsecret['host']
-                         .' port='.$dbsecret['port']
-                         .' dbname=breakpad'
-                         .' user='.$dbsecret['user']
-                         .' password='.$dbsecret['password']);
-  if (!$db_conn) {
-    print('ERROR: DB connection failed, aborting!'."\n");
-    exit(1);
-  }
-  // For info on what data can be accessed, see also
-  // http://socorro.readthedocs.org/en/latest/databasetabledesc.html
-  // For the DB schema, see
-  // https://github.com/mozilla/socorro/blob/master/sql/schema.sql
-}
-else {
-  // Won't work! (Set just for documenting what fields are in the file.)
-  $dbsecret = array('host' => 'host.m.c', 'port' => '6432',
-                    'user' => 'analyst', 'password' => 'foo');
-  print('ERROR: No DB secrets found, aborting!'."\n");
+$db_url = getenv('DATABASE_URL')?:
+        die('No "DATABASE_URL " config var in found in env!');
+$db_url = parse_url($db_url);
+$db_conn = pg_pconnect('host='.$db_url['host']
+                       .' port='.$db_url['port']
+                       .' dbname='.$db_url['database']
+                       .' user='.$db_url['user']
+                       .' password='.$db_url['password']);
+if (!$db_conn) {
+  print('ERROR: DB connection failed, aborting!'."\n");
   exit(1);
 }
+// For info on what data can be accessed, see also
+// http://socorro.readthedocs.org/en/latest/databasetabledesc.html
+// For the DB schema, see
+// https://github.com/mozilla/socorro/blob/master/sql/schema.sql
 
 for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
