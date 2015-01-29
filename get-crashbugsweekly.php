@@ -50,9 +50,6 @@ $outdir = 'crash-bugs';
 // get current day
 $curtime = time();
 
-// make sure our output dir exists
-if (!file_exists($outdir)) { mkdir($outdir); }
-
 $bdfile = $outdir.'/crash.bugdata.json';
 $fweb = '%s.weeklybugs.html';
 
