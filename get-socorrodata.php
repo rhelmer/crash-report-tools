@@ -52,12 +52,11 @@ $day_end = date('Y-m-d', strtotime('yesterday'));
 $db_url = getenv('DATABASE_URL')?:
             die('No "DATABASE_URL " config var in found in env!');
 $db_url = parse_url($db_url);
-$db_conn = pg_pconnect('host='.$db_url['host']
-                       .' port='.$db_url['port']
-                       .' dbname='.$db_url['database']
-                       .' user='.$db_url['user']
-                       .' password='.$db_url['password']);
-$db_conn = pg_pconnect($db_url);
+$dbopts = parse_url($db_url);
+$db_conn = pg_pconnect('host='.$dbopts['host']
+                       .' dbname='.ltrim($dbopts["path"],'/')
+                       .' user='.$dbopts['user']
+                       .' password='.$dbopts['password']);
 if (!$db_conn) {
   print('ERROR: DB connection failed, aborting!'."\n");
   exit(1);
