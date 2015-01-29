@@ -15,6 +15,10 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -50,12 +54,16 @@ $curtime = time();
 
 $db_url = getenv('DATABASE_URL')?:
         die('No "DATABASE_URL " config var in found in env!');
-$db_url = parse_url($db_url);
-$db_conn = pg_pconnect('host='.$db_url['host']
-                       .' port='.$db_url['port']
-                       .' dbname='.$db_url['database']
-                       .' user='.$db_url['user']
-                       .' password='.$db_url['password']);
+$dbopts = parse_url($db_url);
+print_r($dbopts);
+print_r('host='.$dbopts['host']
+                       .' dbname='.ltrim($dbopts["path"],'/')
+                       .' user='.$dbopts['user']
+                       .' password='.$dbopts['password']);
+$db_conn = pg_pconnect('host='.$dbopts['host']
+                       .' dbname='.ltrim($dbopts["path"],'/')
+                       .' user='.$dbopts['user']
+                       .' password='.$dbopts['password']);
 if (!$db_conn) {
   print('ERROR: DB connection failed, aborting!'."\n");
   exit(1);
@@ -69,13 +77,12 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
   $anadir = date('Y-m-d', $anatime);
   print('Builds: Looking at per-build crash data for '.$anadir."\n");
-  if (!file_exists($anadir)) { mkdir($anadir); }
 
   $fpages = 'pages.json';
   $fweb = $anadir.'.buildcrashes.html';
 
   $anafweb = $anadir.'/'.$fweb;
-  if (!file_exists($anafweb)) {
+  if (!$s3->doesObjectExist($bucket, $anafweb)) {
     // create out an HTML page
     print('Writing HTML output'."\n");
 
@@ -394,12 +401,17 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       }
     }
 
-    $doc->saveHTMLFile($anafweb);
+    $s3->upload($bucket, $anafweb, $doc->saveHTML(), 'public-read',
+        array('params' => array('ContentType'=>'text/html')));
 
     // add the page to the pages index
     $anafpages = $anadir.'/'.$fpages;
-    if (file_exists($anafpages)) {
-      $pages = json_decode(file_get_contents($anafpages), true);
+    if ($s3->doesObjectExist($bucket, $anafpages)) {
+      print('Reading stored crash bug data'."\n");
+      $anafpagesobj = $s3->getObject(array(
+              'Bucket' => $bucket,
+              'Key'    => $bdfile));
+      $pages = json_decode($anafpagesobj, true);
     }
     else {
       $pages = array();
@@ -413,6 +425,9 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             'display_ver' => '',
             'display_rep' => 'Crashes / Build');
     file_put_contents($anafpages, json_encode($pages));
+    $s3->upload($bucket, $anafpages, json_encode($pages), 'public-read',
+        array('params' => array('ContentType'=>'application/json')));
+
   }
 }
 print("\n");
