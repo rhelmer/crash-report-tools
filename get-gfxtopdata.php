@@ -48,7 +48,7 @@ $dbopts = parse_url($db_url);
 $db_conn = pg_pconnect('host='.$dbopts['host']
                        .' dbname='.ltrim($dbopts["path"],'/')
                        .' user='.$dbopts['user']
-                       .' password='.$dbopts['password']);
+                       .' password='.$dbopts['pass']);
   print('ERROR: DB connection failed, aborting!'."\n");
   exit(1);
 }
