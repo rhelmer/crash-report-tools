@@ -15,6 +15,10 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array(region => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -46,15 +50,15 @@ $outdir = 'socorro-bugs';
 // get current day
 $curtime = time();
 
-// make sure our output dir exists
-if (!file_exists($outdir)) { mkdir($outdir); }
-
 $bdfile = $outdir.'/socorro.bugdata.json';
 $fweb = '%s.weeklybugs.html';
 
-if (file_exists($bdfile)) {
-  print('Reading stored Socorro bug data'."\n");
-  $bugdata = json_decode(file_get_contents($bdfile), true);
+if ($s3->doesObjectExist($bucket, $bdfile)) {
+  print('Reading stored crash bug data'."\n");
+  $bdobj = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $bdfile));
+  $bugdata = json_decode($bdobj, true);
 }
 else {
   $bugdata = array();
@@ -109,7 +113,8 @@ foreach ($calcweeks as $wkdef) {
 
   ksort($bugdata); // sort by date (key), ascending
 
-  file_put_contents($bdfile, json_encode($bugdata));
+  $s3->upload($bucket, $bdfile, json_encode($bugdata), 'public-read',
+        array('params' => array('ContentType'=>'text/html')));
 }
 
 if (count($bugdata)) {
@@ -348,7 +353,8 @@ if (count($bugdata)) {
 
     $body->appendChild($pgnav);
 
-    $doc->saveHTMLFile($yearfweb);
+    $s3->upload($bucket, $yearfweb, $doc->saveHTML(), 'public-read',
+    array('params' => array('ContentType'=>'text/html')));
   }
 
   print("\n");
