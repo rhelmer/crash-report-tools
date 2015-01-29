@@ -53,9 +53,12 @@ $curtime = time();
 $bdfile = $outdir.'/crash.bugdata.json';
 $fweb = '%s.weeklybugs.html';
 
-if (file_exists($bdfile)) {
+if ($s3->doesObjectExist($bucket, $bdfile)) {
   print('Reading stored crash bug data'."\n");
-  $bugdata = json_decode(file_get_contents($bdfile), true);
+  $bdobj = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $bdfile));
+  $bugdata = json_decode($bdobj, true);
 }
 else {
   $bugdata = array();
@@ -126,7 +129,8 @@ foreach ($calcweeks as $wkdef) {
 
   ksort($bugdata); // sort by date (key), ascending
 
-  file_put_contents($bdfile, json_encode($bugdata));
+  $s3->upload($bucket, $bdfile, json_encode($bugdata), 'public-read',
+        array('params' => array('ContentType'=>'text/html')));
 }
 
 if (count($bugdata)) {
