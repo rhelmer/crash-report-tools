@@ -17,7 +17,8 @@ if (php_sapi_name() != 'cli') {
 
 require('vendor/autoload.php');
 $s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
-$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+$bucket = getenv('S3_BUCKET')?:
+    die('No "S3_BUCKET" config var in found in env!');
 
 include_once('datautils.php');
 
@@ -55,11 +56,6 @@ $curtime = time();
 $db_url = getenv('DATABASE_URL')?:
         die('No "DATABASE_URL " config var in found in env!');
 $dbopts = parse_url($db_url);
-print_r($dbopts);
-print_r('host='.$dbopts['host']
-                       .' dbname='.ltrim($dbopts["path"],'/')
-                       .' user='.$dbopts['user']
-                       .' password='.$dbopts['password']);
 $db_conn = pg_pconnect('host='.$dbopts['host']
                        .' dbname='.ltrim($dbopts["path"],'/')
                        .' user='.$dbopts['user']
