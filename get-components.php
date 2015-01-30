@@ -15,6 +15,11 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?:
+    die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -152,7 +157,6 @@ foreach ($reports as $rep) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
     print('Components: Looking at '.$prdverdisplay.' data for '.$anadir."\n");
-    if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fcompdata = $prdvershort.'-components.json';
     $fpages = 'pages.json';
@@ -161,7 +165,7 @@ foreach ($reports as $rep) {
     $fwebweek = $anadir.'.'.$prdverfile.'.components.weekly.html';
 
     $anafcompdata = $anadir.'/'.$fcompdata;
-    if (!file_exists($anafcompdata)) {
+    if (!$s3->doesObjectExist($bucket, $anafcompdata)) {
       // get all crash IDs and signatures for the selected versions
       $rep_query =
         'SELECT uuid, signature '
@@ -321,10 +325,14 @@ foreach ($reports as $rep) {
         }
       }
 
-      file_put_contents($anafcompdata, json_encode($cd));
+      $s3->upload($bucket, $anafcompdata, json_encode($cd), 'public-read',
+          array('params' => array('ContentType'=>'application/json')));
     }
     else {
-      $cd = json_decode(file_get_contents($anafcompdata), true);
+      $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $anafcompdata));
+      $cd = json_decode($result['Body'], true);
     }
 
     // debug only line
@@ -336,7 +344,7 @@ foreach ($reports as $rep) {
     foreach ($webreports as $type=>$fwebcur) {
       $anafweb = $anadir.'/'.$fwebcur;
       if ($type == 'week') {
-        if (!file_exists($anafweb)) {
+        if (!$s3->doesObjectExist($bucket, $anafweb)) {
           // assemble 7-day "weekly" overview
           print('Calculating weekly data'."\n");
           $curcd = $cd;
@@ -345,9 +353,12 @@ foreach ($reports as $rep) {
             $pastdir = date('Y-m-d', $pasttime);
             print('Adding '.$pastdir);
             $pastfcompdata = $pastdir.'/'.$fcompdata;
-            if (file_exists($pastfcompdata)) {
+            if ($s3->doesObjectExist($bucket, $pastfcompdata)) {
               // Load that data and merge it into $curcd.
-              $pastcd = json_decode(file_get_contents($pastfcompdata), true);
+              $result = $s3->getObject(array(
+                  'Bucket' => $bucket,
+                  'Key'    => $pastfcompdata));
+              $pastcd = json_decode($result['Body'], true);
               $curcd['total'] += $pastcd['total'];
               foreach ($pastcd['tree'] as $path=>$pdata) {
                 print(':');
@@ -397,7 +408,7 @@ foreach ($reports as $rep) {
         $curcd = $cd;
       }
 
-      if (!file_exists($anafweb) && $curcd['total']) {
+      if (!$s3->doesObjectExist($bucket, $anafweb) && $curcd['total']) {
         // create out an HTML page
         print('Writing'.($type == 'week'?' weekly':' daily').' HTML output'."\n");
         $doc = new DOMDocument('1.0', 'utf-8');
@@ -581,12 +592,16 @@ foreach ($reports as $rep) {
           }
         }
 
-        $doc->saveHTMLFile($anafweb);
+        $s3->upload($bucket, $anafweb, $doc->saveHTML(), 'public-read',
+            array('params' => array('ContentType'=>'text/html')));
 
         // add the page to the pages index
         $anafpages = $anadir.'/'.$fpages;
-        if (file_exists($anafpages)) {
-          $pages = json_decode(file_get_contents($anafpages), true);
+        if ($s3->doesObjectExist($bucket, $anafpages)) {
+          $result = $s3->getObject(array(
+              'Bucket' => $bucket,
+              'Key'    => $anafpages));
+          $pages = json_decode($result['Body'], true);
         }
         else {
           $pages = array();
@@ -600,7 +615,8 @@ foreach ($reports as $rep) {
                 'display_ver' => $prdverdisplay,
                 'display_rep' => ($type == 'week'?'Weekly ':'')
                                  .'Crash Components Report');
-        file_put_contents($anafpages, json_encode($pages));
+        $s3->upload($bucket, $anafpages, json_encode($pages), 'public-read',
+            array('params' => array('ContentType'=>'application/json')));
       }
     }
   }

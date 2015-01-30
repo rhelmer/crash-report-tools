@@ -16,6 +16,10 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -124,9 +128,12 @@ foreach ($reports as $rep) {
   $fwebsum = $prdverfile.'.flashsummary.html';
   $fwebdata = $prdverfile.'.flashdata-permajorver.html';
 
-  if (file_exists($fdfile)) {
+  if ($s3->doesObjectExist($bucket, $fdfile)) {
     print('Reading stored '.$prdverdisplay.' Flash/hang data'."\n");
-    $flashdata = json_decode(file_get_contents($fdfile), true);
+    $result = $s3->getObject(array(
+        'Bucket' => $bucket,
+        'Key'    => $fdfile));
+    $flashdata = json_decode($result['Body'], true);
   }
   else {
     $flashdata = array();
@@ -190,7 +197,6 @@ foreach ($reports as $rep) {
   foreach ($days_to_analyze as $anaday) {
     $anadir = $anaday;
     print('Flash/hangs: Looking at '.$prdverdisplay.' data for '.$anadir."\n");
-    if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fpages = 'pages.json';
     $fweb = $anadir.'.'.$prdverfile.'.flashhangs.html';
@@ -263,11 +269,12 @@ foreach ($reports as $rep) {
 
       ksort($flashdata); // sort by date (key), ascending
 
-      file_put_contents($fdfile, json_encode($flashdata));
+      $s3->upload($bucket, $fdfile, json_encode($flashdata), 'public-read',
+          array('params' => array('ContentType'=>'application/json')));
     }
 
     $anafweb = $anadir.'/'.$fweb;
-    if (!file_exists($anafweb) && $flashdata[$anadir]['total_flash']['hang']) {
+    if (!$s3->doesObjectExist($bucket, $anafweb) && $flashdata[$anadir]['total_flash']['hang']) {
       // create a per-day HTML page
       print('Writing HTML output'."\n");
       $doc = new DOMDocument('1.0', 'utf-8');
@@ -404,12 +411,16 @@ foreach ($reports as $rep) {
         }
       }
 
-      $doc->saveHTMLFile($anafweb);
+      $s3->upload($bucket, $anafweb, $doc->saveHTML(), 'public-read',
+          array('params' => array('ContentType'=>'text/html')));
 
       // add the page to the pages index
       $anafpages = $anadir.'/'.$fpages;
-      if (file_exists($anafpages)) {
-        $pages = json_decode(file_get_contents($anafpages), true);
+      if ($s3->doesObjectExist($bucket, $anafpages)) {
+        $result = $s3->getObject(array(
+            'Bucket' => $bucket,
+            'Key'    => $anafpages));
+        $pages = json_decode($result['Body'], true);
       }
       else {
         $pages = array();
@@ -422,14 +433,15 @@ foreach ($reports as $rep) {
               'report_sub' => null,
               'display_ver' => $prdverdisplay,
               'display_rep' => 'Flash Hang Report');
-      file_put_contents($anafpages, json_encode($pages));
+      $s3->upload($bucket, $anafpages, json_encode($pages), 'public-read',
+          array('params' => array('ContentType'=>'application/json')));
     }
   }
   // debug only line
   // print_r($flashdata);
 
   if (count($flashdata) &&
-      (!file_exists($fwebsum) || (filemtime($fwebsum) < filemtime($fdfile)))) {
+      (!$s3->doesObjectExist($bucket, $fwebsum) || (filemtime($fwebsum) < filemtime($fdfile)))) {
     // create a summary HTML page
     print('Writing HTML output'."\n");
     $doc = new DOMDocument('1.0', 'utf-8');
@@ -496,7 +508,8 @@ foreach ($reports as $rep) {
           $adu = $adus[$date];
           // Put it in $flashdata and save it.
           $flashdata[$date]['adu'] = $adu;
-          file_put_contents($fdfile, json_encode($flashdata));
+          $s3->upload($bucket, $fdfile, json_encode($flashdata), 'public-read',
+              array('params' => array('ContentType'=>'application/json')));
         }
       }
 
@@ -551,8 +564,11 @@ foreach ($reports as $rep) {
     $doc->saveHTMLFile($fwebsum);
 
     // add the page to the summary pages index
-    if (file_exists($fsumpages)) {
-      $sumpages = json_decode(file_get_contents($fsumpages), true);
+    if ($s3->doesObjectExist($bucket, $fsumpages)) {
+      $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $fsumpages));
+      $sumpages = json_decode($result['Body'], true);
     }
     else {
       $sumpages = array();
@@ -566,11 +582,12 @@ foreach ($reports as $rep) {
             'last_date' => $lastdate,
             'display_ver' => $prdverdisplay,
             'display_rep' => 'Flash Summary Report');
-    file_put_contents($fsumpages, json_encode($sumpages));
+    $s3->upload($bucket, $fsumpages, json_encode($sumpages), 'public-read',
+        array('params' => array('ContentType'=>'application/json')));
   }
 
   if (($ver == '4plus') && count($flashdata) &&
-      (!file_exists($fwebdata) || (filemtime($fwebdata) < filemtime($fdfile)))) {
+      (!$s3->doesObjectExist($bucket, $fwebdata) || (filemtime($fwebdata) < filemtime($fdfile)))) {
     // create an HTML summary data page
     print('Writing HTML output'."\n");
     $doc = new DOMDocument('1.0', 'utf-8');
@@ -661,8 +678,11 @@ foreach ($reports as $rep) {
     $doc->saveHTMLFile($fwebdata);
 
     // add the page to the summary pages index
-    if (file_exists($fsumpages)) {
-      $sumpages = json_decode(file_get_contents($fsumpages), true);
+    if ($s3->doesObjectExist($bucket, $fsumpages)) {
+      $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $fsumpages));
+      $sumpages = json_decode($result['Body'], true);
     }
     else {
       $sumpages = array();
@@ -676,7 +696,8 @@ foreach ($reports as $rep) {
             'last_date' => $lastdate,
             'display_ver' => $prdverdisplay,
             'display_rep' => 'Flash Main Version Data');
-    file_put_contents($fsumpages, json_encode($sumpages));
+    $s3->upload($bucket, $fsumpages, json_encode($sumpages), 'public-read',
+        array('params' => array('ContentType'=>'application/json')));
   }
   print("\n");
 }

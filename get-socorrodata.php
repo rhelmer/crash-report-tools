@@ -15,6 +15,10 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -51,7 +55,6 @@ $day_end = date('Y-m-d', strtotime('yesterday'));
 
 $db_url = getenv('DATABASE_URL')?:
             die('No "DATABASE_URL " config var in found in env!');
-$db_url = parse_url($db_url);
 $dbopts = parse_url($db_url);
 $db_conn = pg_pconnect('host='.$dbopts['host']
                        .' dbname='.ltrim($dbopts["path"],'/')
@@ -69,9 +72,12 @@ if (!$db_conn) {
 foreach ($products as $product) {
   $fproddata = $product.'-daily.json';
 
-  if (file_exists($fproddata)) {
+  if ($s3->doesObjectExist($bucket, $fproddata)) {
     print('Read stored '.$product.' daily data'."\n");
-    $proddata = json_decode(file_get_contents($fproddata), true);
+    $result = $s3->getObject(array(
+        'Bucket' => $bucket,
+        'Key'    => $fproddata));
+    $proddata = json_decode($result['Body'], true);
   }
   else {
     $proddata = array();
@@ -139,7 +145,8 @@ foreach ($products as $product) {
   if ($maxday < $day_end) {
     print('--- ERROR: Last day retrieved is '.$maxday.' while yesterday was '.$day_end.'!'."\n");
   }
-  file_put_contents($fproddata, json_encode($proddata));
+  $s3->upload($bucket, $fproddata, json_encode($proddata), 'public-read',
+      array('params' => array('ContentType'=>'application/json')));
 }
 
 // uncomment for backfilling
@@ -149,9 +156,12 @@ foreach ($prodchannels as $product=>$channels) {
   foreach ($channels as $channel) {
     $fprodtypedata = $product.'-'.$channel.'-bytype.json';
 
-    if (file_exists($fprodtypedata)) {
+    if ($s3->doesObjectExist($bucket, $fprodtypedata)) {
       print('Read stored '.$product.' '.ucfirst($channel).' per-type data'."\n");
-      $prodtypedata = json_decode(file_get_contents($fprodtypedata), true);
+      $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $fprodtypedata));
+      $prodtypedata = json_decode($result['Body'], true);
     }
     else {
       $prodtypedata = array();
@@ -215,7 +225,8 @@ foreach ($prodchannels as $product=>$channels) {
     if ($maxday < $day_end) {
       print('--- ERROR: Last day retrieved is '.$maxday.' while yesterday was '.$day_end.'!'."\n");
     }
-    file_put_contents($fprodtypedata, json_encode($prodtypedata));
+    $s3->upload($bucket, $fprodtypedata, json_encode($prodtypedata), 'public-read',
+      array('params' => array('ContentType'=>'application/json')));
   }
 }
 print("\n");

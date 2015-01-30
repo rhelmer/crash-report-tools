@@ -404,10 +404,10 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
     $anafpages = $anadir.'/'.$fpages;
     if ($s3->doesObjectExist($bucket, $anafpages)) {
       print('Reading stored crash bug data'."\n");
-      $anafpagesobj = $s3->getObject(array(
+      $result = $s3->getObject(array(
               'Bucket' => $bucket,
               'Key'    => $bdfile));
-      $pages = json_decode($anafpagesobj, true);
+      $pages = json_decode($result['Body'], true);
     }
     else {
       $pages = array();
@@ -420,7 +420,6 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             'report_sub' => null,
             'display_ver' => '',
             'display_rep' => 'Crashes / Build');
-    file_put_contents($anafpages, json_encode($pages));
     $s3->upload($bucket, $anafpages, json_encode($pages), 'public-read',
         array('params' => array('ContentType'=>'application/json')));
 

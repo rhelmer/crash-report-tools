@@ -15,6 +15,10 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -50,9 +54,12 @@ foreach ($channels as $channel) {
   $ver_regex = ($channel == 'Release')?'/^\d+(\.\d+)+$/':'/^\d+(\.\d+)+b\d+$/';
   $max_build_age = getMaxBuildAge(strtolower($channel), true);
 
-  if (file_exists($fprodtypedata)) {
+  if ($s3->doesObjectExist($bucket, $fprodtypedata)) {
     print('Read stored Firefox '.$channel.' summary data'."\n");
-    $prodtypedata = json_decode(file_get_contents($fprodtypedata), true);
+    $result = $s3->getObject(array(
+        'Bucket' => $bucket,
+        'Key'    => $fprodtypedata));
+    $prodtypedata = json_decode($result['Body'], true);
   }
   else {
     $prodtypedata = array();
@@ -66,12 +73,12 @@ foreach ($channels as $channel) {
 
     // Make sure we have the crashdata csv.
     $anafcsv = $fcsv;
-    if (!file_exists($anafcsv)) {
+    if (!$s3->doesObjectExist($bucket, $anafcsv)) {
       print('Fetching '.$anafcsv.' from the web'."\n");
       $webcsvgz = $url_csvbase.date('Ymd', $anatime).'/'.$fcsv.'.gz';
       if (copy($webcsvgz, $anafcsv.'.gz')) { shell_exec('gzip -d '.$anafcsv.'.gz'); }
     }
-    if (!file_exists($anafcsv)) {
+    if (!$s3->doesObjectExist($bucket, $anafcsv)) {
       print($anafcsv.' does not exist!'."\n");
       continue;
     }
@@ -129,7 +136,8 @@ foreach ($channels as $channel) {
       }
     }
   }
-  file_put_contents($fprodtypedata, json_encode($prodtypedata));
+  $s3->upload($bucket, $fprodtypedata, json_encode($prodtypedata), 'public-read',
+      array('params' => array('ContentType'=>'application/json')));
 }
 
 // *** helper functions ***

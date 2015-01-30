@@ -15,6 +15,10 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -43,12 +47,12 @@ $curtime = time();
 
 $db_url = getenv('DATABASE_URL')?:
         die('No "DATABASE_URL " config var in found in env!');
-$db_url = parse_url($db_url);
 $dbopts = parse_url($db_url);
 $db_conn = pg_pconnect('host='.$dbopts['host']
                        .' dbname='.ltrim($dbopts["path"],'/')
                        .' user='.$dbopts['user']
                        .' password='.$dbopts['pass']);
+if (!$db_conn) {
   print('ERROR: DB connection failed, aborting!'."\n");
   exit(1);
 }
@@ -62,7 +66,6 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $anaday = date('Y-m-d', $anatime);
   $anadir = $anaday;
   print('Devices: Looking at GFX data for '.$anaday."\n");
-  if (!file_exists($anadir)) { mkdir($anadir); }
 
   $fgfxdata = 'gfxdata.json';
   $fpages = 'pages.json';
@@ -70,7 +73,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $fweb = sprintf($fwebmask, $anadir);
 
   $anafgfxdata = $anadir.'/'.$fgfxdata;
-  if (!file_exists($anafgfxdata)) {
+  if (!$s3->doesObjectExist($bucket, $anafgfxdata)) {
     // Need to fetch whole JSON object becasue of bug 898072.
     // Look into history to find nicer code to use when that is fixed.
     $raw_query =
@@ -129,17 +132,21 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       uasort($gd[$aname], 'count_compare');
     }
 
-    file_put_contents($anafgfxdata, json_encode($gd));
+    $s3->upload($bucket, $anafgfxdata, json_encode($gd), 'public-read',
+        array('params' => array('ContentType'=>'application/json')));
   }
   else {
-    $gd = json_decode(file_get_contents($anafgfxdata), true);
+    $result = $s3->getObject(array(
+        'Bucket' => $bucket,
+        'Key'    => $anafgfxdata));
+    $gd = json_decode($result['Body'], true);
   }
 
   // debug only line
   // print_r($gd); continue;
 
   $anafweb = $anadir.'/'.$fweb;
-  if (!file_exists($anafweb) && $gd['total_crashes']) {
+  if (!$s3->doesObjectExist($bucket, $anafweb) && $gd['total_crashes']) {
     // create out an HTML page
     print('Writing HTML output'."\n");
     $doc = new DOMDocument('1.0', 'utf-8');
@@ -236,12 +243,17 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $td->setAttribute('class', 'pct');
     }
 
-    $doc->saveHTMLFile($anafweb);
+    $s3->upload($bucket, $anafweb, $doc->saveHTML(), 'public-read',
+        array('params' => array('ContentType'=>'text/html')));
 
     // add the page to the pages index
     $anafpages = $anadir.'/'.$fpages;
-    if (file_exists($anafpages)) {
-      $pages = json_decode(file_get_contents($anafpages), true);
+    if ($s3->doesObjectExist($bucket, $anafpages)) {
+      $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $anafpages));
+      $pages = json_decode($result['Body'], true);
+
     }
     else {
       $pages = array();
@@ -254,7 +266,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
             'report_sub' => null,
             'display_ver' => '',
             'display_rep' => 'GFX Devices Report');
-    file_put_contents($anafpages, json_encode($pages));
+    $s3->upload($bucket, $anafpages, json_encode($pages), 'public-read',
+        array('params' => array('ContentType'=>'application/json')));
   }
 }
 

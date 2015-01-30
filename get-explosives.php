@@ -15,6 +15,10 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -239,7 +243,6 @@ foreach ($reports as $rep) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
     print('Explosiveness: Looking at '.$prdverdisplay.' data for '.$anadir."\n");
-    if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fsigcnt = $prdvershort.'-sigcount.csv';
     $ftotal = $prdvershort.'-total.csv';
@@ -296,31 +299,34 @@ foreach ($reports as $rep) {
 
     // Save total crash count (if needed).
     $anaftotal = $anadir.'/'.$ftotal;
-    if (!file_exists($anaftotal)) {
+    if (!$s3->doesObjectExist($bucket, $anaftotal)) {
       print('Saving total crash count'."\n");
-      file_put_contents($anaftotal, $total[$anadir]);
+      $s3->upload($bucket, $anaftotal, strval($total[$anadir]), 'public-read',
+          array('params' => array('ContentType'=>'text/plain')));
     }
 
     // Save signature count (if needed).
     $anafsigcnt = $anadir.'/'.$fsigcnt;
-    if (!file_exists($anafsigcnt)) {
+    if (!$s3->doesObjectExist($bucket, $anafsigcnt)) {
       print('Saving signature count'."\n");
-      file_put_contents($anafsigcnt, $sigcnt[$anadir]);
+      $s3->upload($bucket, $anafsigcnt, strval($sigcnt[$anadir]), 'public-read',
+          array('params' => array('ContentType'=>'text/plain')));
     }
 
     // Save ADUs (if needed).
     $anafadu = $anadir.'/'.$fadu;
     if (intval(@$adu[$anadir]) && !$rep['fake_adu'] &&
-        (!file_exists($anafadu) || !filesize($anafadu))) {
+        (!$s3->doesObjectExist($bucket, $anafadu) || !filesize($anafadu))) {
       print('Saving ADU count'."\n");
-      file_put_contents($anafadu, $adu[$anadir]);
+      $s3->upload($bucket, $anafadu, strval($adu[$anadir]), 'public-read',
+          array('params' => array('ContentType'=>'text/plain')));
     }
 
     // get explosiveness
     if (intval(@$virtual_adu[$anadir]) && intval(@$total[$anadir]) &&
         ($daysback < $backlog_days - 8)) {
       $anafexpdata = $anadir.'/'.$fexpdata;
-      if (!file_exists($anafexpdata)) {
+      if (!$s3->doesObjectExist($bucket, $anafexpdata)) {
         // get topcrasher list with counts per signature
         print('Calculating explosiveness'."\n");
 
@@ -386,21 +392,25 @@ foreach ($reports as $rep) {
 
         uasort($exp, 'expmax_compare'); // sort by max, highest-first
 
-        file_put_contents($anafexpdata,
-                          json_encode(array('exp'=>$exp,
-                                            'exp_total'=> $exp_total,
-                                            'dayset'=> $dayset)));
+        $s3->upload($bucket, $anafexpdata, 
+                    json_encode(array('exp'=>$exp,
+                                      'exp_total'=> $exp_total,
+                                      'dayset'=> $dayset)), 'public-read',
+            array('params' => array('ContentType'=>'application/json')));
       }
       else {
         print('Reading stored explosiveness'."\n");
-        $edata = json_decode(file_get_contents($anafexpdata), true);
+        $result = $s3->getObject(array(
+            'Bucket' => $bucket,
+            'Key'    => $anafexpdata));
+        $edata = json_decode($result['Body'], true);
         $exp = $edata['exp'];
         $exp_total = $edata['exp_total'];
         $dayset = $edata['dayset'];
       }
 
       $anafweb = $anadir.'/'.$fweb;
-      if (!file_exists($anafweb)) {
+      if (!$s3->doesObjectExist($bucket, $anafweb)) {
         // create out an HTML page
         print('Writing HTML output'."\n");
         $doc = new DOMDocument('1.0', 'utf-8');
@@ -575,12 +585,16 @@ foreach ($reports as $rep) {
           }
         }
 
-        $doc->saveHTMLFile($anafweb);
+        $s3->upload($bucket, $anafweb, $doc->saveHTML(), 'public-read',
+            array('params' => array('ContentType'=>'text/html')));
 
         // add the page to the pages index
         $anafpages = $anadir.'/'.$fpages;
-        if (file_exists($anafpages)) {
-          $pages = json_decode(file_get_contents($anafpages), true);
+        if ($s3->doesObjectExist($bucket, $anafpages)) {
+          $result = $s3->getObject(array(
+              'Bucket' => $bucket,
+              'Key'    => $anafpages));
+          $pages = json_decode($result['Body'], true);
         }
         else {
           $pages = array();
@@ -593,7 +607,8 @@ foreach ($reports as $rep) {
                 'report_sub' => null,
                 'display_ver' => $prdverdisplay,
                 'display_rep' => 'Explosiveness Report');
-        file_put_contents($anafpages, json_encode($pages));
+        $s3->upload($bucket, $anafpages, json_encode($pages), 'public-read',
+            array('params' => array('ContentType'=>'application/json')));
       }
     }
     elseif (!intval(@$total[$anadir])) {

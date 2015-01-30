@@ -15,6 +15,10 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -61,41 +65,50 @@ $bz_restapi_url = 'https://bugzilla.mozilla.org/rest/';
 // get current day
 $curtime = time();
 
-// make sure our output dir exists
-if (!file_exists($outdir)) { mkdir($outdir); }
-
 $bdfile = $outdir.'/qa.bugdata.json';
 $imfile = $outdir.'/qa.itermeta.json';
 $tmfile = $outdir.'/qa.trainmeta.json';
 $smfile = $outdir.'/qa.staticmeta.json';
 
-if (file_exists($bdfile)) {
+if ($s3->doesObjectExist($bucket, $bdfile)) {
   print('Reading stored QA bug data'."\n");
-  $bugdata = json_decode(file_get_contents($bdfile), true);
+  $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $bdfile));
+  $bugdata = json_decode($result['Body'], true);
 }
 else {
   $bugdata = array();
 }
 
-if (file_exists($imfile)) {
+if ($s3->doesObjectExist($bucket, $imfile)) {
   print('Reading stored QA iteration queries'."\n");
-  $itermetastore = json_decode(file_get_contents($imfile), true);
+  $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $imfile));
+  $itermetastore = json_decode($result['Body'], true);
 }
 else {
   $itermetastore = array();
 }
 
-if (file_exists($tmfile)) {
+if ($s3->doesObjectExist($bucket, $tmfile)) {
   print('Reading stored QA train queries'."\n");
-  $trainmetastore = json_decode(file_get_contents($tmfile), true);
+  $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $tmfile));
+  $trainmetastore = json_decode($result['Body'], true);
 }
 else {
   $trainmetastore = array();
 }
 
-if (file_exists($smfile)) {
+if ($s3->doesObjectExist($bucket, $smfile)) {
   print('Reading stored static queries'."\n");
-  $staticmetastore = json_decode(file_get_contents($smfile), true);
+  $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $smfile));
+  $staticmetastore = json_decode($result['Body'], true);
 }
 else {
   $staticmetastore = array();
@@ -372,21 +385,26 @@ foreach ($staticqueries as $sqtype) {
 print("\n");
 
 ksort($bugdata); // sort by date (key), ascending
-file_put_contents($bdfile, json_encode($bugdata));
+$s3->upload($bucket, $bdfile, json_encode($bugdata), 'public-read',
+    array('params' => array('ContentType'=>'application/json')));
+
 // debug only line
 //print_r($bugdata);
 
 ksort($itermetastore); // sort by iteration (key), ascending
-file_put_contents($imfile, json_encode($itermetastore));
+$s3->upload($bucket, $imfile, json_encode($itermetastore), 'public-read',
+    array('params' => array('ContentType'=>'application/json')));
 // debug only line
 //print_r($itermetastore);
 
 ksort($trainmetastore); // sort by train (key), ascending
-file_put_contents($tmfile, json_encode($trainmetastore));
+$s3->upload($bucket, $tmfile, json_encode($trainmetastore), 'public-read',
+    array('params' => array('ContentType'=>'application/json')));
 // debug only line
 //print_r($trainmetastore);
 
-file_put_contents($smfile, json_encode($staticmetastore));
+$s3->upload($bucket, $smfile, json_encode($staticmetastore), 'public-read',
+    array('params' => array('ContentType'=>'application/json')));
 // debug only line
 //print_r($staticmetastore);
 

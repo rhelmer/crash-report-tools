@@ -15,6 +15,11 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?:
+        die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -67,7 +72,6 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $anadir = date('Y-m-d', $anatime);
 
   print('B2G: Looking at on-device crash data for '.$anadir."\n");
-  if (!file_exists($anadir)) { mkdir($anadir); }
 
   $fbcdata = 'b2g-crashdata.json';
   $fbtc = 'b2g-topcrashes.json';
@@ -76,7 +80,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   $fwebweek = $anadir.'.b2g.topcrashes.weekly.html';
 
   $anafbcdata = $anadir.'/'.$fbcdata;
-  if (!file_exists($anafbcdata)) {
+  if (!$s3->doesObjectExist($bucket, $anafbcdata)) {
     $rep_query =
       'SELECT version,build,release_channel,'
       .'process_type,signature,date_processed,uuid '
@@ -137,14 +141,19 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
 
     uasort($bcd['list'], 'b2glist_compare'); // sort by B2G version, build ID, and crash time
 
-    file_put_contents($anafbcdata, json_encode($bcd));
+    $s3->upload($bucket, $anafbcdata, json_encode($bcd), 'public-read',
+        array('params' => array('ContentType'=>'application/json')));
   }
   else {
-    $bcd = json_decode(file_get_contents($anafbcdata), true);
+    $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $anafbcdata));
+    $bcd = json_decode($result['Body'], true);
+
   }
 
   $anafbtc = $anadir.'/'.$fbtc;
-  if (!file_exists($anafbtc)) {
+  if (!$s3->doesObjectExist($bucket, $anafbtc)) {
     $btc = array();
     foreach ($bcd['list'] as $crash) {
       $b2g_ver = strlen(@$crash['b2g_ver'])?$crash['b2g_ver']:'unknown';
@@ -199,10 +208,14 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       }
     }
 
-    file_put_contents($anafbtc, json_encode($btc));
+    $s3->upload($bucket, $anafbtc, json_encode($btc), 'public-read',
+        array('params' => array('ContentType'=>'application/json')));
   }
   else {
-    $btc = json_decode(file_get_contents($anafbtc), true);
+    $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $anafbtc));
+    $btc = json_decode($result['Body'], true);
   }
 
   $webreports = array('day' => $fweb, 'week' => $fwebweek);
@@ -210,7 +223,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
   foreach ($webreports as $type=>$fwebcur) {
     $anafweb = $anadir.'/'.$fwebcur;
     if ($type == 'week') {
-      if (!file_exists($anafweb)) {
+      if (!$s3->doesObjectExist($bucket, $anafweb)) {
         // assemble 7-day "weekly" overview
         print('Calculating weekly data'."\n");
         $curbtc = $btc;
@@ -220,9 +233,12 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
           $pastdir = date('Y-m-d', $pasttime);
           print('Adding '.$pastdir);
           $pastfbtc = $pastdir.'/'.$fbtc;
-          if (file_exists($pastfbtc)) {
+          if ($s3->doesObjectExist($bucket, $pastfbtc)) {
             // Load that data and merge it into $curcd.
-            $pastbtc = json_decode(file_get_contents($pastfbtc), true);
+            $result = $s3->getObject(array(
+                'Bucket' => $bucket,
+                'Key'    => $pastfbtc));
+            $pastbtc = json_decode($result['Body'], true);
             foreach ($pastbtc as $report=>$rdata) {
               print(':');
               if (array_key_exists($report, $curbtc)) {
@@ -272,7 +288,7 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
       $curbtc = $btc;
     }
 
-    if (!file_exists($anafweb) && count($curbtc)) {
+    if (!$s3->doesObjectExist($bucket, $anafweb) && count($curbtc)) {
       // create out an HTML page
       print('Writing HTML output'."\n");
       $doc = new DOMDocument('1.0', 'utf-8');
@@ -560,12 +576,16 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
         }
       }
 
-      $doc->saveHTMLFile($anafweb);
+      $s3->upload($bucket, $anafweb, $doc->saveHTML(), 'public-read',
+          array('params' => array('ContentType'=>'text/html')));
 
       // add the page to the pages index
       $anafpages = $anadir.'/'.$fpages;
-      if (file_exists($anafpages)) {
-        $pages = json_decode(file_get_contents($anafpages), true);
+      if ($s3->doesObjectExist($bucket, $anafpages)) {
+        $result = $s3->getObject(array(
+            'Bucket' => $bucket,
+            'Key'    => $anafpages));
+        $pages = json_decode($result['Body'], true);
       }
       else {
         $pages = array();
@@ -579,7 +599,8 @@ for ($daysback = $backlog_days + 1; $daysback > 0; $daysback--) {
               'display_ver' => 'B2G',
               'display_rep' => ($type == 'week'?'Weekly Topcrash':'Crashes')
                                .' Report');
-      file_put_contents($anafpages, json_encode($pages));
+      $s3->upload($bucket, $anafpages, json_encode($pages), 'public-read',
+          array('params' => array('ContentType'=>'application/json')));
     }
   }
 }

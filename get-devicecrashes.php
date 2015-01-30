@@ -131,7 +131,6 @@ foreach ($reports as $rep) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
     print('Devices: Looking at '.$prdverdisplay.' data for '.$anadir."\n");
-    if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fdevdata = $prdvershort.'-devices.json';
     $fpages = 'pages.json';
@@ -140,7 +139,7 @@ foreach ($reports as $rep) {
     $fwebweek = $anadir.'.'.$prdverfile.'.devices.weekly.html';
 
     $anafdevdata = $anadir.'/'.$fdevdata;
-    if (!file_exists($anafdevdata)) {
+    if (!$s3->doesObjectExist($bucket, $anafdevdata)) {
       // get all crash IDs and signatures for the selected versions
       $rep_query =
         'SELECT uuid, signature '
@@ -230,10 +229,14 @@ foreach ($reports as $rep) {
         arsort($dd['devices'][$devname]['signatures']);
       }
 
-      file_put_contents($anafdevdata, json_encode($dd));
+      $s3->upload($bucket, $anafdevdata, json_encode($dd), 'public-read',
+        array('params' => array('ContentType'=>'text/html')));
     }
     else {
-      $dd = json_decode(file_get_contents($anafdevdata), true);
+      $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $anafdevdata));
+      $dd = json_decode($result['Body'], true);
     }
 
     // debug only line
@@ -245,7 +248,7 @@ foreach ($reports as $rep) {
     foreach ($webreports as $type=>$fwebcur) {
       $anafweb = $anadir.'/'.$fwebcur;
       if ($type == 'week') {
-        if (!file_exists($anafweb)) {
+        if (!$s3->doesObjectExist($bucket, $anafweb)) {
           // assemble 7-day "weekly" overview
           print('Calculating weekly data'."\n");
           $curdd = $dd;
@@ -254,9 +257,12 @@ foreach ($reports as $rep) {
             $pastdir = date('Y-m-d', $pasttime);
             print('Adding '.$pastdir);
             $pastfdevdata = $pastdir.'/'.$fdevdata;
-            if (file_exists($pastfdevdata)) {
+            if ($s3->doesObjectExist($bucket, $pastfdevdata)) {
               // Load that data and merge it into $curcd.
-              $pastdd = json_decode(file_get_contents($pastfdevdata), true);
+              $result = $s3->getObject(array(
+                  'Bucket' => $bucket,
+                  'Key'    => $pastfdevdata));
+              $pastdd = json_decode($result['Body'], true);
               $curdd['total_crashes'] += $pastdd['total_crashes'];
               foreach ($pastdd['devices'] as $devname=>$devdata) {
                 print(':');
@@ -301,7 +307,7 @@ foreach ($reports as $rep) {
         $curdd = $dd;
       }
 
-      if (!file_exists($anafweb) && $curdd['total_crashes']) {
+      if (!$s3->doesObjectExist($bucket, $anafweb) && $curdd['total_crashes']) {
         // create out an HTML page
         print('Writing'.($type == 'week'?' weekly':' daily').' HTML output'."\n");
         $doc = new DOMDocument('1.0', 'utf-8');
@@ -498,12 +504,16 @@ foreach ($reports as $rep) {
           }
         }
 
-        $doc->saveHTMLFile($anafweb);
+        $s3->upload($bucket, $anafweb, $doc->saveHTML(), 'public-read',
+            array('params' => array('ContentType'=>'text/html')));
 
         // add the page to the pages index
         $anafpages = $anadir.'/'.$fpages;
-        if (file_exists($anafpages)) {
-          $pages = json_decode(file_get_contents($anafpages), true);
+        if ($s3->doesObjectExist($bucket, $anafpages)) {
+          $result = $s3->getObject(array(
+              'Bucket' => $bucket,
+              'Key'    => $anafpages));
+          $pages = json_decode($result['Body'], true);
         }
         else {
           $pages = array();
@@ -517,7 +527,8 @@ foreach ($reports as $rep) {
                 'display_ver' => $prdverdisplay,
                 'display_rep' => ($type == 'week'?'Weekly ':'')
                                  .'Device Crash Report');
-        file_put_contents($anafpages, json_encode($pages));
+        $s3->upload($bucket, $anafpages, json_encode($pages), 'public-read',
+            array('params' => array('ContentType'=>'text/html')));
       }
     }
   }

@@ -25,6 +25,10 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -158,9 +162,12 @@ foreach ($reports as $rep) {
 
   $max_build_age = getMaxBuildAge($channel, true);
 
-  if (file_exists($sdfile)) {
+  if ($s3->doesObjectExist($bucket, $sdfile)) {
     print('Read stored data'."\n");
-    $startupdata = json_decode(file_get_contents($sdfile), true);
+    $result = $s3->getObject(array(
+        'Bucket' => $bucket,
+        'Key'    => $sdfile));
+    $startupdata = json_decode($result['Body'], true);
   }
   else {
     $startupdata = array();
@@ -170,7 +177,6 @@ foreach ($reports as $rep) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
     print('Startup: Looking at data for '.$anadir."\n");
-    if (!file_exists($anadir)) { mkdir($anadir); }
 
     $ftotal = $prdvershort.'-total.csv';
     $fdata = $prdvershort.'-startup.json';
@@ -179,7 +185,7 @@ foreach ($reports as $rep) {
 
     // get startup data for the product
     $anafdata = $anadir.'/'.$fdata;
-    if (!file_exists($anafdata)) {
+    if (!$s3->doesObjectExist($bucket, $anafdata)) {
       print('Getting '.$prdverdisplay.' startup data'."\n");
 
       $rep_query =
@@ -221,13 +227,18 @@ foreach ($reports as $rep) {
         }
         $scrashes[$ptype] += $rep_row['cnt'];
       }
-      file_put_contents($anafdata,
-                        json_encode(array('anacrashes'=>$anacrashes,
-                                          'scrashes'=>$scrashes)));
+      $s3->upload($bucket, $anafdata,
+                  json_encode(array('anacrashes'=>$anacrashes,
+                                    'scrashes'=>$scrashes)),
+                  'public-read',
+                  array('params' => array('ContentType'=>'application/json')));
     }
     else {
       print('Read stored '.$prdverdisplay.' startup data'."\n");
-      $sdata = json_decode(file_get_contents($anafdata), true);
+      $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $anafdata));
+      $sdata = json_decode($result['Body'], true);
       $anacrashes = $sdata['anacrashes'];
       $scrashes = $sdata['scrashes'];
     }
@@ -235,7 +246,7 @@ foreach ($reports as $rep) {
     if (!array_key_exists($anadir, $startupdata) || (filemtime($sdfile) < filemtime($anafdata))) {
       // get total crash count
       $anaftotal = $anadir.'/'.$ftotal;
-      if (!file_exists($anaftotal)) {
+      if (!$s3->doesObjectExist($bucket, $anaftotal)) {
         print('Getting total crash count'."\n");
         $total_query =
           'SELECT COUNT(*) as cnt '
@@ -260,10 +271,14 @@ foreach ($reports as $rep) {
         }
         $total_row = pg_fetch_array($total_result);
         $anatotal = $total_row['cnt'];
-        file_put_contents($anaftotal, $anatotal);
+        $s3->upload($bucket, $anaftotal, $anatotal, 'public-read',
+            array('params' => array('ContentType'=>'text/plain')));
       }
       else {
-        $anatotal = intval(file_get_contents($anaftotal));
+        $result = $s3->getObject(array(
+            'Bucket' => $bucket,
+            'Key'    => $anaftotal));
+        $anatotal = intval($result['Body']);
       }
 
       $startupdata[$anadir] = array('startup' => $scrashes,
@@ -271,11 +286,12 @@ foreach ($reports as $rep) {
 
       ksort($startupdata); // sort by date (key), ascending
 
-      file_put_contents($sdfile, json_encode($startupdata));
+      $s3->upload($bucket, $sdfile, json_encode($startupdata), 'public-read',
+          array('params' => array('ContentType'=>'application/json')));
     }
 
     $anafweb = $anadir.'/'.$fweb;
-    if (!file_exists($anafweb) && count($anacrashes)) {
+    if (!$s3->doesObjectExist($bucket, $anafweb) && count($anacrashes)) {
       // create out an HTML page
       print('Writing HTML output'."\n");
       $doc = new DOMDocument('1.0', 'utf-8');
@@ -350,12 +366,16 @@ foreach ($reports as $rep) {
         $td->setAttribute('class', 'num');
       }
 
-      $doc->saveHTMLFile($anafweb);
+      $s3->upload($bucket, $anafweb, $doc->saveHTML(), 'public-read',
+          array('params' => array('ContentType'=>'text/html')));
 
       // add the page to the pages index
       $anafpages = $anadir.'/'.$fpages;
-      if (file_exists($anafpages)) {
-        $pages = json_decode(file_get_contents($anafpages), true);
+      if ($s3->doesObjectExist($bucket, $anafpages)) {
+        $result = $s3->getObject(array(
+            'Bucket' => $bucket,
+            'Key'    => $anafpages));
+        $pages = intval($result['Body']);
       }
       else {
         $pages = array();
@@ -368,14 +388,15 @@ foreach ($reports as $rep) {
               'report_sub' => null,
               'display_ver' => $prdverdisplay,
               'display_rep' => 'Startup Crash Report');
-      file_put_contents($anafpages, json_encode($pages));
+      $s3->upload($bucket, $anafpages, json_encode($pages), 'public-read',
+          array('params' => array('ContentType'=>'application/json')));
     }
   }
   // debug only line
   // print_r($anacrashes);
 
   if (count($startupdata) &&
-      (!file_exists($fwebsum) || (filemtime($fwebsum) < filemtime($sdfile)))) {
+      (!$s3->doesObjectExist($bucket, $fwebsum) || (filemtime($fwebsum) < filemtime($sdfile)))) {
     // create out an HTML page
     print('Writing HTML output'."\n");
     $doc = new DOMDocument('1.0', 'utf-8');
@@ -455,11 +476,15 @@ foreach ($reports as $rep) {
       $td->setAttribute('class', 'pct');
     }
 
-    $doc->saveHTMLFile($fwebsum);
+    $s3->upload($bucket, $fwebsum, $doc->saveHTML(), 'public-read',
+        array('params' => array('ContentType'=>'text/html')));
 
     // add the page to the summary pages index
-    if (file_exists($fsumpages)) {
-      $sumpages = json_decode(file_get_contents($fsumpages), true);
+    if ($s3->doesObjectExist($bucket, $fsumpages)) {
+      $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $fsumpages));
+      $sumpages = json_decode($result['Body']);
     }
     else {
       $sumpages = array();
@@ -473,7 +498,8 @@ foreach ($reports as $rep) {
             'last_date' => $lastdate,
             'display_ver' => $prdverdisplay,
             'display_rep' => 'Startup Summary Report');
-    file_put_contents($fsumpages, json_encode($sumpages));
+    $s3->upload($bucket, $fsumpages, json_encode(sumpages), 'public-read',
+        array('params' => array('ContentType'=>'application/json')));
   }
   print("\n");
 }

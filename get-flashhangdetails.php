@@ -15,6 +15,10 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -97,9 +101,12 @@ foreach ($reports as $rep) {
                    .(strlen($ver)?' '.(isset($rep['version_display'])?$rep['version_display']:$ver):'');
 
   $fdfile = $prdvershort.'.flashhang.json';
-  if (file_exists($fdfile)) {
+  if ($s3->doesObjectExist($bucket, $fdfile)) {
     print('Read stored data'."\n");
-    $flashdata = json_decode(file_get_contents($fdfile), true);
+    $result = $s3->getObject(array(
+        'Bucket' => $bucket,
+        'Key'    => $fdfile));
+    $flashdata = json_decode($result['Body'], true);
   }
   else {
     $flashdata = array();
@@ -134,7 +141,6 @@ foreach ($reports as $rep) {
     $anatime = strtotime(date('Y-m-d', $curtime).' -'.$daysback.' day');
     $anadir = date('Y-m-d', $anatime);
     print('Looking at data for '.$anadir."\n");
-    if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fhdrawdata = $prdvershort.'-flashhangdetails-raw.json';
     $fhddata = $prdvershort.'-flashhangdetails.json';
@@ -146,7 +152,7 @@ foreach ($reports as $rep) {
 
     // Get summarized list with counts per flash version and hang/crash.
     $anafhdrawdata = $anadir.'/'.$fhdrawdata;
-    if (!file_exists($anafhdrawdata)) {
+    if (!$s3->doesObjectExist($bucket, $anafhdrawdata)) {
       print('Getting combined '.$prdverdisplay.' plugin and browser data'."\n");
       $rep_query =
         'SELECT plug.hang_id as hang_id, flash_version,'
@@ -184,15 +190,20 @@ foreach ($reports as $rep) {
                   'flash-ver' => $rep_row['flash_version']);
         }
       }
-      file_put_contents($anafhdrawdata, json_encode($rawhangdata));
+      $s3->upload($bucket, $anafhdrawdata, json_encode($rawhangdata), 'public-read',
+          array('params' => array('ContentType'=>'application/json')));
+
     }
     else {
-      $rawhangdata = json_decode(file_get_contents($anafhdrawdata), true);
+      $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $anafhdrawdata));
+      $rawhangdata = json_decode($result['Body'], true);
     }
 
     // get summarized list with counts per flash version and hang/crash
     $anafhddata = $anadir.'/'.$fhddata;
-    if (!file_exists($anafhddata)) {
+    if (!$s3->doesObjectExist($bucket, $anafhddata)) {
       print('Summarize Flash hang data'."\n");
       $hangdata = array();
       foreach ($rawhangdata as $hangentry) {
@@ -219,14 +230,18 @@ foreach ($reports as $rep) {
         arsort($hangdata[$sig_id]['count_flash']); // sort by value, highest-first
       }
 
-      file_put_contents($anafhddata, json_encode($hangdata));
+      $s3->upload($bucket, $anafhddata, json_encode($hangdata), 'public-read',
+          array('params' => array('ContentType'=>'application/json')));
     }
     else {
-      $hangdata = json_decode(file_get_contents($anafhddata), true);
+      $result = $s3->getObject(array(
+          'Bucket' => $bucket,
+          'Key'    => $anafhddata));
+      $hangdata = json_decode($result['Body'], true);
     }
 
     $anafweb = $anadir.'/'.$fweb;
-    if (!file_exists($anafweb) && count($hangdata)) {
+    if (!$s3->doesObjectExist($bucket, $anafweb) && count($hangdata)) {
       // create out an HTML page
       print('Writing HTML output'."\n");
       $doc = new DOMDocument('1.0', 'utf-8');
@@ -346,12 +361,16 @@ foreach ($reports as $rep) {
         $td->setAttribute('class', 'flashver');
       }
 
-      $doc->saveHTMLFile($anafweb);
+      $s3->upload($bucket, $anafweb, $doc->saveHTML(), 'public-read',
+          array('params' => array('ContentType'=>'text/html')));
 
       // add the page to the pages index
       $anafpages = $anadir.'/'.$fpages;
-      if (file_exists($anafpages)) {
-        $pages = json_decode(file_get_contents($anafpages), true);
+      if ($s3->doesObjectExist($bucket, $anafpages)) {
+        $result = $s3->getObject(array(
+            'Bucket' => $bucket,
+            'Key'    => $anafpages));
+        $pages = json_decode($result['Body'], true);
       }
       else {
         $pages = array();
@@ -364,7 +383,8 @@ foreach ($reports as $rep) {
               'report_sub' => 'pairs',
               'display_ver' => $prdverdisplay,
               'display_rep' => 'Flash Hang Details Report');
-      file_put_contents($anafpages, json_encode($pages));
+      $s3->upload($bucket, $anafpages, json_encode($pages), 'public-read',
+          array('params' => array('ContentType'=>'application/json')));
     }
 
     print("\n");

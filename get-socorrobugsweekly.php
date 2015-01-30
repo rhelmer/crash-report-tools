@@ -16,7 +16,7 @@ if (php_sapi_name() != 'cli') {
 }
 
 require('vendor/autoload.php');
-$s3 = Aws\S3\S3Client::factory(array(region => 'us-west-2'));
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
 $bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
 
 include_once('datautils.php');
@@ -55,10 +55,10 @@ $fweb = '%s.weeklybugs.html';
 
 if ($s3->doesObjectExist($bucket, $bdfile)) {
   print('Reading stored crash bug data'."\n");
-  $bdobj = $s3->getObject(array(
+  $result = $s3->getObject(array(
           'Bucket' => $bucket,
           'Key'    => $bdfile));
-  $bugdata = json_decode($bdobj, true);
+  $bugdata = json_decode($result['Body'], true);
 }
 else {
   $bugdata = array();
@@ -114,7 +114,7 @@ foreach ($calcweeks as $wkdef) {
   ksort($bugdata); // sort by date (key), ascending
 
   $s3->upload($bucket, $bdfile, json_encode($bugdata), 'public-read',
-        array('params' => array('ContentType'=>'text/html')));
+      array('params' => array('ContentType'=>'application/json')));
 }
 
 if (count($bugdata)) {
@@ -354,7 +354,7 @@ if (count($bugdata)) {
     $body->appendChild($pgnav);
 
     $s3->upload($bucket, $yearfweb, $doc->saveHTML(), 'public-read',
-    array('params' => array('ContentType'=>'text/html')));
+        array('params' => array('ContentType'=>'text/html')));
   }
 
   print("\n");

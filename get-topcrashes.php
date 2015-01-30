@@ -15,6 +15,10 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -179,14 +183,13 @@ foreach ($reports as $rname=>$rep) {
           continue;
         }
         print('TCBS: Looking at '.$prdverdisplay.' on '.$rep['display_name'].' data for '.$anadir."\n");
-        if (!file_exists($anadir)) { mkdir($anadir); }
 
         $ftcdata = $prdvershort.'-'.$rname.'-topcrash.json';
         $fpages = 'pages.json';
         $fweb = $anadir.'.'.$prdverfile.'.'.$rname.'.topcrash.html';
 
         $anaftcdata = $anadir.'/'.$ftcdata;
-        if (!file_exists($anaftcdata)) {
+        if (!$s3->doesObjectExist($bucket, $anaftcdata)) {
           $all_pv_ids = $pv_ids;
           if ($ver_row['is_rapid_beta'] == 't') {
             // Rapid beta rolls up 2 weeks of builds since the current date.
@@ -260,14 +263,18 @@ foreach ($reports as $rname=>$rep) {
           }
           ksort($tcd); // sort by date (key), ascending
 
-          file_put_contents($anaftcdata, json_encode($tcd));
+          $s3->upload($bucket, $anaftcdata, json_encode($tcd), 'public-read',
+              array('params' => array('ContentType'=>'application/json')));
         }
         else {
-          $tcd = json_decode(file_get_contents($anaftcdata), true);
+          $result = $s3->getObject(array(
+              'Bucket' => $bucket,
+              'Key'    => $anaftcdata));
+          $tcd = json_decode($result['Body'], true);
         }
 
         $anafweb = $anadir.'/'.$fweb;
-        if (!file_exists($anafweb) &&
+        if (!$s3->doesObjectExist($bucket, $anafweb) &&
             count($tcd) && $tcd['total']) {
           // create out an HTML page
           print('Writing HTML output'."\n");
@@ -395,12 +402,16 @@ foreach ($reports as $rname=>$rep) {
             if ($rank >= $top_x) { break; }
           }
 
-          $doc->saveHTMLFile($anafweb);
+          $s3->upload($bucket, $anafweb, $doc->saveHTML(), 'public-read',
+              array('params' => array('ContentType'=>'text/html')));
 
           // add the page to the pages index
           $anafpages = $anadir.'/'.$fpages;
-          if (file_exists($anafpages)) {
-            $pages = json_decode(file_get_contents($anafpages), true);
+          if ($s3->doesObjectExist($bucket, $anafpages)) {
+            $result = $s3->getObject(array(
+              'Bucket' => $bucket,
+              'Key'    => $anafpages));
+            $pages = json_decode($result['Body'], true);
           }
           else {
             $pages = array();
@@ -413,7 +424,8 @@ foreach ($reports as $rname=>$rep) {
                   'report_sub' => $rname,
                   'display_ver' => $prdverdisplay,
                   'display_rep' => $rep['display_name'].' Top Crash Report');
-          file_put_contents($anafpages, json_encode($pages));
+          $s3->upload($bucket, $anafpages, json_encode($pages), 'public-read',
+              array('params' => array('ContentType'=>'application/json')));
         }
       }
       print("\n");

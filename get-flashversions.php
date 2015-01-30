@@ -15,6 +15,10 @@ if (php_sapi_name() != 'cli') {
   exit;
 }
 
+require('vendor/autoload.php');
+$s3 = Aws\S3\S3Client::factory(array('region' => 'us-west-2'));
+$bucket = getenv('S3_BUCKET')?: die('No "S3_BUCKET" config var in found in env!');
+
 include_once('datautils.php');
 
 // *** script settings ***
@@ -98,9 +102,12 @@ foreach ($flash_versions as $fver) {
 
   $fvdfile = $prdshort.'.flash.'.$fvdash.'.json';
 
-  if (file_exists($fvdfile)) {
+  if ($s3->doesObjectExist($bucket, $fvdfile)) {
     print('Read stored data'."\n");
-    $flashverdata = json_decode(file_get_contents($fvdfile), true);
+    $result = $s3->getObject(array(
+        'Bucket' => $bucket,
+        'Key'    => $fvdfile));
+    $flashverdata = json_decode($result['Body'], true);
   }
   else {
     $flashverdata = array();
@@ -169,7 +176,6 @@ foreach ($flash_versions as $fver) {
   foreach ($days_to_analyze as $anaday) {
     $anadir = $anaday;
     print('Flash versions: Looking at Flash '.$fver.' data for '.$anadir."\n");
-    if (!file_exists($anadir)) { mkdir($anadir); }
 
     $fpages = 'pages.json';
     $fweb = $anadir.'.'.$prd.'.flash.'.$fvdash.'.html';
@@ -241,11 +247,13 @@ foreach ($flash_versions as $fver) {
 
       ksort($flashverdata); // sort by date (key), ascending
 
-      file_put_contents($fvdfile, json_encode($flashverdata));
+      $s3->upload($bucket, $fvdfile, json_encode($flashverdata), 'public-read',
+          array('params' => array('ContentType'=>'application/json')));
+
     }
 
     $anafweb = $anadir.'/'.$fweb;
-    if ((!file_exists($anafweb) || in_array($anadir, $force_dates)) &&
+    if ((!$s3->doesObjectExist($bucket, $anafweb) || in_array($anadir, $force_dates)) &&
         count($flashverdata[$anadir]) && $flashverdata[$anadir]['total']) {
       // create out an HTML page
       print('Writing HTML output'."\n");
@@ -368,12 +376,16 @@ foreach ($flash_versions as $fver) {
         if ($rank >= $top_x) { break; }
       }
 
-      $doc->saveHTMLFile($anafweb);
+      $s3->upload($bucket, $anafweb, $doc->saveHTML(), 'public-read',
+          array('params' => array('ContentType'=>'text/html')));
 
       // add the page to the pages index
       $anafpages = $anadir.'/'.$fpages;
-      if (file_exists($anafpages)) {
-        $pages = json_decode(file_get_contents($anafpages), true);
+      if ($s3->doesObjectExist($bucket, $anafpages)) {
+        $result = $s3->getObject(array(
+            'Bucket' => $bucket,
+            'Key'    => $anafpages));
+        $pages = json_decode($result['Body'], true);
       }
       else {
         $pages = array();
@@ -386,7 +398,8 @@ foreach ($flash_versions as $fver) {
               'report_sub' => $fver,
               'display_ver' => '',
               'display_rep' => 'Flash '.$fver.' Report');
-      file_put_contents($anafpages, json_encode($pages));
+      $s3->upload($bucket, $anafpages, json_encode($pages), 'public-read',
+          array('params' => array('ContentType'=>'application/json')));
     }
   }
   // debug only line
